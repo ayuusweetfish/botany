@@ -26,9 +26,10 @@ char *ipc_recv(int pipe, size_t *o_len, int timeout)
     struct pollfd pfd = (struct pollfd){pipe, POLLIN, 0};
     char *ret = NULL;
     size_t len = 0, ptr = 0;
-    char buf[8];
+    char buf[4];
 
     while (len == 0 || ptr < len) {
+        /* Wait for reading */
         pfd.revents = 0;
         int poll_ret = poll(&pfd, 1, timeout);
         if (poll_ret == -1) {
@@ -40,17 +41,14 @@ char *ipc_recv(int pipe, size_t *o_len, int timeout)
 
         if (poll_ret == 1 && (pfd.revents & POLLIN)) {
             /* Ready for reading! Let's see */
-            size_t size_to_read;
+            ssize_t read_len;
+
             if (ret == NULL) {
-                size_to_read = 3;
+                read_len = read(pipe, buf, 3);
             } else {
-                size_to_read = len - ptr;
-                if (size_to_read > sizeof buf)
-                    size_to_read = sizeof buf;
+                read_len = read(pipe, ret + ptr, len - ptr);
             }
 
-            /* Read into the buffer */
-            ssize_t read_len = read(pipe, buf, size_to_read);
             if (read_len == -1) {
                 fprintf(stderr, "read() failed with errno %d\n", errno);
                 if (ret) free(ret);
@@ -69,12 +67,11 @@ char *ipc_recv(int pipe, size_t *o_len, int timeout)
                 len = ((unsigned char)buf[2] << 16) |
                     ((unsigned char)buf[1] << 8) |
                     (unsigned char)buf[0];
+                len = 16;
                 ret = (char *)malloc(len == 0 ? 1 : len);
                 if (len == 0) break;    /* Nothing to read */
             } else {
-                /* Copy data to the buffer */
-                /* TODO: Directly read into the buffer */
-                memcpy(ret + ptr, buf, read_len);
+                /* Move buffer pointer */
                 ptr += read_len;
             }
         } else {
