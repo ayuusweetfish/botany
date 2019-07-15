@@ -4,7 +4,7 @@
 #include <poll.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
+#include <time.h>
 
 #define quq(__syscall, ...) _quq(#__syscall, __syscall(__VA_ARGS__))
 
@@ -14,6 +14,13 @@ static int _quq(const char *name, int ret)
         fprintf(stderr, "%s() failed > < [errno %d]\n", name, errno);
         exit(1);
     }
+    return ret;
+}
+
+static inline long diff_ms(const struct timespec t1, const struct timespec t2)
+{
+    long ret = (t2.tv_sec - t1.tv_sec) * 1000;
+    ret += (1000000000 + t2.tv_nsec - t1.tv_nsec) / 1000000 - 1000;
     return ret;
 }
 
@@ -27,8 +34,20 @@ char *ipc_recv(int pipe, size_t *o_len, int timeout)
     char *ret = NULL;
     size_t len = 0, ptr = 0;
     char buf[4];
+    struct timespec t1, t2;
 
     while (len == 0 || ptr < len) {
+        /* Unlikely; in case poll()'s time slightly differs
+           from CLOCK_MONOTONIC, or rounding errors happen */
+        if (timeout <= 0) {
+            fprintf(stderr, "read() failed with errno %d\n", errno);
+            if (ret) free(ret);
+            *o_len = IPC_ERR_SYSCALL;
+            return NULL;
+        }
+
+        /* Keep time */
+        clock_gettime(CLOCK_MONOTONIC, &t1);
         /* Wait for reading */
         pfd.revents = 0;
         int poll_ret = poll(&pfd, 1, timeout);
@@ -38,6 +57,9 @@ char *ipc_recv(int pipe, size_t *o_len, int timeout)
             *o_len = IPC_ERR_SYSCALL;
             return NULL;
         }
+        /* Calculate remaining time */
+        clock_gettime(CLOCK_MONOTONIC, &t2);
+        timeout -= diff_ms(t1, t2);
 
         if (poll_ret == 1 && (pfd.revents & POLLIN)) {
             /* Ready for reading! Let's see */
