@@ -29,11 +29,7 @@ static inline char tenacious_write(int fd, const char *buf, size_t len)
 {
     size_t ptr = 0;
     while (ptr < len) {
-        int write_len = len - ptr;
-        if (write_len > 2) write_len = 2;
-        ssize_t written = write(fd, buf + ptr, write_len);
-        usleep(10000);
-        //ssize_t written = write(fd, buf + ptr, len - ptr);
+        ssize_t written = write(fd, buf + ptr, len - ptr);
         if (written == -1) return -1;
         ptr += written;
     }
