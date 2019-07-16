@@ -30,7 +30,7 @@ static inline char tenacious_write(int fd, const char *buf, size_t len)
     size_t ptr = 0;
     while (ptr < len) {
         int write_len = len - ptr;
-        if (write_len > 4) write_len = 4;
+        if (write_len > 2) write_len = 2;
         ssize_t written = write(fd, buf + ptr, write_len);
         usleep(10000);
         //ssize_t written = write(fd, buf + ptr, len - ptr);
@@ -139,9 +139,14 @@ int main(int argc, char *argv[])
     if (argc >= 2 && argv[1][0] == 'i') {
         size_t len;
         char *s = ipc_recv(STDIN_FILENO, &len, 100000);
-        printf("Length = %zd\n", len);
-        for (size_t i = 0; i < len; i++) putchar(s[i]);
-        putchar('\n');
+        if (!s) {
+            printf("Invalid! Application error %d, system errno %d\n",
+                (int)len, errno);
+        } else {
+            printf("Length = %zd\n", len);
+            for (size_t i = 0; i < len; i++) putchar(s[i]);
+            putchar('\n');
+        }
     } else {
         char *s = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Dolor sed viverra ipsum nunc aliquet bibendum enim. In massa tempor nec feugiat. Nunc aliquet bibendum enim facilisis gravida. Nisl nunc mi ipsum faucibus vitae aliquet nec ullamcorper. Amet luctus venenatis lectus magna fringilla. Volutpat maecenas volutpat blandit aliquam etiam erat velit scelerisque in. Egestas egestas fringilla phasellus faucibus scelerisque eleifend. Sagittis orci a scelerisque purus semper eget duis. Nulla pharetra diam sit amet nisl suscipit. Sed adipiscing diam donec adipiscing tristique risus nec feugiat in. Fusce ut placerat orci nulla. Pharetra vel turpis nunc eget lorem dolor. Tristique senectus et netus et malesuada.";
         ipc_send(STDOUT_FILENO, strlen(s), s);
