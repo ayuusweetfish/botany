@@ -8,7 +8,7 @@
 #define IPC_ERR_POLL    2
 #define IPC_ERR_SYSCALL 3
 
-void ipc_send(int pipe, size_t len, char *payload);
+int ipc_send(int pipe, size_t len, const char *payload);
 
 /*
   Receives data from a file descriptor with a given timeout.
