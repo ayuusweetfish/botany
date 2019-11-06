@@ -18,13 +18,10 @@ jobs:
   include:
     - name: Gofmt check
       stage: build
-      script: ../.travis.gofmt.sh
+      script: "[[ -z `go fmt ./...` ]]"
     - name: Go build
       stage: build
-      script: go build ./...
-
-stages:
-  - build
+      script: "go build ./..."
 
 branches:
   except:
