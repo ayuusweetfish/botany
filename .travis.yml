@@ -3,15 +3,20 @@ language: go
 go:
   - 1.13.x
 
+cache:
+  directories:
+    - $GOPATH/pkg/mod
+
 before_script:
   - cd app
 
 jobs:
   include:
-    - script: go fmt ./...
-    - script: go build ./...
+    - name: Gofmt check
+      script: go fmt ./...
+    - name: Go build
+      script: go build ./...
 
 branches:
-  only:
-    - master
-    - dev
+  except:
+    - /^exp-.*$/
