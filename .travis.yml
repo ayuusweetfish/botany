@@ -16,12 +16,13 @@ install:
 
 jobs:
   include:
-    - name: Gofmt check
-      stage: build
-      script: ../.travis.gofmt.sh
     - name: Go build
       stage: build
-      script: go build ./...
+      script:
+        - pwd
+        - ls -l
+        - go fmt ./...
+        - go build -v ./...
 
 stages:
   - build
