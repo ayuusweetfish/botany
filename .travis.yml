@@ -8,7 +8,7 @@ cache:
   directories:
     - $GOPATH/src
 
-before_script:
+before_install:
   - cd app
 
 install:
@@ -17,8 +17,10 @@ install:
 jobs:
   include:
     - name: Gofmt check
+      stage: build
       script: go fmt ./...
     - name: Go build
+      stage: build
       script: go build ./...
 
 branches:
