@@ -14,15 +14,12 @@ install:
 
 jobs:
   include:
+    - name: Gofmt check
+      stage: build
+      script: "[[ -z `go fmt ./...` ]]"
     - name: Go build
       stage: build
-      script:
-        - ls -l
-        - go fmt ./...
-        - go build -v ./...
-
-stages:
-  - build
+      script: "go build ./..."
 
 branches:
   except:
