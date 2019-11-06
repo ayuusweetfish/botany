@@ -18,7 +18,7 @@ jobs:
   include:
     - name: Gofmt check
       stage: build
-      script: go fmt ./...
+      script: if [[ -n `go fmt ./...` ]]; then (exit 1); fi
     - name: Go build
       stage: build
       script: go build ./...
