@@ -4,22 +4,19 @@ dist: bionic
 go:
   - 1.13.x
 
-cache:
-  directories:
-    - $GOPATH/src
-
 before_install:
   - cd app
+  - ls -l
 
 install:
   - go get -d ./...
+  - ls -l
 
 jobs:
   include:
     - name: Go build
       stage: build
       script:
-        - pwd
         - ls -l
         - go fmt ./...
         - go build -v ./...
