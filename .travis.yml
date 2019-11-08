@@ -10,19 +10,22 @@ node_js:
 before_install:
   - cd app
 
-install:
-  - npm install --prefix views
-  - go get -d ./...
-
 jobs:
   include:
     - name: Gofmt check
       stage: build
-      script: "[[ -z `go fmt ./...` ]]"
+      install:
+        - go get -d ./...
+      script:
+        - "[[ -z `go fmt ./...` ]]"
+
     - name: Go & Node.js build
       stage: build
+      install:
+        - npm install --prefix views
+        - go get -d ./...
       script:
-        - npm build --prefix views
+        - npm run-script build --prefix views
         - go build ./...
 
 branches:
