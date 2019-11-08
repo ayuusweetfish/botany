@@ -1,0 +1,151 @@
+<template>
+  <el-container class="login-container">
+    <el-header class="login-header">
+      <div style="margin:auto">登录</div>
+    </el-header>
+    <el-main class="login-main">
+      <el-form
+        ref="usernamelogin"
+        :model="loginInfo"
+        label-suffix="left"
+        label-width="0px"
+      >  
+        <el-row>
+          <el-col :span="5">
+            <div align="right" class="login-title">用户名：</div>
+          </el-col>
+          <el-col :span="19">
+            <el-form-item prop="username" :error="loginErrUsrnm">
+              <el-input
+                type="text"
+                v-model="loginInfo.username"
+                placeholder="请输入账号"
+                auto-complete="off"
+                prefix-icon="el-icon-user-solid"
+              ></el-input>
+            </el-form-item>
+          </el-col>
+        </el-row>          
+               
+        <el-row>
+          <el-col :span="5">
+            <div align="right" class="login-title">密码：</div>
+          </el-col>
+          <el-col :span="19">
+            <el-form-item prop="enigma" :error="loginErrPswd">
+              <el-input
+                type="password"
+                v-model="loginInfo.enigma"
+                placeholder="请输入密码"
+                auto-complete="off"
+                prefix-icon="el-icon-lock"
+              ></el-input>
+            </el-form-item>
+          </el-col>
+        </el-row>
+                   
+        <el-row>
+          <el-col :span="5">
+            <div align="right" class="login-title">验证码：</div>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item prop="enigma2" :error="loginErrPswd2">
+            <el-input
+              type="text"
+              v-model="loginInfo.enigma2"
+              placeholder="请输入验证码"
+              auto-complete="off"
+              prefix-icon="el-icon-s-claim"
+            ></el-input>
+            </el-form-item>
+          </el-col>
+          <el-col :span="7">
+            <img src = "../assets/demo1.png" style="width:100%; margin-top: -10px">
+          </el-col>
+        </el-row>
+      </el-form>
+
+      <el-row>
+        <el-col :span="12">
+          <el-button type="primary" @click="login" style="width: 80%">登录</el-button>
+        </el-col>
+        <el-col :span="12">
+          <el-button @click="goRegister" style="width: 80%">注册</el-button>
+        </el-col>
+      </el-row>
+      <el-row>
+        <el-button type="text">忘记密码？</el-button>
+      </el-row>          
+    </el-main>
+  </el-container>
+</template>
+
+<script>
+export default {
+  name: 'login',
+  data() {
+    return {
+      loginInfo: {
+        username: '',
+        enigma: '',
+        enigma2: '',
+        email: '',
+        phone: ''
+      },
+      loginErrUsrnm: '',
+      loginErrPswd: '',
+      loginErrPswd2: '',
+      loginErrEml: '',
+      loginErrPhn: '',
+    }
+  },
+  methods: {
+    login() {
+      this.$router.push('/gamelist')
+
+    },
+    goRegister(){
+      this.$router.push('/register')
+    }
+  }
+}
+</script>
+
+<style scoped>
+.login-container {
+  border-radius: 5px;
+  background-clip: padding-box;
+  margin: 100px auto;
+  padding: 20px;
+  width: 550px;
+  border: 1px solid silver;
+  font-weight: 600;
+  font-size: 25px;
+}
+.login-header {
+  display: flex;
+  text-align: center;
+  border-top: none;
+  border-left: none;
+  border-right: none;
+  border-bottom: 1px solid silver;
+}
+.login-main {
+  font-weight: 400;
+  font-size: 18px;
+}
+.login-title {
+  font-weight: 400;
+  font-size: 18px;
+  vertical-align: middle;
+  line-height: 40px;
+}
+.login-tip {
+  font-weight: 400;
+  font-size: 16px;
+  color: silver;
+  margin-bottom: 0;
+  padding: 0;
+  line-height: 22px;
+}
+</style>

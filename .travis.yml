@@ -4,20 +4,29 @@ dist: bionic
 go:
   - 1.13.x
 
+node_js:
+  - 10.16.x
+
 before_install:
   - cd app
-
-install:
-  - go get -d ./...
 
 jobs:
   include:
     - name: Gofmt check
       stage: build
-      script: "[[ -z `go fmt ./...` ]]"
-    - name: Go build
+      install:
+        - go get -d ./...
+      script:
+        - "[[ -z `go fmt ./...` ]]"
+
+    - name: Go & Node.js build
       stage: build
-      script: "go build ./..."
+      install:
+        - npm install --prefix views
+        - go get -d ./...
+      script:
+        - npm run-script build --prefix views
+        - go build ./...
 
 branches:
   except:
