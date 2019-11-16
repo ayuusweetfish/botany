@@ -10,7 +10,7 @@ import (
 	"net/http"
 )
 
-const HTTPListenPort = 3434
+const HTTPListenPort = 8080
 
 var db *sql.DB
 var store = sessions.NewCookieStore([]byte("vertraulich"))
@@ -28,7 +28,7 @@ func middlewareProcessSession(w http.ResponseWriter, r *http.Request) {
 	id, ok := session.Values["uniq-id"].(int)
 	if !ok || session.IsNew {
 		uniqId++
-		id = uniqId
+		id = uniqId + 1
 		session.Values["uniq-id"] = id
 		// Save session
 		// Note that the cookie store writes to the HTTP header
@@ -39,7 +39,7 @@ func middlewareProcessSession(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	// All headers go before actual content
-	fmt.Fprintf(w, "Your unique ID is %d\n", id)
+	//fmt.Fprintf(w, "Your unique ID is %d\n", id)
 }
 
 // Routed to /
@@ -101,6 +101,7 @@ func main() {
 	defer db.Close()
 	db.Exec(schema)
 	r := mux.NewRouter()
+	r.HandleFunc("/api/user/captcha/", captchaHandler)
 	r.HandleFunc("/", rootHandler)
 	r.HandleFunc("/{name:[a-z]+}", nameHandler)
 	http.Handle("/", r)
