@@ -1,5 +1,6 @@
 *.swp
 tmp/
 a.out
+.idea/
 package-lock.json
 node_modules/

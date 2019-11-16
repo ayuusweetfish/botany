@@ -23,6 +23,7 @@
   要求登录成功后返回200，以及
 
   ```
+  uid:          int(用户唯一认证)
   usertype:		string(用户权限)
   ```
 
@@ -39,7 +40,7 @@
   ```
   username:		string,
   password:		string,
-  email:			string,
+  email:		string,
   captcha:		string
   ```
 
@@ -78,6 +79,7 @@
 以下发送的GET和POST请求都会带以下参数
 
 ```
+uid             int(用户在服务器中唯一标示符）
 id:				string(比赛在服务器中的唯一标识符)
 ```
 

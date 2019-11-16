@@ -13,13 +13,6 @@ import (
 const HTTPListenPort = 3434
 
 var db *sql.DB
-
-var schema = `
-CREATE TABLE visitor (
-	name TEXT,
-	count INTEGER
-)`
-
 var store = sessions.NewCookieStore([]byte("vertraulich"))
 var uniqId = 0
 
@@ -45,7 +38,6 @@ func middlewareProcessSession(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-
 	// All headers go before actual content
 	fmt.Fprintf(w, "Your unique ID is %d\n", id)
 }
@@ -53,7 +45,6 @@ func middlewareProcessSession(w http.ResponseWriter, r *http.Request) {
 // Routed to /
 func rootHandler(w http.ResponseWriter, r *http.Request) {
 	middlewareProcessSession(w, r)
-
 	fmt.Fprintf(w, "This is the home page!")
 }
 
@@ -64,10 +55,10 @@ func nameHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	name := vars["name"]
 	var count int
-	row := db.QueryRow("SELECT count FROM visitor WHERE name = $1", name)
+	row := db.QueryRow("SELECT count FROM b_user WHERE username = $1", name)
 	err := row.Scan(&count)
 	if err == sql.ErrNoRows {
-		_, err = db.Exec("INSERT INTO visitor(name, count) VALUES ($1, 1)", name)
+		_, err = db.Exec("INSERT INTO b_user(username, count) VALUES ($1, 1)", name)
 		if err != nil {
 			http.Error(w, err.Error(), 500)
 			return
@@ -78,7 +69,7 @@ func nameHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	} else {
 		count += 1
-		_, err = db.Exec("UPDATE visitor SET count = $1 WHERE name = $2", count, name)
+		_, err = db.Exec("UPDATE b_user SET count = $1 WHERE username = $2", count, name)
 		if err != nil {
 			http.Error(w, err.Error(), 500)
 			return
@@ -87,24 +78,38 @@ func nameHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Hi %s, your #%d visit!", name, count)
 }
 
-func main() {
-	// $ initdb -D ./data
-	// $ pg_ctl -D ./data start
-	// $ createdb dbqwq -U uwu
+const (
+	dbuser     = "list"
+	dbpassword = ""
+	dbname     = "botanyDatabase"
+)
+
+func dbConnect() *sql.DB {
 	var err error
-	db, err = sql.Open("postgres", "sslmode=disable dbname=dbqwq user=uwu")
+	db, err = sql.Open("postgres", fmt.Sprintf("sslmode=disable dbname=%s user=%s", dbname, dbuser))
 	if err != nil {
 		log.Fatalln(err)
 	}
+	return db
+}
+
+func main() {
+	//$ initdb -D ./data
+	//$ pg_ctl -D ./data start
+	//$ createdb dbqwq -U uwu
+	db = dbConnect()
 	defer db.Close()
-
 	db.Exec(schema)
-
 	r := mux.NewRouter()
 	r.HandleFunc("/", rootHandler)
 	r.HandleFunc("/{name:[a-z]+}", nameHandler)
 	http.Handle("/", r)
-
 	log.Printf("Listening on http://localhost:%d/\n", HTTPListenPort)
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", HTTPListenPort), nil))
+}
+
+func checkErr(err error) {
+	if err != nil {
+		panic(err)
+	}
 }
