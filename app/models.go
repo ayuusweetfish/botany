@@ -5,6 +5,7 @@ CREATE TABLE IF NOT EXISTS b_user (
 	uid SERIAL CONSTRAINT uid_unique UNIQUE,
 	username TEXT UNIQUE,
 	password TEXT,
+	email TEXT,
   	last_login timestamp NOT NULL DEFAULT NOW(),
 	count int,
 	PRIMARY KEY(uid)

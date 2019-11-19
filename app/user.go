@@ -7,20 +7,15 @@ import (
 	"golang.org/x/crypto/bcrypt"
 	"log"
 	"net/http"
+	"strings"
 )
 
-func createUser(name string, password string) bool {
-	var count int
-	var err error
-	row := db.QueryRow("SELECT username = $1 from b_user", name)
-	err = row.Scan(&count)
-	if err == sql.ErrNoRows {
-		hashedPwd, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.MinCost)
-		_, err = db.Exec("INSERT INTO b_user(username, password) VALUES ($1, $2)", name, hashedPwd)
-		if err != nil {
-			log.Println(err)
-			return false
-		}
+func createUser(name string, password string, email string) bool {
+	hashedPwd, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.MinCost)
+	_, err = db.Exec("INSERT INTO b_user(username, password, email) VALUES ($1, $2, $3)", name, hashedPwd, email)
+	if err != nil {
+		log.Println(err)
+		return false
 	}
 	return true
 }
@@ -100,9 +95,38 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 
 func registerHandler(w http.ResponseWriter, r *http.Request) {
 	middlewareProcessSession(w, r)
-	//vars := mux.Vars(r)
+	id, err := r.Cookie("QAQ")
+	if err == http.ErrNoCookie {
+		//w.WriteHeader()
+		//？遗留问题暂待处理
+	}
 	if r.Method == "GET" {
-		//_, captcha := captchaCreate()
-		//w.Write([]byte(captcha))
+		_, captcha := captchaCreate(id.Value)
+		result := []byte(fmt.Sprintf(`{"pic": %s}`, captcha))
+		w.Write(result)
+		return
+	} else if r.Method == "POST" {
+		r.ParseForm()
+		username := strings.Join(r.Form["username"], "")
+		password := strings.Join(r.Form["password"], "")
+		email := strings.Join(r.Form["email"], "")
+		captcha := strings.Join(r.Form["captcha"], "")
+		captchaPass := captchaVerfiy(id.Value, captcha)
+		if captchaPass {
+			var uid int
+			row := db.QueryRow("SELECT count FROM b_user WHERE username = $1", username)
+			err := row.Scan(&uid)
+			if err == sql.ErrNoRows {
+				createUser(username, password, email)
+				w.Write([]byte(fmt.Sprintf(`{"success: 注册成功", uid: %d}`, uid)))
+			} else if err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				w.Write([]byte(`{"error": "Internal Server Error"}`))
+				return
+			} else {
+				w.WriteHeader(http.StatusForbidden)
+				w.Write([]byte(`{"error": "用户名已存在"}`))
+			}
+		}
 	}
 }

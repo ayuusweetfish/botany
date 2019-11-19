@@ -10,7 +10,7 @@ var config = base64Captcha.ConfigDigit{
 	Width:      240,
 	MaxSkew:    0.7,
 	DotCount:   80,
-	CaptchaLen: 5,
+	CaptchaLen: 2,
 }
 
 func captchaCreate(idKey string) (id string, base64 string) {
@@ -32,6 +32,7 @@ func captchaHandler(w http.ResponseWriter, r *http.Request) {
 	middlewareProcessSession(w, r)
 	if r.Method == "GET" {
 		id, err := r.Cookie("QAQ")
+
 		if err == http.ErrNoCookie {
 			//w.WriteHeader()
 			//？遗留问题暂待处理
