@@ -15,7 +15,7 @@ jobs:
     - name: Gofmt check
       stage: build
       install:
-        - go get -d ./...
+        - go get -d -v .
       script:
         - "[[ -z `go fmt ./...` ]]"
 
@@ -23,10 +23,10 @@ jobs:
       stage: build
       install:
         - npm install --prefix views
-        - go get -d ./...
+        - go get -d -v .
       script:
         - npm run-script build --prefix views
-        - go build ./...
+        - go build -v .
 
 branches:
   except:

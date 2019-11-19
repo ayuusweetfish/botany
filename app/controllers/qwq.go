@@ -1,8 +1,8 @@
 package controllers
 
 import (
-	"../globals"
-	"../models"
+	"github.com/kawa-yoiko/botany/app/globals"
+	"github.com/kawa-yoiko/botany/app/models"
 
 	"database/sql"
 	"errors"
