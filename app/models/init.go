@@ -1,19 +1,20 @@
 package models
 
 import (
-	"../globals"
-
+	"database/sql"
 	"strings"
 )
 
+var db *sql.DB
 var schemata []string
 
 func registerSchema(sql string) {
 	schemata = append(schemata, sql)
 }
 
-func InitializeSchemata() {
+func InitializeSchemata(dbInput *sql.DB) {
+	db = dbInput
 	s := strings.Join(schemata, "\n")
-	globals.DB.Exec(schema)
+	db.Exec(schema)
 	println(s)
 }

@@ -26,10 +26,9 @@ func main() {
 	}
 	defer db.Close()
 
-	globals.DB = db
 	globals.SessionStore = sessions.NewCookieStore([]byte("vertraulich"))
 
-	models.InitializeSchemata()
+	models.InitializeSchemata(db)
 	http.Handle("/", controllers.Router)
 
 	log.Printf("Listening on http://localhost:%d/\n", HTTPListenPort)

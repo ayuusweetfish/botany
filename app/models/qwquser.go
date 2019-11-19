@@ -1,9 +1,5 @@
 package models
 
-import (
-	"../globals"
-)
-
 type QwQUser struct {
 	Name string
 	Count int32
@@ -16,18 +12,18 @@ CREATE TABLE visitor (
 )`
 
 func (u *QwQUser) Create() error {
-	_, err := globals.DB.Exec("INSERT INTO visitor(name, count) VALUES ($1, $2)", u.Name, u.Count)
+	_, err := db.Exec("INSERT INTO visitor(name, count) VALUES ($1, $2)", u.Name, u.Count)
 	return err
 }
 
 func (u *QwQUser) Read() error {
-	row := globals.DB.QueryRow("SELECT count FROM visitor WHERE name = $1", u.Name)
+	row := db.QueryRow("SELECT count FROM visitor WHERE name = $1", u.Name)
 	err := row.Scan(&u.Count)
 	return err
 }
 
 func (u *QwQUser) Update() error {
-	_, err := globals.DB.Exec("UPDATE visitor SET count = $1 WHERE name = $2", u.Count, u.Name)
+	_, err := db.Exec("UPDATE visitor SET count = $1 WHERE name = $2", u.Count, u.Name)
 	return err
 }
 
