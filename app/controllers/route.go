@@ -1,11 +1,16 @@
 package controllers
 
-import "github.com/gorilla/mux"
+import (
+	"net/http"
 
-func Handler() *mux.Router {
-	r := mux.NewRouter()
-	r.HandleFunc("/", rootHandler)
-	r.HandleFunc("/{name:[a-z]+}", nameHandler)
-	return r
+	"github.com/gorilla/mux"
+)
+
+var Router *mux.Router
+
+func registerRouterFunc(path string, fn func(http.ResponseWriter, *http.Request)) {
+	if Router == nil {
+		Router = mux.NewRouter()
+	}
+	Router.HandleFunc(path, fn)
 }
-

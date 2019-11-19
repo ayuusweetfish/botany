@@ -6,10 +6,11 @@ import (
 
 	"database/sql"
 	"fmt"
-	"github.com/gorilla/sessions"
-	_ "github.com/lib/pq"
 	"log"
 	"net/http"
+
+	"github.com/gorilla/sessions"
+	_ "github.com/lib/pq"
 )
 
 const HTTPListenPort = 3434
@@ -37,7 +38,7 @@ func main() {
 	globals.DB = db
 	globals.SessionStore = sessions.NewCookieStore([]byte("vertraulich"))
 
-	http.Handle("/", controllers.Handler())
+	http.Handle("/", controllers.Router)
 
 	log.Printf("Listening on http://localhost:%d/\n", HTTPListenPort)
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", HTTPListenPort), nil))

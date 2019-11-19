@@ -5,8 +5,9 @@ import (
 
 	"database/sql"
 	"fmt"
-	"github.com/gorilla/mux"
 	"net/http"
+
+	"github.com/gorilla/mux"
 )
 
 var uniqId = 0
@@ -65,4 +66,8 @@ func nameHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	fmt.Fprintf(w, "Hi %s, your #%d visit!", name, count)
+}
+
+func init() {
+	registerRouterFunc("/{name:[a-z]+}", nameHandler)
 }
