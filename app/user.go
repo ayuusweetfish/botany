@@ -3,7 +3,6 @@ package main
 import (
 	"database/sql"
 	"fmt"
-	"github.com/gorilla/mux"
 	"golang.org/x/crypto/bcrypt"
 	"log"
 	"net/http"
@@ -64,10 +63,9 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 		w.Write(result)
 		return
 	} else if r.Method == "POST" {
-		vars := mux.Vars(r)
-		username := vars["username"]
-		password := vars["password"]
-		captcha := vars["captcha"]
+		username := strings.Join(r.Form["username"], "")
+		password := strings.Join(r.Form["password"], "")
+		captcha := strings.Join(r.Form["captcha"], "")
 		captchaPass := captchaVerfiy(id.Value, captcha)
 		if captchaPass {
 			var userPassword string
