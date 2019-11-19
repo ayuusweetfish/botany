@@ -3,6 +3,7 @@ package main
 import (
 	"./controllers"
 	"./globals"
+	"./models"
 
 	"database/sql"
 	"fmt"
@@ -15,14 +16,6 @@ import (
 
 const HTTPListenPort = 3434
 
-var db *sql.DB
-
-var schema = `
-CREATE TABLE visitor (
-	name TEXT,
-	count INTEGER
-)`
-
 func main() {
 	// $ initdb -D ./data
 	// $ pg_ctl -D ./data start
@@ -33,11 +26,10 @@ func main() {
 	}
 	defer db.Close()
 
-	db.Exec(schema)
-
 	globals.DB = db
 	globals.SessionStore = sessions.NewCookieStore([]byte("vertraulich"))
 
+	models.InitializeSchemata()
 	http.Handle("/", controllers.Router)
 
 	log.Printf("Listening on http://localhost:%d/\n", HTTPListenPort)

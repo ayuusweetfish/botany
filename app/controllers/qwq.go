@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"../globals"
+	"../models"
 
 	"database/sql"
 	"fmt"
@@ -44,28 +45,29 @@ func nameHandler(w http.ResponseWriter, r *http.Request) {
 
 	vars := mux.Vars(r)
 	name := vars["name"]
-	var count int
-	row := globals.DB.QueryRow("SELECT count FROM b_user WHERE username = $1", name)
-	err := row.Scan(&count)
+
+	u := models.QwQUser{Name: name}
+	err := u.Read()
+
 	if err == sql.ErrNoRows {
-		_, err = globals.DB.Exec("INSERT INTO b_user(username, count) VALUES ($1, 1)", name)
+		u.Count = 1
+		err = u.Create()
 		if err != nil {
 			http.Error(w, err.Error(), 500)
 			return
 		}
-		count = 1
 	} else if err != nil {
 		http.Error(w, err.Error(), 500)
 		return
 	} else {
-		count += 1
-		_, err = globals.DB.Exec("UPDATE b_user SET count = $1 WHERE username = $2", count, name)
+		u.Count += 1
+		err = u.Update()
 		if err != nil {
 			http.Error(w, err.Error(), 500)
 			return
 		}
 	}
-	fmt.Fprintf(w, "Hi %s, your #%d visit!", name, count)
+	fmt.Fprintf(w, "Hi %s, your #%d visit!", u.Name, u.Count)
 }
 
 func init() {
