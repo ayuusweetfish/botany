@@ -1,7 +1,7 @@
 package models
 
 type QwQUser struct {
-	Name string
+	Name  string
 	Count int32
 }
 

@@ -29,7 +29,7 @@ func main() {
 	globals.SessionStore = sessions.NewCookieStore([]byte("vertraulich"))
 
 	models.InitializeSchemata(db)
-	http.Handle("/", controllers.Router)
+	http.HandleFunc("/", controllers.GetGlobalRouterFunc())
 
 	log.Printf("Listening on http://localhost:%d/\n", HTTPListenPort)
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", HTTPListenPort), nil))

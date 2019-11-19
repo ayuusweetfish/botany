@@ -5,6 +5,7 @@ import (
 	"../models"
 
 	"database/sql"
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -18,8 +19,7 @@ var uniqId = 0
 func middlewareProcessSession(w http.ResponseWriter, r *http.Request) {
 	session, err := globals.SessionStore.Get(r, "QAQ")
 	if err != nil {
-		http.Error(w, err.Error(), 500)
-		return
+		panic(err)
 	}
 
 	id, ok := session.Values["uniq-id"].(int)
@@ -31,8 +31,7 @@ func middlewareProcessSession(w http.ResponseWriter, r *http.Request) {
 		// Note that the cookie store writes to the HTTP header
 		err = session.Save(r, w)
 		if err != nil {
-			http.Error(w, err.Error(), 500)
-			return
+			panic(err)
 		}
 	}
 	// All headers go before actual content
@@ -45,6 +44,9 @@ func nameHandler(w http.ResponseWriter, r *http.Request) {
 
 	vars := mux.Vars(r)
 	name := vars["name"]
+	if name == "panic" {
+		panic(errors.New("OvO"))
+	}
 
 	u := models.QwQUser{Name: name}
 	err := u.Read()
@@ -53,18 +55,15 @@ func nameHandler(w http.ResponseWriter, r *http.Request) {
 		u.Count = 1
 		err = u.Create()
 		if err != nil {
-			http.Error(w, err.Error(), 500)
-			return
+			panic(err)
 		}
 	} else if err != nil {
-		http.Error(w, err.Error(), 500)
-		return
+		panic(err)
 	} else {
 		u.Count += 1
 		err = u.Update()
 		if err != nil {
-			http.Error(w, err.Error(), 500)
-			return
+			panic(err)
 		}
 	}
 	fmt.Fprintf(w, "Hi %s, your #%d visit!", u.Name, u.Count)
