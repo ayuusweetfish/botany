@@ -57,19 +57,15 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 		//w.WriteHeader()
 		//？遗留问题暂待处理
 	}
-	if r.Method == "GET" {
-		_, captcha := captchaCreate(id.Value)
-		result := []byte(fmt.Sprintf(`{"pic": %s}`, captcha))
-		w.Write(result)
-		return
-	} else if r.Method == "POST" {
+	if r.Method == "POST" {
+		r.ParseForm()
 		username := strings.Join(r.Form["username"], "")
 		password := strings.Join(r.Form["password"], "")
 		captcha := strings.Join(r.Form["captcha"], "")
 		captchaPass := captchaVerfiy(id.Value, captcha)
 		if captchaPass {
 			var userPassword string
-			row := db.QueryRow("SELECT count FROM b_user WHERE username = $1", username)
+			row := db.QueryRow("SELECT password FROM b_user WHERE username = $1", username)
 			err := row.Scan(&userPassword)
 			if err == sql.ErrNoRows {
 				w.WriteHeader(http.StatusForbidden)
@@ -98,12 +94,7 @@ func registerHandler(w http.ResponseWriter, r *http.Request) {
 		//w.WriteHeader()
 		//？遗留问题暂待处理
 	}
-	if r.Method == "GET" {
-		_, captcha := captchaCreate(id.Value)
-		result := []byte(fmt.Sprintf(`{"pic": %s}`, captcha))
-		w.Write(result)
-		return
-	} else if r.Method == "POST" {
+	if r.Method == "POST" {
 		r.ParseForm()
 		username := strings.Join(r.Form["username"], "")
 		password := strings.Join(r.Form["password"], "")
@@ -112,7 +103,7 @@ func registerHandler(w http.ResponseWriter, r *http.Request) {
 		captchaPass := captchaVerfiy(id.Value, captcha)
 		if captchaPass {
 			var uid int
-			row := db.QueryRow("SELECT count FROM b_user WHERE username = $1", username)
+			row := db.QueryRow("SELECT uid FROM b_user WHERE username = $1", username)
 			err := row.Scan(&uid)
 			if err == sql.ErrNoRows {
 				createUser(username, password, email)

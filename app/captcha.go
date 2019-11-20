@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"github.com/mojocn/base64Captcha"
 	"net/http"
 )
@@ -10,7 +11,7 @@ var config = base64Captcha.ConfigDigit{
 	Width:      240,
 	MaxSkew:    0.7,
 	DotCount:   80,
-	CaptchaLen: 2,
+	CaptchaLen: 4,
 }
 
 func captchaCreate(idKey string) (id string, base64 string) {
@@ -38,7 +39,8 @@ func captchaHandler(w http.ResponseWriter, r *http.Request) {
 			//？遗留问题暂待处理
 		}
 		_, captcha := captchaCreate(id.Value)
-		//log.Printf(id.Value)
-		w.Write([]byte(captcha))
+		result := []byte(fmt.Sprintf(`{"pic": "%s"}`, captcha))
+		w.Write(result)
+		return
 	}
 }

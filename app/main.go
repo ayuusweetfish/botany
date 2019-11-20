@@ -10,7 +10,7 @@ import (
 	"net/http"
 )
 
-const HTTPListenPort = 8080
+const HTTPListenPort = 3000
 
 var db *sql.DB
 var store = sessions.NewCookieStore([]byte("vertraulich"))
@@ -101,8 +101,10 @@ func main() {
 	defer db.Close()
 	db.Exec(schema)
 	r := mux.NewRouter()
+	r.HandleFunc("/api/captcha/login", captchaHandler)
+	r.HandleFunc("/api/captcha/register", captchaHandler)
+	r.HandleFunc("/api/register", registerHandler)
 	r.HandleFunc("/api/login", loginHandler)
-	r.HandleFunc("/api/register/", registerHandler)
 	r.HandleFunc("/", rootHandler)
 	r.HandleFunc("/{name:[a-z]+}", nameHandler)
 	http.Handle("/", r)
