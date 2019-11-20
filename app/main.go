@@ -79,14 +79,15 @@ func nameHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 const (
-	dbuser     = "list"
-	dbpassword = ""
-	dbname     = "botanyDatabase"
+	dbuser     = "sakura"
+	dbpassword = "123456"
+	dbname     = "botanydatabase"
 )
 
 func dbConnect() *sql.DB {
 	var err error
-	db, err = sql.Open("postgres", fmt.Sprintf("sslmode=disable dbname=%s user=%s", dbname, dbuser))
+	db, err = sql.Open("postgres", fmt.Sprintf("sslmode=disable dbname=%s "+
+		"user=%s password=%s", dbname, dbuser, dbpassword))
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -99,7 +100,10 @@ func main() {
 	//$ createdb dbqwq -U uwu
 	db = dbConnect()
 	defer db.Close()
-	db.Exec(schema)
+	_, err := db.Exec(schema)
+	if err != nil {
+		log.Fatalln(err)
+	}
 	r := mux.NewRouter()
 	r.HandleFunc("/api/login", loginHandler)
 	r.HandleFunc("/api/register/", registerHandler)
