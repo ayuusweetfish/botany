@@ -15,24 +15,38 @@
 <script>
 export default {
   name:'gamelist',
+  created(){
+    this.getGameList()
+  },
   data() {
     return {
-      title: '当前共有2场比赛正在进行',
-      games: [
-        {
-          name: 'GStrategy',
-          time: '2019-09-01 to 2020-01-01',
-          info: 'a SSAST game.'
-        },
-        {
-          name: 'GStrategy2',
-          time: '2019-09-02 to 2020-01-02',
-          info: 'a SSAST game.'
-        },
-      ]
+      title: '当前共有0场比赛正在进行',
+      total: 0,
+      games: []
     }
   },
   methods: {
+    getGameList(){
+      const loading = this.$loading({lock: true, text: '正在查询比赛列表'})
+      this.$axios.get(
+        '/gamelist'
+      ).then(res=>{
+        this.total = res.data.total
+        res.data.games.forEach(element => {
+          this.games.push({
+            id: element.id,
+            name: element.name,
+            time: element.time_start + ' 到 ' + element.time_end,
+            info: element.info
+          })
+        })
+        this.title = '当前共有' + this.total + '场比赛正在进行'
+        loading.close()
+      }).catch(err=>{
+        this.$message.error('查询比赛列表失败')
+        loading.close()
+      })
+    },
     goGamemain(x, y, z){
       console.log('clicked')
       this.$router.push('gamemain')

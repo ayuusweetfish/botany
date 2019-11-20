@@ -10,7 +10,7 @@
 
 ### 登录/注册
 
-* 进入登录页面时，发送GET /login，要求在pic字段下返回验证码图片的base64编码
+* 进入登录页面时，发送GET /captcha/login，要求在pic字段下返回验证码图片的base64编码
 
 * 点击“登录”按钮，发送POST /login
 
@@ -27,13 +27,13 @@
   usertype:		string(用户权限)
   ```
 
-  登录失败时返回403（用户名不存在或者密码错误），以及
+  登录失败时返回403，以及 
 
   ```
-  error:			string(错误信息)
+  error:			string(错误信息: 用户名不存在或密码错误-'wrong username or password'/验证码错误-'wrong captcha')
   ```
 
-* 进入注册页面时，发送GET /register，要求在pic字段下返回验证码图片的base64编码
+* 进入注册页面时，发送GET /captcha/register，要求在pic字段下返回验证码图片的base64编码
 
 * 点击“注册”按钮，发送POST /register
 
@@ -49,7 +49,7 @@
   注册失败后返回403，以及
 
   ```
-  error:		string(错误信息)
+  error:		string(错误信息: 用户名已被注册-'username already exists'/邮箱已被注册-'email already exists'/验证码错误-'wrong captcha')
   ```
 
 
