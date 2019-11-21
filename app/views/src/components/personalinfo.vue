@@ -69,13 +69,13 @@
               </template>
             </el-table-column>
           </el-table>
-          <el-pagination 
-            :total="total" 
-            :current-page="1" 
-            :page-size="20" 
-            @current-change="handleCurrentChange" 
+          <el-pagination
+            :total="total"
+            :current-page="1"
+            :page-size="20"
+            @current-change="handleCurrentChange"
             :pager-count="11"
-            layout="prev, pager, next, jumper, ->, total" 
+            layout="prev, pager, next, jumper, ->, total"
           >
           </el-pagination>
         </el-card>
@@ -87,16 +87,16 @@
 <script>
 export default {
   name: 'personalinfo',
-  data() {
+  data () {
     return {
-      major:[
+      major: [
         {
           name: 'GStrategy',
           win: '20',
           loss: '20',
           rate: '50%',
           mmr: '1000',
-          rank: '23',
+          rank: '23'
         },
         {
           name: 'GStrategy2',
@@ -104,10 +104,10 @@ export default {
           loss: '20',
           rate: '50%',
           mmr: '1000',
-          rank: '23',
-        },
+          rank: '23'
+        }
       ],
-      minor:[
+      minor: [
         {
           id: '987',
           game: 'GStrategy',
@@ -137,14 +137,14 @@ export default {
           game: 'GStrategy',
           oppo: 'USER1',
           res: 'WON'
-        },
+        }
       ],
       total: 123,
       size: 120
     }
   },
   methods: {
-    handleCurrentChange(val){
+    handleCurrentChange (val) {
 
     }
   }

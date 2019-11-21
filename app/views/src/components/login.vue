@@ -10,7 +10,7 @@
         label-suffix="left"
         label-width="0px"
         :rules="rules"
-      >  
+      >
         <el-row>
           <el-col :span="5">
             <div align="right" class="login-title">用户名：</div>
@@ -26,8 +26,8 @@
               ></el-input>
             </el-form-item>
           </el-col>
-        </el-row>          
-               
+        </el-row>
+
         <el-row>
           <el-col :span="5">
             <div align="right" class="login-title">密码：</div>
@@ -44,7 +44,7 @@
             </el-form-item>
           </el-col>
         </el-row>
-                   
+
         <el-row>
           <el-col :span="5">
             <div align="right" class="login-title">验证码：</div>
@@ -76,7 +76,7 @@
       </el-row>
       <el-row>
         <el-button type="text">忘记密码？</el-button>
-      </el-row>          
+      </el-row>
     </el-main>
   </el-container>
 </template>
@@ -84,15 +84,15 @@
 <script>
 export default {
   name: 'login',
-  created() {
+  created () {
     this.getCaptcha()
   },
-  data() {
+  data () {
     return {
       loginInfo: {
         username: '',
         password: '',
-        captcha:  '',
+        captcha: ''
       },
       captcha64: '',
       loginErrUsrnm: '',
@@ -101,32 +101,33 @@ export default {
       rules: {
         username: [
           {required: true, message: '请输入账号', trigger: 'blur'},
-          {max: 30, message: '输入过长', trigger:'blur'}
+          {max: 30, message: '输入过长', trigger: 'blur'}
         ],
         password: [
           {required: true, message: '请输入密码', trigger: 'blur'},
-          {max: 30, message: '输入过长', trigger:'blur'}
+          {max: 30, message: '输入过长', trigger: 'blur'}
         ],
         captcha: [
           {required: true, message: '请输入验证码', trigger: 'blur'},
-          {min: 4, max: 4, message: '请输入4个字符', trigger:'blur'}
-        ],
+          {min: 4, max: 4, message: '请输入4个字符', trigger: 'blur'}
+        ]
       }
     }
   },
   methods: {
-    getCaptcha() {
+    getCaptcha () {
       this.$axios.get(
         '/captcha/login'
-      ).then(res=>{
+      ).then(res => {
         this.captcha64 = res.data.pic
-      }).catch(err=>{
+      // eslint-disable-next-line handle-callback-err
+      }).catch(err => {
         this.$message.error('无法获取验证码，请检查网络')
       })
     },
-    login() {
-      this.$refs['loginform'].validate(valid=>{
-        if(valid){
+    login () {
+      this.$refs['loginform'].validate(valid => {
+        if (valid) {
           this.loginErrUsrnm = ''
           this.loginErrPswd = ''
           this.loginErrCpch = ''
@@ -138,7 +139,7 @@ export default {
           this.$axios.post(
             '/login',
             params
-          ).then(res=>{
+          ).then(res => {
             let logindata = {
               username: this.loginInfo.username,
               userid: res.data.uid,
@@ -147,15 +148,14 @@ export default {
             this.$store.commit('login', logindata)
             loading.close()
             this.$router.push('/gamelist')
-          }).catch(err=>{
+          }).catch(err => {
             loading.close()
             this.$message.error('登录失败')
-            if(err.response.data.error === 'wrong captcha'){
+            if (err.response.data.error === 'wrong captcha') {
               this.loginErrCpch = '验证码错误'
               this.loginInfo.captcha = ''
               this.getCaptcha()
-            }
-            else if (err.response.data.error === 'wrong username or password'){
+            } else if (err.response.data.error === 'wrong username or password') {
               this.loginErrUsrnm = '用户名或密码错误'
               this.loginErrPswd = '用户名或密码错误'
               this.loginInfo.password = ''
@@ -164,9 +164,8 @@ export default {
           })
         }
       })
-      
     },
-    goRegister(){
+    goRegister () {
       this.$router.push('/register')
     }
   }

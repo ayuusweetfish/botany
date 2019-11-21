@@ -6,10 +6,10 @@ Vue.use(Vuex)
 
 export default new Vuex.Store({
   state: {
-    routeList:  [],
-    userid:     '',
-    usertype:   '',
-    username:   '',
+    routeList: [],
+    userid: '',
+    usertype: '',
+    username: ''
   },
   mutations: {
     setRouteList (state, val) {

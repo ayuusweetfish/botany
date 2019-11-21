@@ -14,11 +14,11 @@
 
 <script>
 export default {
-  name:'gamelist',
-  created(){
+  name: 'gamelist',
+  created () {
     this.getGameList()
   },
-  data() {
+  data () {
     return {
       title: '当前共有0场比赛正在进行',
       total: 0,
@@ -26,11 +26,11 @@ export default {
     }
   },
   methods: {
-    getGameList(){
+    getGameList () {
       const loading = this.$loading({lock: true, text: '正在查询比赛列表'})
       this.$axios.get(
         '/gamelist'
-      ).then(res=>{
+      ).then(res => {
         this.total = res.data.total
         res.data.games.forEach(element => {
           this.games.push({
@@ -42,12 +42,13 @@ export default {
         })
         this.title = '当前共有' + this.total + '场比赛正在进行'
         loading.close()
-      }).catch(err=>{
+      // eslint-disable-next-line handle-callback-err
+      }).catch(err => {
         this.$message.error('查询比赛列表失败')
         loading.close()
       })
     },
-    goGamemain(x, y, z){
+    goGamemain (x, y, z) {
       console.log('clicked')
       this.$router.push('gamemain')
     }

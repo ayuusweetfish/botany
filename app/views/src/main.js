@@ -8,13 +8,11 @@ import 'element-ui/lib/theme-chalk/index.css'
 import axios from 'axios'
 import store from './store'
 
-
 Vue.config.productionTip = false
 Vue.use(ElementUI)
 
 Vue.prototype.$axios = axios
 axios.defaults.baseURL = '/api'
-
 
 /* eslint-disable no-new */
 new Vue({
