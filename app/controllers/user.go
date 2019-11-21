@@ -31,9 +31,7 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(http.StatusForbidden)
 				w.Write([]byte(`{"error": "该用户不存在"}`))
 			} else if err != nil {
-				w.WriteHeader(http.StatusInternalServerError)
-				w.Write([]byte(`{"error": "Internal Server Error"}`))
-				return
+				panic(err)
 			} else {
 				passwordPass := u.VerifyPassword()
 				if passwordPass {
@@ -70,9 +68,7 @@ func registerHandler(w http.ResponseWriter, r *http.Request) {
 				u.Create()
 				w.Write([]byte(fmt.Sprintf(`{"success: 注册成功", uid: %d}`, uid)))
 			} else if err != nil {
-				w.WriteHeader(http.StatusInternalServerError)
-				w.Write([]byte(`{"error": "Internal Server Error"}`))
-				return
+				panic(err)
 			} else {
 				w.WriteHeader(http.StatusForbidden)
 				w.Write([]byte(`{"error": "用户名已存在"}`))
@@ -85,7 +81,6 @@ func captchaHandler(w http.ResponseWriter, r *http.Request) {
 	middlewareProcessSession(w, r)
 	if r.Method == "GET" {
 		id, err := r.Cookie("QAQ")
-
 		if err == http.ErrNoCookie {
 			//w.WriteHeader()
 			//？遗留问题暂待处理
@@ -95,4 +90,11 @@ func captchaHandler(w http.ResponseWriter, r *http.Request) {
 		w.Write(result)
 		return
 	}
+}
+
+func init() {
+	registerRouterFunc("/api/captcha/register", captchaHandler)
+	registerRouterFunc("/api/register", registerHandler)
+	registerRouterFunc("/api/captcha/login", captchaHandler)
+	registerRouterFunc("/api/login", loginHandler)
 }
