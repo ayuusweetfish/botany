@@ -13,7 +13,7 @@
         <el-card>
           <el-timeline align="left">
             <el-timeline-item
-              v-for="(activity, index) in events" 
+              v-for="(activity, index) in events"
               :key="index"
               :timestamp="activity.time"
               :color="activity.color"
@@ -46,11 +46,10 @@
 
 <script>
 
-
 export default {
   name: 'gamemain',
-  data() {
-    return{
+  data () {
+    return {
       events: [
         {
           time: '2019-01-01',
@@ -71,7 +70,7 @@ export default {
           time: '2019-09-01',
           event: '比赛资源上传',
           color: 'green'
-        },
+        }
       ]
     }
   }

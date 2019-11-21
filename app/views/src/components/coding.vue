@@ -26,7 +26,7 @@
           <div align="left" style="font-size: 18px; font-weight: 600; margin-bottom: 20px">历史代码</div>
           <el-timeline align="left">
             <el-timeline-item
-              v-for="(activity, index) in history" 
+              v-for="(activity, index) in history"
               :key="index"
               :timestamp="activity.time"
               :color="activity.color"
@@ -59,14 +59,14 @@
 </template>
 
 <script>
-import {codemirror} from 'vue-codemirror-lite';
+import {codemirror} from 'vue-codemirror-lite'
 
 export default {
   name: 'coding',
   components: {
-    codemirror,
+    codemirror
   },
-  data() {
+  data () {
     return {
       code: '',
       history: [
@@ -84,13 +84,13 @@ export default {
           time: '2019-09-10 19:00:00',
           status: '可用',
           color: 'green'
-        },
+        }
       ],
       cmOptions: {
         lineNumbers: true,
         indentUnit: 2,
-        autoCloseBrackets: true,
-      },
+        autoCloseBrackets: true
+      }
     }
   }
 }
@@ -98,7 +98,7 @@ export default {
 
 <style scoped>
   .code{
-    border: 1px solid #dcdfe6; 
+    border: 1px solid #dcdfe6;
     margin: auto;
   }
 </style>
