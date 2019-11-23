@@ -8,10 +8,20 @@ Botany is a customizable contest platform for duels among programs.
 
 Tested Go version: 1.13.1
 
+Clone repository into `$GOPATH/src/github.com/kawa-yoiko/botany`, or create a symlink, whichever works.
+
 ```sh
 cd app
 go get -d .
 go run .
+```
+如果go get -d失败，可以继续执行
+
+```shell script
+mkdir -p $GOPATH/src/golang.org/x
+cd $GOPATH/src/golang.org/x/
+git clone https://github.com/golang/crypto
+git clone https://github.com/golang/image.git
 ```
 
 ## 规范与约定

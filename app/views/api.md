@@ -5,12 +5,12 @@
 
 
 在任何时候，返回\_\_\_代表登录失效，返回\_\_\_代表权限错误
-
+返回500表示服务器内部错误
 
 
 ### 登录/注册
 
-* 进入登录页面时，发送GET /login，要求在pic字段下返回验证码图片的base64编码
+* 进入登录页面时，发送GET /captcha/login，要求在pic字段下返回验证码图片的base64编码
 
 * 点击“登录”按钮，发送POST /login
 
@@ -23,32 +23,33 @@
   要求登录成功后返回200，以及
 
   ```
+  uid:          int(用户唯一认证)
   usertype:		string(用户权限)
   ```
 
-  登录失败时返回\_\_\_，以及
+  登录失败时返回403，以及 
 
   ```
-  error:			string(错误信息)
+  error:			string(错误信息: 用户名不存在或密码错误-'wrong username or password'/验证码错误-'wrong captcha')
   ```
 
-* 进入注册页面时，发送GET /register，要求在pic字段下返回验证码图片的base64编码
+* 进入注册页面时，发送GET /captcha/register，要求在pic字段下返回验证码图片的base64编码
 
 * 点击“注册”按钮，发送POST /register
 
   ```
   username:		string,
   password:		string,
-  email:			string,
+  email:		string,
   captcha:		string
   ```
 
   要求注册成功后返回200
 
-  注册失败后返回\_\_\_，以及
+  注册失败后返回403，以及
 
   ```
-  error:		string(错误信息)
+  error:		string(错误信息: 用户名已被注册-'username already exists'/邮箱已被注册-'email already exists'/验证码错误-'wrong captcha')
   ```
 
 
@@ -78,6 +79,7 @@
 以下发送的GET和POST请求都会带以下参数
 
 ```
+uid             int(用户在服务器中唯一标示符）
 id:				string(比赛在服务器中的唯一标识符)
 ```
 
