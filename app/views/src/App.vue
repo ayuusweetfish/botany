@@ -33,7 +33,7 @@
         <el-dropdown :hide-on-click="false" @command="handleCommand" v-model="username">
           <span class="el-dropdown-link" style="cursor: pointer;">
             <el-avatar size = "small"></el-avatar>
-            USERNAME
+            <p style="margin: 0">{{$store.state.username}}</p>
           </span>
           <el-dropdown-menu  slot="dropdown">
             <el-dropdown-item command="logout">退出</el-dropdown-item>

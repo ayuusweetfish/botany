@@ -5,10 +5,12 @@ import (
 	"net/http"
 )
 
-func gamelistHandler (w http.ResponseWriter, r *http.Request) {
-	
+// Routed to /gamelist
+func gamelistHandler(w http.ResponseWriter, r *http.Request) {
+	middlewareProcessSession(w, r)
+	fmt.Fprintf(w, `{"total": `))
 }
 
 func init () {
-	registerFunc("/gamelist", gamelistHandler);
+	registerFunc("/gamelist", gamelistHandler)
 }
