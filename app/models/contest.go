@@ -12,7 +12,9 @@ type Contest struct {
 	IsRegOpen bool
 
 	Rel struct {
-		Owner User
+		Owner          User
+		Participations []ContestParticipation
+		MatchScripts   []ContestMatchScript
 	}
 }
 
@@ -32,6 +34,11 @@ type ContestParticipation struct {
 	}
 }
 
+type ContestMatchScript struct {
+	Contest  int32
+	Contents string
+}
+
 func init() {
 	registerSchema("contest",
 		"id SERIAL PRIMARY KEY",
@@ -46,6 +53,10 @@ func init() {
 		"uid INTEGER NOT NULL REFERENCES users(id)",
 		"contest INTEGER NOT NULL REFERENCES contest(id)",
 		"type SMALLINT NOT NULL",
+	)
+	registerSchema("contest_match_script",
+		"contest INTEGER NOT NULL REFERENCES contest(id)",
+		"contents TEXT NOT NULL",
 	)
 }
 
