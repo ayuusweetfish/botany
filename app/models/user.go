@@ -44,7 +44,7 @@ func init() {
 }
 
 func (u *User) hashPassword() {
-	hashed, err := bcrypt.GenerateFromPassword([]byte(u.Password), bcrypt.DefaultCost + 1)
+	hashed, err := bcrypt.GenerateFromPassword([]byte(u.Password), bcrypt.DefaultCost+1)
 	if err != nil {
 		panic(err)
 	}

@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"net/http"
 
-	_"github.com/gorilla/mux"
+	_ "github.com/gorilla/mux"
 )
 
 // Returns a user ID
