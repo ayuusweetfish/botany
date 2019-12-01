@@ -1,5 +1,7 @@
 package models
 
+import "strconv"
+
 type Contest struct {
 	Id    int32
 	Title string
@@ -34,8 +36,15 @@ type ContestParticipation struct {
 	}
 }
 
+const (
+	MatchScriptHookManual = iota
+	MatchScriptHookSubmission
+	MatchScriptHookTimed
+)
+
 type ContestMatchScript struct {
 	Contest  int32
+	Hook     int8
 	Contents string
 }
 
@@ -56,6 +65,7 @@ func init() {
 	)
 	registerSchema("contest_match_script",
 		"contest INTEGER NOT NULL REFERENCES contest(id)",
+		"hook SMALLINT NOT NULL DEFAULT "+strconv.Itoa(MatchScriptHookManual),
 		"contents TEXT NOT NULL",
 	)
 }
