@@ -99,7 +99,7 @@ func checkAuthHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func init() {
-	registerRouterFunc("/signup", signupHandler)
-	registerRouterFunc("/login", loginHandler)
-	registerRouterFunc("/check_auth", checkAuthHandler)
+	registerRouterFunc("/signup", signupHandler, "POST")
+	registerRouterFunc("/login", loginHandler, "POST")
+	registerRouterFunc("/check_auth", checkAuthHandler, "GET")
 }
