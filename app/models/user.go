@@ -1,7 +1,12 @@
 package models
 
-import "strconv"
-import "time"
+import (
+	"strconv"
+	"time"
+
+	"database/sql"
+	"golang.org/x/crypto/bcrypt"
+)
 
 const (
 	UserPrivilegeNormal = iota
@@ -38,7 +43,17 @@ func init() {
 	)
 }
 
+func (u *User) hashPassword() {
+	hashed, err := bcrypt.GenerateFromPassword([]byte(u.Password), bcrypt.DefaultCost + 1)
+	if err != nil {
+		panic(err)
+	}
+	u.Password = string(hashed)
+}
+
 func (u *User) Create() error {
+	u.hashPassword()
+
 	u.JoinedAt = time.Now().Unix()
 	// lib/pq driver does not support LastInsertId()
 	// https://github.com/lib/pq/issues/24
@@ -54,19 +69,29 @@ func (u *User) Create() error {
 	return err
 }
 
-// TODO: Implement `byId` support
-func (u *User) Read(byId bool) error {
-	row := db.QueryRow("SELECT "+
-		"(id, handle, email, password, privilege, joined_at, nickname) "+
-		"FROM users WHERE id = $1",
-		u.Id,
-	)
+func (u *User) Read(byHandle bool) error {
+	var row *sql.Row
+	if byHandle {
+		row = db.QueryRow("SELECT "+
+			"id, handle, email, password, privilege, joined_at, nickname "+
+			"FROM users WHERE handle = $1",
+			u.Handle,
+		)
+	} else {
+		row = db.QueryRow("SELECT "+
+			"id, handle, email, password, privilege, joined_at, nickname "+
+			"FROM users WHERE id = $1",
+			u.Id,
+		)
+	}
 	err := row.Scan(&u.Id, &u.Handle, &u.Email,
 		&u.Password, &u.Privilege, &u.JoinedAt, &u.Nickname)
 	return err
 }
 
 func (u *User) Update() error {
+	u.hashPassword()
+
 	_, err := db.Exec("UPDATE users SET "+
 		"handle = $1, email = $2, password = $3, privilege = $4, nickname = $5 "+
 		"WHERE id = $1",
@@ -80,5 +105,6 @@ func (u *User) Update() error {
 }
 
 func (u *User) VerifyPassword(pw string) bool {
-	return true
+	err := bcrypt.CompareHashAndPassword([]byte(u.Password), []byte(pw))
+	return err == nil
 }
