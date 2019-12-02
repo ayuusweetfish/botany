@@ -109,11 +109,20 @@
 - **start_time** (number) 开始时刻的 Unix 时间戳，单位为秒
 - **end_time** (number) 结束时刻的 Unix 时间戳，单位为秒
 - **desc** (string) 简要描述
-- **details** (string) 完整的长篇说明
+- **details** (string) 长篇详细说明
 - **is_reg_open** (boolean) 是否公开接受报名
 - **owner** (UserShort) 创建者
+
+### 比赛数据结构 ContestShort
+
+仅包含 Contest 的 **id**, **title**, **banner**, **start_time**, **end_time**, **desc**, **is_reg_open**
+
+### 比赛列表 GET /contest/list
+
+响应
+- 若干 ContestShort 组成的数组
 
 ### 比赛信息 GET /contest/{id}/info
 
 响应
-- 一个 Contest 对象
+- 一个 Contest

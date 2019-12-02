@@ -91,6 +91,18 @@ func (c *Contest) Representation() map[string]interface{} {
 	}
 }
 
+func (c *Contest) ShortRepresentation() map[string]interface{} {
+	return map[string]interface{}{
+		"id":          c.Id,
+		"title":       c.Title,
+		"banner":      c.Banner,
+		"start_time":  c.StartTime,
+		"end_time":    c.EndTime,
+		"desc":        c.Desc,
+		"is_reg_open": c.IsRegOpen,
+	}
+}
+
 func (c *Contest) Create() error {
 	err := db.QueryRow("INSERT INTO "+
 		"contest(title, banner, owner, start_time, end_time, descr, details, is_visible, is_reg_open) "+
@@ -125,6 +137,37 @@ func (c *Contest) Read() error {
 		&c.IsRegOpen,
 	)
 	return err
+}
+
+func ContestReadAll() ([]Contest, error) {
+	rows, err := db.Query("SELECT " +
+		"id, title, banner, owner, start_time, end_time, descr, is_visible, is_reg_open " +
+		"FROM contest",
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	cs := []Contest{}
+	for rows.Next() {
+		c := Contest{}
+		err := rows.Scan(
+			&c.Id,
+			&c.Title,
+			&c.Banner,
+			&c.Owner,
+			&c.StartTime,
+			&c.EndTime,
+			&c.Desc,
+			&c.IsVisible,
+			&c.IsRegOpen,
+		)
+		if err != nil {
+			return nil, err
+		}
+		cs = append(cs, c)
+	}
+	return cs, rows.Err()
 }
 
 func (c *Contest) LoadRel() error {

@@ -12,6 +12,24 @@ import (
 	"github.com/gorilla/mux"
 )
 
+func contestListHandler(w http.ResponseWriter, r *http.Request) {
+	cs, err := models.ContestReadAll()
+	if err != nil {
+		panic(err)
+	}
+
+	w.Write([]byte("["))
+	enc := json.NewEncoder(w)
+	enc.SetEscapeHTML(false)
+	for i, c := range cs {
+		if i != 0 {
+			w.Write([]byte(","))
+		}
+		enc.Encode(c.ShortRepresentation())
+	}
+	w.Write([]byte("]"))
+}
+
 func contestInfoHandler(w http.ResponseWriter, r *http.Request) {
 	cid, _ := strconv.Atoi(mux.Vars(r)["cid"])
 
@@ -59,6 +77,7 @@ func contestCreateHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func init() {
+	registerRouterFunc("/contest/list", contestListHandler, "GET")
 	registerRouterFunc("/contest/{cid:[0-9]+}/info", contestInfoHandler, "GET")
 	registerRouterFunc("/contest/create", contestCreateHandler, "POST")
 }
