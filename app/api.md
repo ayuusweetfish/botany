@@ -28,6 +28,7 @@
 不用 Username 的原因是希望区分登录名 Handle 和昵称 Nickname。  
 不用 Player 的原因是希望区分比赛的人 Participant 和对局的代码 Party。
 
+
 ## 普适
 
 请求参数均为纯文本 `key=val&key=val`，响应内容均为 JSON。
@@ -39,7 +40,25 @@
 - 任何时候返回 500 表示服务器内部错误。
 - 其余状态码由每个接入点各自规定。
 
+
 ## 登录/注册
+
+### 用户数据结构 User
+
+- **id** (number) ID
+- **handle** (string) 登录名
+- **email** (string) email
+- **privilege** (number) 权限
+	- **0** 普通权限
+	- **1** 主办权限
+	- **2** 站长权限
+- **joined_at** (number) 加入时刻的 Unix 时间戳，单位为秒
+- **nickname** (string) 昵称
+- **bio** (string) 个性签名
+
+### 用户数据结构 UserShort
+
+仅包含 User 的 **id**, **handle**, **nickname**
 
 ### 验证码 GET /captcha
 
@@ -78,3 +97,23 @@
 
 响应 400
 - 空对象 {}，登录失败
+
+
+## 比赛
+
+### 比赛数据结构 Contest
+
+- **id** (number) ID
+- **title** (string) 标题
+- **banner** (string) Banner 图片链接（暂不使用）
+- **start_time** (number) 开始时刻的 Unix 时间戳，单位为秒
+- **end_time** (number) 结束时刻的 Unix 时间戳，单位为秒
+- **desc** (string) 简要描述
+- **details** (string) 完整的长篇说明
+- **is_reg_open** (boolean) 是否公开接受报名
+- **owner** (UserShort) 创建者
+
+### 比赛信息 GET /contest/{id}/info
+
+响应
+- 一个 Contest 对象

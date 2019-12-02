@@ -60,7 +60,7 @@ func init() {
 		"owner INTEGER NOT NULL REFERENCES users(id)",
 		"start_time BIGINT NOT NULL",
 		"end_time BIGINT NOT NULL",
-		"desc TEXT NOT NULL DEFAULT ''",
+		"descr TEXT NOT NULL DEFAULT ''",
 		"details TEXT NOT NULL DEFAULT ''",
 		"is_visible BOOLEAN NOT NULL DEFAULT FALSE",
 		"is_reg_open BOOLEAN NOT NULL DEFAULT FALSE",
@@ -77,19 +77,59 @@ func init() {
 	)
 }
 
+func (c *Contest) Representation() map[string]interface{} {
+	return map[string]interface{}{
+		"id":          c.Id,
+		"title":       c.Title,
+		"banner":      c.Banner,
+		"start_time":  c.StartTime,
+		"end_time":    c.EndTime,
+		"desc":        c.Desc,
+		"details":     c.Details,
+		"is_reg_open": c.IsRegOpen,
+		"owner":       c.Rel.Owner.ShortRepresentation(),
+	}
+}
+
 func (c *Contest) Create() error {
-	// TODO
-	return nil
+	err := db.QueryRow("INSERT INTO "+
+		"contest(title, banner, owner, start_time, end_time, descr, details, is_visible, is_reg_open) "+
+		"VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id",
+		c.Title,
+		c.Banner,
+		c.Owner,
+		c.StartTime,
+		c.EndTime,
+		c.Desc,
+		c.Details,
+		c.IsVisible,
+		c.IsRegOpen,
+	).Scan(&c.Id)
+	return err
 }
 
 func (c *Contest) Read() error {
-	// TODO
-	return nil
+	err := db.QueryRow("SELECT "+
+		"title, banner, owner, start_time, end_time, descr, details, is_visible, is_reg_open "+
+		"FROM contest WHERE id = $1",
+		c.Id,
+	).Scan(
+		&c.Title,
+		&c.Banner,
+		&c.Owner,
+		&c.StartTime,
+		&c.EndTime,
+		&c.Desc,
+		&c.Details,
+		&c.IsVisible,
+		&c.IsRegOpen,
+	)
+	return err
 }
 
 func (c *Contest) LoadRel() error {
-	// TODO
-	return nil
+	c.Rel.Owner.Id = c.Owner
+	return c.Rel.Owner.Read(false)
 }
 
 func (c *Contest) Update() error {

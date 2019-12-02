@@ -45,6 +45,26 @@ func init() {
 	)
 }
 
+func (u *User) Representation() map[string]interface{} {
+	return map[string]interface{}{
+		"id":        u.Id,
+		"handle":    u.Handle,
+		"email":     u.Email,
+		"privilege": u.Privilege,
+		"joined_at": u.JoinedAt,
+		"nickname":  u.Nickname,
+		"bio":       u.Bio,
+	}
+}
+
+func (u *User) ShortRepresentation() map[string]interface{} {
+	return map[string]interface{}{
+		"id":       u.Id,
+		"handle":   u.Handle,
+		"nickname": u.Nickname,
+	}
+}
+
 func (u *User) hashPassword() {
 	hashed, err := bcrypt.GenerateFromPassword([]byte(u.Password), bcrypt.DefaultCost+1)
 	if err != nil {
