@@ -86,7 +86,7 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 
 	ok := true
 
-	if err := u.Read(true); err != nil {
+	if err := u.ReadByHandle(); err != nil {
 		if err == sql.ErrNoRows {
 			ok = false
 		} else {

@@ -111,6 +111,14 @@ func (u *User) Read(byHandle bool) error {
 	return err
 }
 
+func (u *User) ReadById() error {
+	return u.Read(false)
+}
+
+func (u *User) ReadByHandle() error {
+	return u.Read(true)
+}
+
 func (u *User) Update() error {
 	u.hashPassword()
 

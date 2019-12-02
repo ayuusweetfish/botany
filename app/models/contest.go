@@ -129,7 +129,7 @@ func (c *Contest) Read() error {
 
 func (c *Contest) LoadRel() error {
 	c.Rel.Owner.Id = c.Owner
-	return c.Rel.Owner.Read(false)
+	return c.Rel.Owner.ReadById()
 }
 
 func (c *Contest) Update() error {
