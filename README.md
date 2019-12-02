@@ -4,14 +4,20 @@ master [![Build Status](https://travis-ci.com/kawa-yoiko/botany.svg?token=GcJo7c
 
 Botany is a customizable contest platform for duels among programs.
 
-## Starting the database server
+## The database server
 
 Install PostgreSQL
 
 ```sh
-initdb -D <directory for storage>
-pg_ctl -D <directory for storage> start
-createdb <database name> -U <database user name>
+initdb -D <storage_dir>
+pg_ctl -D <storage_dir> start
+createdb <db_name> -U <db_user>
+```
+
+To stop, run
+
+```sh
+pg_ctl -D <storage_dir> stop
 ```
 
 ## Running the server
@@ -28,6 +34,15 @@ cp config_example.json config.json
 vim config.json     # Edit in any convenient way
 
 go run .
+```
+
+如果 `go get` 速度慢，可以尝试
+
+```sh
+mkdir -p $GOPATH/src/golang.org/x
+cd $GOPATH/src/golang.org/x/
+git clone https://github.com/golang/crypto
+git clone https://github.com/golang/image
 ```
 
 ## 规范与约定

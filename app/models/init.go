@@ -40,7 +40,7 @@ func InitializeSchemata(dbInput *sql.DB) {
 				println(schema)
 				db.Exec(schema)
 			} else {
-				println("Column " + columnName + " already exists, skipping")
+				// println("Column " + columnName + " already exists, skipping")
 			}
 		}
 	}
