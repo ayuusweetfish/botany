@@ -5,6 +5,8 @@ import (
 	"github.com/kawa-yoiko/botany/app/models"
 
 	"database/sql"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -39,20 +41,33 @@ func middlewareAuthGrant(w http.ResponseWriter, r *http.Request, uid int32) {
 	}
 }
 
-// curl http://localhost:3434/signup --data "handle=abc&password=qwq"
-// TODO: Add captcha validation and more fields
+func middlewareCaptchaVerify(w http.ResponseWriter, r *http.Request) bool {
+	captchaKey := r.PostFormValue("captcha_key")
+	captchaValue := r.PostFormValue("captcha_value")
+	return globals.CaptchaVerfiy(captchaKey, captchaValue)
+}
+
+// curl http://localhost:3434/signup -d "handle=abc&password=qwq&email=gamma@example.com&nickname=ABC&captcha_key=...&captcha_value=..."
 func signupHandler(w http.ResponseWriter, r *http.Request) {
+	if !middlewareCaptchaVerify(w, r) {
+		// TODO: Proper error handling
+		panic(errors.New("Are you a robot?"))
+	}
+
 	s := r.PostFormValue("handle")
 	p := r.PostFormValue("password")
+	email := r.PostFormValue("email")
+	nickname := r.PostFormValue("nickname")
 
 	u := models.User{}
 	u.Handle = s
-	u.Email = "beta@example.com"
+	u.Email = email
 
+	// TODO: Validate email format
 	// TODO: Look for an existing user with the same handle or email
 
 	u.Password = p
-	u.Nickname = "Uvuvwevwevwe"
+	u.Nickname = nickname
 	if err := u.Create(); err != nil {
 		panic(err)
 	}
@@ -60,7 +75,7 @@ func signupHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Welcome on board, %s!\n", u.Handle)
 }
 
-// curl http://localhost:3434/login -i --data "handle=abc&password=qwq"
+// curl http://localhost:3434/login -i -d "handle=abc&password=qwq"
 func loginHandler(w http.ResponseWriter, r *http.Request) {
 	s := r.PostFormValue("handle")
 	p := r.PostFormValue("password")
@@ -87,6 +102,7 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 		middlewareAuthGrant(w, r, u.Id)
 		fmt.Fprintf(w, "Hi %s, your ID is %d\n", s, u.Id)
 	} else {
+		// TODO: Proper error handling
 		fmt.Fprintf(w, "Incorrect credentials\n")
 	}
 }
@@ -98,8 +114,20 @@ func checkAuthHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Your ID is %d\n", uid)
 }
 
+func captchaGetHandler(w http.ResponseWriter, r *http.Request) {
+	key, img := globals.CaptchaCreate()
+	enc := json.NewEncoder(w)
+	enc.SetEscapeHTML(false)
+	enc.Encode(map[string]string{
+		"key": key,
+		"img": img,
+	})
+}
+
 func init() {
 	registerRouterFunc("/signup", signupHandler, "POST")
 	registerRouterFunc("/login", loginHandler, "POST")
 	registerRouterFunc("/check_auth", checkAuthHandler, "GET")
+
+	registerRouterFunc("/captcha", captchaGetHandler, "GET")
 }
