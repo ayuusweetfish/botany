@@ -4,6 +4,16 @@ master [![Build Status](https://travis-ci.com/kawa-yoiko/botany.svg?token=GcJo7c
 
 Botany is a customizable contest platform for duels among programs.
 
+## Starting the database server
+
+Install PostgreSQL
+
+```sh
+initdb -D <directory for storage>
+pg_ctl -D <directory for storage> start
+createdb <database name> -U <database user name>
+```
+
 ## Running the server
 
 Tested Go version: 1.13.1
@@ -13,6 +23,10 @@ Clone repository into `$GOPATH/src/github.com/kawa-yoiko/botany`, or create a sy
 ```sh
 cd app
 go get -d .
+
+cp config_example.json config.json
+vim config.json     # Edit in any convenient way
+
 go run .
 ```
 

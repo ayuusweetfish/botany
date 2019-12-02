@@ -69,6 +69,36 @@ func nameHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Hi %s, your #%d visit!", u.Name, u.Count)
 }
 
+func testUserHandler(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	name := vars["name"]
+	password := vars["pass"]
+
+	u := models.User{}
+	u.Handle = name
+
+	if err := u.Read(true); err != nil {
+		if err == sql.ErrNoRows {
+			u.Email = "alpha@example.com"
+			u.Password = password
+			u.Nickname = name
+			if err := u.Create(); err != nil {
+				panic(err)
+			}
+			fmt.Fprintf(w, "Welcome, %s!\n", u.Handle)
+		} else {
+			panic(err)
+		}
+	}
+
+	if !u.VerifyPassword(password) {
+		fmt.Fprintf(w, "Incorrect password!\n")
+	} else {
+		fmt.Fprintf(w, "Hi %s, your ID is %d\n", u.Handle, u.Id)
+	}
+}
+
 func init() {
+	registerRouterFunc("/t1/{name:[a-z]+}/{pass:[a-z]+}", testUserHandler)
 	registerRouterFunc("/{name:[a-z]+}", nameHandler)
 }

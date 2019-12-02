@@ -6,15 +6,42 @@ import (
 )
 
 var db *sql.DB
-var schemata []string
 
-func registerSchema(sql string) {
-	schemata = append(schemata, sql)
+type TableSchema struct {
+	table   string
+	columns []string
+}
+
+var schemata []TableSchema
+
+func registerSchema(table string, columns ...string) {
+	schemata = append(schemata, TableSchema{table, columns})
 }
 
 func InitializeSchemata(dbInput *sql.DB) {
 	db = dbInput
-	s := strings.Join(schemata, "\n")
-	db.Exec(schema)
-	println(s)
+	for _, schema := range schemata {
+		cmd := "CREATE TABLE IF NOT EXISTS " + schema.table + " ()"
+		println(cmd)
+		db.Exec(cmd)
+		for _, columnDesc := range schema.columns {
+			columnName := strings.SplitN(columnDesc, " ", 2)[0]
+			row := db.QueryRow("SELECT COUNT(*) FROM information_schema.columns "+
+				"WHERE table_name = $1 AND column_name = $2",
+				schema.table,
+				columnName,
+			)
+			var count int
+			if err := row.Scan(&count); err != nil {
+				panic(err)
+			}
+			if count == 0 {
+				schema := "ALTER TABLE " + schema.table + " ADD COLUMN " + columnDesc
+				println(schema)
+				db.Exec(schema)
+			} else {
+				println("Column " + columnName + " already exists, skipping")
+			}
+		}
+	}
 }

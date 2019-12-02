@@ -8,11 +8,14 @@ import (
 
 var router *mux.Router
 
-func registerRouterFunc(path string, fn func(http.ResponseWriter, *http.Request)) {
+func registerRouterFunc(path string, fn func(http.ResponseWriter, *http.Request), methods ...string) {
 	if router == nil {
 		router = mux.NewRouter()
 	}
-	router.HandleFunc(path, fn)
+	if len(methods) == 0 {
+		methods = []string{"GET"}
+	}
+	router.HandleFunc(path, fn).Methods(methods...)
 }
 
 func GetGlobalRouterFunc() func(w http.ResponseWriter, req *http.Request) {
