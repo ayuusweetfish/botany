@@ -7,11 +7,11 @@ type Match struct {
 
 	Rel struct {
 		Contest Contest
-		Sides   []Submission
+		Parties []Submission
 	}
 }
 
-type MatchSide struct {
+type MatchParty struct {
 	Match      int32
 	Submission int32
 	Score      int32
@@ -28,7 +28,7 @@ func init() {
 		"contest INTEGER NOT NULL REFERENCES contest(id)",
 		"report TEXT NOT NULL DEFAULT ''",
 	)
-	registerSchema("match_side",
+	registerSchema("match_party",
 		"match INTEGER NOT NULL REFERENCES match(id)",
 		"submission INTEGER NOT NULL REFERENCES submission(id)",
 		"score INTEGER NOT NULL DEFAULT 0",

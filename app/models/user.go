@@ -29,6 +29,7 @@ type User struct {
 
 	// Customized profile
 	Nickname string
+	Bio      string
 }
 
 func init() {
@@ -40,6 +41,7 @@ func init() {
 		"privilege SMALLINT NOT NULL DEFAULT "+strconv.Itoa(UserPrivilegeNormal),
 		"joined_at BIGINT NOT NULL",
 		"nickname TEXT NOT NULL",
+		"bio TEXT NOT NULL DEFAULT ''",
 	)
 }
 

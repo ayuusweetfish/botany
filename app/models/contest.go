@@ -3,12 +3,16 @@ package models
 import "strconv"
 
 type Contest struct {
-	Id    int32
-	Title string
+	Id     int32
+	Title  string
+	Banner string
 
 	Owner     int32
 	StartTime int64
 	EndTime   int64
+
+	Desc    string
+	Details string
 
 	IsVisible bool
 	IsRegOpen bool
@@ -52,9 +56,12 @@ func init() {
 	registerSchema("contest",
 		"id SERIAL PRIMARY KEY",
 		"title TEXT NOT NULL DEFAULT ''",
+		"banner TEXT NOT NULL DEFAULT ''",
 		"owner INTEGER NOT NULL REFERENCES users(id)",
 		"start_time BIGINT NOT NULL",
 		"end_time BIGINT NOT NULL",
+		"desc TEXT NOT NULL DEFAULT ''",
+		"details TEXT NOT NULL DEFAULT ''",
 		"is_visible BOOLEAN NOT NULL DEFAULT FALSE",
 		"is_reg_open BOOLEAN NOT NULL DEFAULT FALSE",
 	)
@@ -70,22 +77,22 @@ func init() {
 	)
 }
 
-func (u *Contest) Create() error {
+func (c *Contest) Create() error {
 	// TODO
 	return nil
 }
 
-func (u *Contest) Read() error {
+func (c *Contest) Read() error {
 	// TODO
 	return nil
 }
 
-func (u *Contest) LoadRel() error {
+func (c *Contest) LoadRel() error {
 	// TODO
 	return nil
 }
 
-func (u *Contest) Update() error {
+func (c *Contest) Update() error {
 	// TODO
 	return nil
 }
