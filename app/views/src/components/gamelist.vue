@@ -14,14 +14,11 @@
 
 <script>
 export default {
-  name:'gamelist',
-<<<<<<< HEAD
-=======
-  created(){
+  name: 'gamelist',
+  created () {
     this.getGameList()
   },
->>>>>>> parent of 20eb236... Merge branch 'frontend' of github.com:kawa-yoiko/botany into backend-dev
-  data() {
+  data () {
     return {
       title: '当前共有2场比赛正在进行',
       games: [
@@ -34,18 +31,16 @@ export default {
           name: 'GStrategy2',
           time: '2019-09-02 to 2020-01-02',
           info: 'a SSAST game.'
-        },
+        }
       ]
     }
   },
   methods: {
-<<<<<<< HEAD
-=======
-    getGameList(){
+    getGameList () {
       const loading = this.$loading({lock: true, text: '正在查询比赛列表'})
       this.$axios.get(
         '/gamelist'
-      ).then(res=>{
+      ).then(res => {
         this.total = res.data.total
         res.data.games.forEach(element => {
           this.games.push({
@@ -57,13 +52,13 @@ export default {
         })
         this.title = '当前共有' + this.total + '场比赛正在进行'
         loading.close()
-      }).catch(err=>{
+      // eslint-disable-next-line handle-callback-err
+      }).catch(err => {
         this.$message.error('查询比赛列表失败')
         loading.close()
       })
     },
->>>>>>> parent of 20eb236... Merge branch 'frontend' of github.com:kawa-yoiko/botany into backend-dev
-    goGamemain(x, y, z){
+    goGamemain (x, y, z) {
       console.log('clicked')
       this.$router.push('gamemain')
     }

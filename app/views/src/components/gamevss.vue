@@ -37,13 +37,13 @@
           </template>
         </el-table-column>
       </el-table>
-      <el-pagination 
-        :total="total" 
-        :current-page="1" 
-        :page-size="20" 
-        @current-change="handleCurrentChange" 
+      <el-pagination
+        :total="total"
+        :current-page="1"
+        :page-size="20"
+        @current-change="handleCurrentChange"
         :pager-count="11"
-        layout="prev, pager, next, jumper, ->, total" 
+        layout="prev, pager, next, jumper, ->, total"
       >
       </el-pagination>
     </el-card>
@@ -53,15 +53,15 @@
 <script>
 export default {
   name: 'gamevss',
-  data() {
+  data () {
     let ls = []
-    for(let i = 0; i < 20; ++i){
+    for (let i = 0; i < 20; ++i) {
       ls.push({
-          id: (1000-i).toString(),
-          name1: 'USERNAME1',
-          name2: 'USERNAME2',
-          winner: 'USERNAME1'
-        })
+        id: (1000 - i).toString(),
+        name1: 'USERNAME1',
+        name2: 'USERNAME2',
+        winner: 'USERNAME1'
+      })
     }
     return {
       games: ls,
@@ -70,10 +70,10 @@ export default {
     }
   },
   methods: {
-    handleCurrentChange(val){
+    handleCurrentChange (val) {
 
     },
-    goDetail(x, y, z){
+    goDetail (x, y, z) {
       this.$router.push('/vsdetail')
     }
   }
