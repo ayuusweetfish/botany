@@ -9,6 +9,10 @@
         :model="loginInfo"
         label-suffix="left"
         label-width="0px"
+<<<<<<< HEAD
+=======
+        :rules="rules"
+>>>>>>> parent of 20eb236... Merge branch 'frontend' of github.com:kawa-yoiko/botany into backend-dev
       >  
         <el-row>
           <el-col :span="5">
@@ -83,17 +87,29 @@
 <script>
 export default {
   name: 'login',
+<<<<<<< HEAD
+=======
+  created() {
+    this.getCaptcha()
+  },
+>>>>>>> parent of 20eb236... Merge branch 'frontend' of github.com:kawa-yoiko/botany into backend-dev
   data() {
     return {
       loginInfo: {
         username: '',
+<<<<<<< HEAD
         enigma: '',
         enigma2: '',
         email: '',
         phone: ''
+=======
+        password: '',
+        captcha:  '',
+>>>>>>> parent of 20eb236... Merge branch 'frontend' of github.com:kawa-yoiko/botany into backend-dev
       },
       loginErrUsrnm: '',
       loginErrPswd: '',
+<<<<<<< HEAD
       loginErrPswd2: '',
       loginErrEml: '',
       loginErrPhn: '',
@@ -103,6 +119,76 @@ export default {
     login() {
       this.$router.push('/gamelist')
 
+=======
+      loginErrCpch: '',
+      rules: {
+        username: [
+          {required: true, message: '请输入账号', trigger: 'blur'},
+          {max: 30, message: '输入过长', trigger:'blur'}
+        ],
+        password: [
+          {required: true, message: '请输入密码', trigger: 'blur'},
+          {max: 30, message: '输入过长', trigger:'blur'}
+        ],
+        captcha: [
+          {required: true, message: '请输入验证码', trigger: 'blur'},
+          {min: 4, max: 4, message: '请输入4个字符', trigger:'blur'}
+        ],
+      }
+    }
+  },
+  methods: {
+    getCaptcha() {
+      this.$axios.get(
+        '/captcha/login'
+      ).then(res=>{
+        this.captcha64 = res.data.pic
+      }).catch(err=>{
+        this.$message.error('无法获取验证码，请检查网络')
+      })
+    },
+    login() {
+      this.$refs['loginform'].validate(valid=>{
+        if(valid){
+          this.loginErrUsrnm = ''
+          this.loginErrPswd = ''
+          this.loginErrCpch = ''
+          const loading = this.$loading({lock: true, text: '登录中'})
+          let params = new URLSearchParams()
+          params.append('username', this.loginInfo.username)
+          params.append('password', this.loginInfo.password)
+          params.append('captcha', this.loginInfo.captcha)
+          this.$axios.post(
+            '/login',
+            params
+          ).then(res=>{
+            let logindata = {
+              username: this.loginInfo.username,
+              userid: res.data.uid,
+              usertype: res.data.usertype
+            }
+            this.$store.commit('login', logindata)
+            loading.close()
+            this.$router.push('/gamelist')
+          }).catch(err=>{
+            loading.close()
+            this.$message.error('登录失败')
+            if(err.response.data.error === 'wrong captcha'){
+              this.loginErrCpch = '验证码错误'
+              this.loginInfo.captcha = ''
+              this.getCaptcha()
+            }
+            else if (err.response.data.error === 'wrong username or password'){
+              this.loginErrUsrnm = '用户名或密码错误'
+              this.loginErrPswd = '用户名或密码错误'
+              this.loginInfo.password = ''
+              this.getCaptcha()
+            }
+          })
+        }
+      })
+      
+>>>>>>> parent of 20eb236... Merge branch 'frontend' of github.com:kawa-yoiko/botany into backend-dev
     },
     goRegister(){
       this.$router.push('/register')

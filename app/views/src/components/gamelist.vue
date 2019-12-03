@@ -15,6 +15,12 @@
 <script>
 export default {
   name:'gamelist',
+<<<<<<< HEAD
+=======
+  created(){
+    this.getGameList()
+  },
+>>>>>>> parent of 20eb236... Merge branch 'frontend' of github.com:kawa-yoiko/botany into backend-dev
   data() {
     return {
       title: '当前共有2场比赛正在进行',
@@ -33,6 +39,30 @@ export default {
     }
   },
   methods: {
+<<<<<<< HEAD
+=======
+    getGameList(){
+      const loading = this.$loading({lock: true, text: '正在查询比赛列表'})
+      this.$axios.get(
+        '/gamelist'
+      ).then(res=>{
+        this.total = res.data.total
+        res.data.games.forEach(element => {
+          this.games.push({
+            id: element.id,
+            name: element.name,
+            time: element.time_start + ' 到 ' + element.time_end,
+            info: element.info
+          })
+        })
+        this.title = '当前共有' + this.total + '场比赛正在进行'
+        loading.close()
+      }).catch(err=>{
+        this.$message.error('查询比赛列表失败')
+        loading.close()
+      })
+    },
+>>>>>>> parent of 20eb236... Merge branch 'frontend' of github.com:kawa-yoiko/botany into backend-dev
     goGamemain(x, y, z){
       console.log('clicked')
       this.$router.push('gamemain')

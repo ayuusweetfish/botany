@@ -9,6 +9,10 @@
         :model="loginInfo"
         label-suffix="left"
         label-width="0px"
+<<<<<<< HEAD
+=======
+        :rules="rules"
+>>>>>>> parent of 20eb236... Merge branch 'frontend' of github.com:kawa-yoiko/botany into backend-dev
       >  
         <el-row>
           <el-col :span="5">
@@ -97,7 +101,37 @@
 <script>
 export default {
   name: 'register',
+<<<<<<< HEAD
   data() {
+=======
+  created(){
+    this.getCaptcha()
+  },
+  data() {
+    let password2_validator = (rule, value, callback)=>{
+      console.log(this)
+      if(!value) {
+        callback(new Error('请确认密码'))
+      }
+      else if(value !== this.regisInfo.password){
+        callback(new Error('密码不一致'))
+      }
+      else {
+        callback()
+      }
+    }
+    let email_validator = (rule, value, callback)=>{
+      if(!value) {
+        callback(new Error('请输入邮箱'))
+      }
+      else if(!/^([a-zA-Z0-9]+[-_\.]?)+@([a-zA-Z0-9]+\.)+[a-z]+$/.test(value)){
+        callback(new Error('请输入格式正确的邮箱'))
+      }
+      else {
+        callback()
+      }
+    }
+>>>>>>> parent of 20eb236... Merge branch 'frontend' of github.com:kawa-yoiko/botany into backend-dev
     return {
       loginInfo: {
         username: '',
@@ -105,6 +139,7 @@ export default {
         enigma2: '',
         email: '',
       },
+<<<<<<< HEAD
       loginErrUsrnm: '',
       loginErrPswd: '',
       loginErrPswd2: '',
@@ -119,6 +154,94 @@ export default {
     },
     goLogin(){
       this.$router.push('/')
+=======
+      captcha64: '',
+      regisErrUsrnm: '',
+      regisErrPswd: '',
+      regisErrPswd2: '',
+      regisErrEml: '',
+      regisErrCpch: '',
+      rules: {
+        username: [
+          {required: true, message: '请输入用户名', trigger: 'blur'},
+          {min: 3, max: 30, message: '用户名应在3-30个字符之间', trigger: 'blur'}
+        ],
+        password: [
+          {required: true, message: '请输入密码', trigger: 'blur'},
+          {min: 5, max: 30, message: '密码应在5-30个字符之间', trigger:'blur'}
+        ],
+        password2: [
+          {validator: password2_validator, trigger: 'blur'},
+        ],
+        email: [
+          {validator: email_validator, trigger: 'blur'}
+        ],
+        captcha: [
+          {required: true, message: '请输入验证码', trigger: 'blur'},
+          {min: 4, max: 4, message: '请输入4个字符', trigger: 'blur'}
+        ]
+      }
+    }
+  },
+  methods: {
+    getCaptcha() {
+      this.$axios.get(
+        '/captcha/register'
+      ).then(res=>{
+        this.captcha64 = res.data.pic
+      }).catch(err=>{
+        this.$message.error('无法获取验证码，请检查网络')
+      })
+    },
+    register() {
+      this.$refs['regisform'].validate(valid=>{
+        if(valid){
+          this.regisErrUsrnm = ''
+          this.regisErrPswd = ''
+          this.regisErrPswd2 = ''
+          this.regisErrEml = ''
+          this.regisErrCpch = ''
+          const loading = this.$loading({lock: true, text: '注册中'})
+          let params = new URLSearchParams()
+          params.append('username', this.regisInfo.username)
+          params.append('password', this.regisInfo.password)
+          params.append('email', this.regisInfo.email)
+          params.append('captcha', this.regisInfo.captcha)
+          this.$axios.post(
+            '/register',
+            params
+          ).then(res=>{
+            loading.close()
+            this.$alert('注册成功，请登录','成功',{
+              confirmButtonText: '确定',
+              callback: action=>{
+                this.$router.replace('/')
+              }
+            })
+          }).catch(err=>{
+            loading.close()
+            this.$message.error('注册失败')
+            if(err.response.data.error === 'wrong captcha'){
+              this.regisErrCpch = '验证码错误'
+              this.regisInfo.captcha = ''
+              this.getCaptcha()
+            }
+            else if(err.response.data.error === 'username already exists'){
+              this.regisErrUsrnm = '用户名已被注册'
+              this.getCaptcha()
+            }
+            else if(err.response.data.error === 'email already exists'){
+              this.regisErrEml = '邮箱已被注册'
+              this.getCaptcha()
+            }
+          })
+        }
+      })
+
+    },
+    goLogin(){
+      this.$router.replace('/')
+>>>>>>> parent of 20eb236... Merge branch 'frontend' of github.com:kawa-yoiko/botany into backend-dev
     }
   }
 }
