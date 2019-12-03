@@ -97,7 +97,7 @@
 
 <script>
 export default {
-  name: 'register',
+  name: 'signin',
   created () {
     this.getCaptcha()
   },
@@ -131,6 +131,7 @@ export default {
         email: ''
       },
       captcha64: '',
+      captchaKey: '',
       regisErrUsrnm: '',
       regisErrPswd: '',
       regisErrPswd2: '',
@@ -161,9 +162,10 @@ export default {
   methods: {
     getCaptcha () {
       this.$axios.get(
-        '/captcha/register'
+        '/captcha'
       ).then(res => {
-        this.captcha64 = res.data.pic
+        this.captcha64 = res.data.img
+        this.captchaKey = res.data.kay
       // eslint-disable-next-line handle-callback-err
       }).catch(err => {
         this.$message.error('无法获取验证码，请检查网络')

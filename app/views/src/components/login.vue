@@ -5,7 +5,7 @@
     </el-header>
     <el-main class="login-main">
       <el-form
-        ref="usernamelogin"
+        ref="loginform"
         :model="loginInfo"
         label-suffix="left"
         label-width="0px"
@@ -13,13 +13,13 @@
       >
         <el-row>
           <el-col :span="5">
-            <div align="right" class="login-title">用户名：</div>
+            <div align="right" class="login-title">账号：</div>
           </el-col>
           <el-col :span="19">
-            <el-form-item prop="username" :error="loginErrUsrnm">
+            <el-form-item prop="handle" :error="loginErrHandle">
               <el-input
                 type="text"
-                v-model="loginInfo.username"
+                v-model="loginInfo.handle"
                 placeholder="请输入账号"
                 auto-complete="off"
                 prefix-icon="el-icon-user-solid"
@@ -33,10 +33,10 @@
             <div align="right" class="login-title">密码：</div>
           </el-col>
           <el-col :span="19">
-            <el-form-item prop="enigma" :error="loginErrPswd">
+            <el-form-item prop="password" :error="loginErrPswd">
               <el-input
                 type="password"
-                v-model="loginInfo.enigma"
+                v-model="loginInfo.password"
                 placeholder="请输入密码"
                 auto-complete="off"
                 prefix-icon="el-icon-lock"
@@ -45,15 +45,15 @@
           </el-col>
         </el-row>
 
-        <el-row>
+        <!-- <el-row>
           <el-col :span="5">
             <div align="right" class="login-title">验证码：</div>
           </el-col>
           <el-col :span="12">
-            <el-form-item prop="enigma2" :error="loginErrPswd2">
+            <el-form-item prop="captcha" :error="loginErrCpch">
             <el-input
               type="text"
-              v-model="loginInfo.enigma2"
+              v-model="loginInfo.captcha"
               placeholder="请输入验证码"
               auto-complete="off"
               prefix-icon="el-icon-s-claim"
@@ -61,9 +61,9 @@
             </el-form-item>
           </el-col>
           <el-col :span="7">
-            <img src = "../assets/demo1.png" style="width:100%; margin-top: -10px">
+            <img :src="captcha64" style="width:100%; margin-top: -10px">
           </el-col>
-        </el-row>
+        </el-row>-->
       </el-form>
 
       <el-row>
@@ -74,9 +74,9 @@
           <el-button @click="goRegister" style="width: 80%">注册</el-button>
         </el-col>
       </el-row>
-      <el-row>
+      <!--<el-row>
         <el-button type="text">忘记密码？</el-button>
-      </el-row>
+      </el-row>-->
     </el-main>
   </el-container>
 </template>
@@ -85,40 +85,43 @@
 export default {
   name: 'login',
   created () {
-    this.getCaptcha()
+    // this.getCaptcha()
   },
   data () {
     return {
       loginInfo: {
-        username: '',
-        password: '',
-        captcha: ''
+        handle: '',
+        password: ''
+        // captcha: ''
       },
-      loginErrUsrnm: '',
+      captcha64: '',
+      captchaKey: '',
+      loginErrHandle: '',
       loginErrPswd: '',
       loginErrCpch: '',
       rules: {
-        username: [
+        handle: [
           {required: true, message: '请输入账号', trigger: 'blur'},
           {max: 30, message: '输入过长', trigger: 'blur'}
         ],
         password: [
           {required: true, message: '请输入密码', trigger: 'blur'},
           {max: 30, message: '输入过长', trigger: 'blur'}
-        ],
-        captcha: [
-          {required: true, message: '请输入验证码', trigger: 'blur'},
-          {min: 4, max: 4, message: '请输入4个字符', trigger: 'blur'}
         ]
+        // captcha: [
+        //   {required: true, message: '请输入验证码', trigger: 'blur'},
+        //   {min: 4, max: 4, message: '请输入4个字符', trigger: 'blur'}
+        // ]
       }
     }
   },
   methods: {
     getCaptcha () {
       this.$axios.get(
-        '/captcha/login'
+        '/captcha'
       ).then(res => {
-        this.captcha64 = res.data.pic
+        this.captcha64 = res.data.img
+        this.captchaKey = res.data.key
       // eslint-disable-next-line handle-callback-err
       }).catch(err => {
         this.$message.error('无法获取验证码，请检查网络')
@@ -127,24 +130,31 @@ export default {
     login () {
       this.$refs['loginform'].validate(valid => {
         if (valid) {
-          this.loginErrUsrnm = ''
+          this.loginErrHandle = ''
           this.loginErrPswd = ''
           this.loginErrCpch = ''
           const loading = this.$loading({lock: true, text: '登录中'})
-          let params = new URLSearchParams()
-          params.append('username', this.loginInfo.username)
-          params.append('password', this.loginInfo.password)
-          params.append('captcha', this.loginInfo.captcha)
+          let params = {
+            'username': this.loginInfo.handle,
+            'password': this.loginInfo.password
+          }
+          // let params = new URLSearchParams()
+          // params.append('username', this.loginInfo.username)
+          // params.append('password', this.loginInfo.password)
+          // params.append('captcha', this.loginInfo.captcha)
           this.$axios.post(
             '/login',
-            params
+            params,
+            {headers: {
+              'Content-Type': 'application/x-www-form-urlencoded'
+            }}
           ).then(res => {
-            let logindata = {
-              username: this.loginInfo.username,
-              userid: res.data.uid,
-              usertype: res.data.usertype
-            }
-            this.$store.commit('login', logindata)
+            // let logindata = {
+            //   username: this.loginInfo.username,
+            //   userid: res.data.uid,
+            //   usertype: res.data.usertype
+            // }
+            // this.$store.commit('login', logindata)
             loading.close()
             this.$router.push('/gamelist')
           }).catch(err => {
@@ -165,7 +175,7 @@ export default {
       })
     },
     goRegister () {
-      this.$router.push('/register')
+      this.$router.push('/signup')
     }
   }
 }

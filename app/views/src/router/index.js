@@ -1,16 +1,16 @@
 import Vue from 'vue'
 import Router from 'vue-router'
-import HelloWorld from '@/components/HelloWorld'
+// import HelloWorld from '@/components/HelloWorld'
 import login from '@/components/login'
-import register from '@/components/register'
-import gamelist from '@/components/gamelist'
-import gamemain from '@/components/gamemain'
-import gamedetail from '@/components/gamedetail'
-import coding from '@/components/coding'
-import gameranking from '@/components/gameranking'
-import gamevss from '@/components/gamevss'
-import vsdetail from '@/components/vsdetail'
-import personalinfo from '@/components/personalinfo'
+import signup from '@/components/signup'
+import contestlist from '@/components/contestlist'
+import contestmain from '@/components/contestmain'
+import contestdetail from '@/components/contestdetail'
+import submission from '@/components/submission'
+import ranklist from '@/components/ranklist'
+import matchlist from '@/components/matchlist'
+import match from '@/components/match'
+import profile from '@/components/profile'
 
 Vue.use(Router)
 
@@ -25,76 +25,76 @@ export default new Router({
       }
     },
     {
-      path: '/register',
-      name: 'register',
-      component: register,
+      path: '/signup',
+      name: 'signup',
+      component: signup,
       meta: {
         navbarType: 'none'
       }
     },
     {
-      path: '/gamelist',
-      name: 'gamelist',
-      component: gamelist,
+      path: '/contest_list',
+      name: 'contest_list',
+      component: contestlist,
       meta: {
         navbarType: 'main'
       }
     },
     {
-      path: '/gamemain',
-      name: 'gamemain',
-      component: gamemain,
+      path: '/contest_main',
+      name: 'contest_main',
+      component: contestmain,
       meta: {
         navbarType: 'game'
       }
     },
     {
-      path: '/gamedetail',
-      name: 'gamemdetail',
-      component: gamedetail,
+      path: '/contest_detail',
+      name: 'contest_detail',
+      component: contestdetail,
       meta: {
         navbarType: 'game'
       }
     },
     {
-      path: '/coding',
-      name: 'coding',
-      component: coding,
+      path: '/submission',
+      name: 'submission',
+      component: submission,
       meta: {
         navbarType: 'game'
       }
     },
     {
-      path: '/gameranking',
-      name: 'gameranking',
-      component: gameranking,
+      path: '/ranklist',
+      name: 'ranklist',
+      component: ranklist,
       meta: {
         navbarType: 'game'
       }
     },
     {
-      path: '/gamevss',
-      name: 'gamevss',
-      component: gamevss,
+      path: '/matchlist',
+      name: 'matchlist',
+      component: matchlist,
       meta: {
         navbarType: 'game'
       }
     },
     {
-      path: '/vsdetail',
-      name: 'vsdetail',
-      component: vsdetail,
+      path: '/match',
+      name: 'match',
+      component: match,
       meta: {
         navbarType: 'game'
       }
     },
     {
-      path: '/personalinfo',
-      name: 'personalinfo',
-      component: personalinfo,
+      path: '/profile',
+      name: 'profile',
+      component: profile,
       meta: {
         navbarType: 'main'
       }
-    },
+    }
   ]
 })

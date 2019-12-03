@@ -4,19 +4,15 @@ import Vue from 'vue'
 import App from './App'
 import router from './router'
 import ElementUI from 'element-ui'
+import axios from 'axios'
 import 'element-ui/lib/theme-chalk/index.css'
-
 
 Vue.config.productionTip = false
 Vue.use(ElementUI)
-<<<<<<< HEAD
-=======
 
 Vue.prototype.$axios = axios
 axios.defaults.baseURL = '/api'
 
-
->>>>>>> parent of 20eb236... Merge branch 'frontend' of github.com:kawa-yoiko/botany into backend-dev
 /* eslint-disable no-new */
 new Vue({
   el: '#app',
