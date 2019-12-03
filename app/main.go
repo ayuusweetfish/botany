@@ -21,6 +21,8 @@ type Config struct {
 	DbName     string `json:"db_name"`
 	DbUser     string `json:"db_user"`
 	DbPassword string `json:"db_password"`
+
+	CookieKeyPairs []string `json:"cookie_key_pairs"`
 }
 
 func LoadConfiguration(file string) Config {
@@ -48,7 +50,14 @@ func main() {
 	}
 	defer db.Close()
 
-	globals.SessionStore = sessions.NewCookieStore([]byte("vertraulich"))
+	keyPairs := [][]byte{}
+	for i, s := range config.CookieKeyPairs {
+		if i%2 == 1 && len(s) != 16 && len(s) != 24 && len(s) != 32 {
+			log.Fatalf("Size of key should be 16, 24 or 32 bytes ('%s' is %d bytes)", s, len(s))
+		}
+		keyPairs = append(keyPairs, []byte(s))
+	}
+	globals.SessionStore = sessions.NewCookieStore(keyPairs...)
 
 	models.InitializeSchemata(db)
 	http.HandleFunc("/", controllers.GetGlobalRouterFunc())
