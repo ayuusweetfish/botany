@@ -38,6 +38,7 @@ static inline char tenacious_write(int fd, const char *buf, size_t len)
 
 int ipc_send(int pipe, size_t len, const char *payload)
 {
+    if (len > 0xffffff) return IPC_ERR_TOOLONG;
     char len_buf[3] = {
         len & 0xff,
         (len >> 8) & 0xff,
@@ -59,12 +60,13 @@ char *ipc_recv(int pipe, size_t *o_len, int timeout)
     size_t len = 0, ptr = 0;
     char buf[4];
     struct timespec t1, t2;
+    int loops = 0;
 
     while (len == 0 || ptr < len) {
         /* Unlikely; in case poll()'s time slightly differs
            from CLOCK_MONOTONIC, or rounding errors happen */
-        if (timeout <= 0) {
-            fprintf(stderr, "read() failed with errno %d\n", errno);
+        if (timeout <= 0 || ++loops >= 1000000) {
+            fprintf(stderr, "Unidentifiable exception with errno %d\n", errno);
             if (ret) free(ret);
             *o_len = IPC_ERR_SYSCALL;
             return NULL;
@@ -84,6 +86,13 @@ char *ipc_recv(int pipe, size_t *o_len, int timeout)
         /* Calculate remaining time */
         clock_gettime(CLOCK_MONOTONIC, &t2);
         timeout -= diff_ms(t1, t2);
+
+        /* Is the pipe still open on the other side? */
+        if (pfd.revents & POLLHUP) {
+            if (ret) free(ret);
+            *o_len = IPC_ERR_CLOSED;
+            return NULL;
+        }
 
         if (poll_ret == 1 && (pfd.revents & POLLIN)) {
             /* Ready for reading! Let's see */
@@ -121,7 +130,12 @@ char *ipc_recv(int pipe, size_t *o_len, int timeout)
             }
         } else {
             if (ret) free(ret);
-            *o_len = IPC_ERR_POLL;
+            if (timeout <= 0) {
+                *o_len = IPC_ERR_TIMEOUT;
+            } else {
+                fprintf(stderr, "poll() returns unexpected events %d\n", pfd.revents);
+                *o_len = IPC_ERR_SYSCALL;
+            }
             return NULL;
         }
     }
@@ -134,7 +148,7 @@ int main(int argc, char *argv[])
 {
     if (argc >= 2 && argv[1][0] == 'i') {
         size_t len;
-        char *s = ipc_recv(STDIN_FILENO, &len, 100000);
+        char *s = ipc_recv(STDIN_FILENO, &len, 1000);
         if (!s) {
             printf("Invalid! Application error %d, system errno %d\n",
                 (int)len, errno);
