@@ -35,22 +35,22 @@ func init() {
 	)
 }
 
-func (u *Match) Create() error {
+func (m *Match) Create() error {
 	// TODO
 	return nil
 }
 
-func (u *Match) Read() error {
+func (m *Match) Read() error {
 	// TODO
 	return nil
 }
 
-func (u *Match) LoadRel() error {
+func (m *Match) LoadRel() error {
 	// TODO
 	return nil
 }
 
-func (u *Match) Update() error {
+func (m *Match) Update() error {
 	// TODO
 	return nil
 }

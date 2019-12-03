@@ -18,22 +18,22 @@ func init() {
 	)
 }
 
-func (u *Submission) Create() error {
+func (s *Submission) Create() error {
 	// TODO
 	return nil
 }
 
-func (u *Submission) Read() error {
+func (s *Submission) Read() error {
 	// TODO
 	return nil
 }
 
-func (u *Submission) LoadRel() error {
+func (s *Submission) LoadRel() error {
 	// TODO
 	return nil
 }
 
-func (u *Submission) Update() error {
+func (s *Submission) Update() error {
 	// TODO
 	return nil
 }
