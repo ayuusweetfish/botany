@@ -5,6 +5,7 @@ import App from './App'
 import router from './router'
 import ElementUI from 'element-ui'
 import axios from 'axios'
+import qs from 'querystring'
 import 'element-ui/lib/theme-chalk/index.css'
 
 Vue.config.productionTip = false
@@ -12,6 +13,9 @@ Vue.use(ElementUI)
 
 Vue.prototype.$axios = axios
 axios.defaults.baseURL = '/api'
+axios.defaults.headers.post['Content-Type'] = 'application/x-www-form-urlencoded'
+
+Vue.prototype.$qs = qs
 
 /* eslint-disable no-new */
 new Vue({

@@ -134,10 +134,10 @@ export default {
           this.loginErrPswd = ''
           this.loginErrCpch = ''
           const loading = this.$loading({lock: true, text: '登录中'})
-          let params = {
-            'username': this.loginInfo.handle,
+          let params = this.$qs.stringify({
+            'handle': this.loginInfo.handle,
             'password': this.loginInfo.password
-          }
+          })
           // let params = new URLSearchParams()
           // params.append('username', this.loginInfo.username)
           // params.append('password', this.loginInfo.password)
@@ -145,9 +145,6 @@ export default {
           this.$axios.post(
             '/login',
             params,
-            {headers: {
-              'Content-Type': 'application/x-www-form-urlencoded'
-            }}
           ).then(res => {
             // let logindata = {
             //   username: this.loginInfo.username,
