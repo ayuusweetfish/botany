@@ -144,6 +144,7 @@ char *ipc_recv(int pipe, size_t *o_len, int timeout)
     return ret;
 }
 
+#ifdef IPC_DEMO
 int main(int argc, char *argv[])
 {
     if (argc >= 2 && argv[1][0] == 'i') {
@@ -163,3 +164,4 @@ int main(int argc, char *argv[])
     }
     return 0;
 }
+#endif

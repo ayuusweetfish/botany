@@ -3,11 +3,17 @@
 #include <errno.h>
 #include <signal.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 typedef struct _childproc {
     pid_t pid;
+    /* fd_send is the child's stdin, fd_recv is stdout
+       Parent writes to fd_send and reads from fd_recv */
     int fd_send, fd_recv;
 } childproc;
+
+#define pause_child(__cp)   kill((__cp).pid, SIGSTOP)
+#define resume_child(__cp)  kill((__cp).pid, SIGCONT)
 
 childproc create_child(const char *path)
 {
@@ -40,23 +46,45 @@ childproc create_child(const char *path)
         ret.pid = pid;
         ret.fd_send = fd_send[1];
         ret.fd_recv = fd_recv[0];
-        kill(pid, SIGSTOP);
+        pause_child(ret);
     }
 
     return ret;
 }
 
-int main()
+void run_as_child()
 {
-    childproc cp = create_child("/bin/cat");
-    kill(cp.pid, SIGCONT);
+    /* Receives a string, xor each character by 1 and return */
+    size_t len, i;
+    char *s = ipc_recv(STDIN_FILENO, &len, 1000);
+    for (i = 0; i < len; i++) s[i] ^= 1;
+    ipc_send(STDOUT_FILENO, len, s);
 
-    write(cp.fd_send, "rua", 3);
-    write(cp.fd_send, "ruwww", 5);
+    free(s);
+}
 
-    char buf[10] = { 0 };
-    read(cp.fd_recv, buf, sizeof buf);
-    puts(buf);
+void run_as_parent(const char *path)
+{
+    /* Sends a string to the child and reads its response */
+    childproc cp = create_child(path);
+    resume_child(cp);
+
+    ipc_send(cp.fd_send, 5, "ruwww");
+
+    size_t len, i;
+    char *s = ipc_recv(cp.fd_recv, &len, 1000);
+    for (i = 0; i < len; i++) putchar(s[i]);
+
+    free(s);
+}
+
+/* Example: ./a.out ./a.out */
+int main(int argc, char *argv[])
+{
+    if (argc == 1)
+        run_as_child();
+    else
+        run_as_parent(argv[1]);
 
     return 0;
 }
