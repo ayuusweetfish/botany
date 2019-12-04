@@ -32,7 +32,6 @@ func contestListHandler(w http.ResponseWriter, r *http.Request) {
 
 func contestInfoHandler(w http.ResponseWriter, r *http.Request) {
 	cid, _ := strconv.Atoi(mux.Vars(r)["cid"])
-
 	c := models.Contest{Id: int32(cid)}
 	if err := c.Read(); err != nil {
 		if err == sql.ErrNoRows {
@@ -44,9 +43,53 @@ func contestInfoHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	c.LoadRel()
 
+	uid := middlewareAuthRetrieve(w, r)
 	enc := json.NewEncoder(w)
 	enc.SetEscapeHTML(false)
-	enc.Encode(c.Representation())
+	enc.Encode(c.Representation(uid))
+}
+
+// curl http://localhost:3434/contest/1/join -i -H "Cookie: auth=..." -d ""
+func contestJoinHandler(w http.ResponseWriter, r *http.Request) {
+	uid := middlewareAuthRetrieve(w, r)
+	if uid == -1 {
+		w.WriteHeader(401)
+		return
+	}
+
+	cid, _ := strconv.Atoi(mux.Vars(r)["cid"])
+	c := models.Contest{Id: int32(cid)}
+	if err := c.Read(); err != nil {
+		if err == sql.ErrNoRows {
+			w.WriteHeader(404)
+			return
+		} else {
+			panic(err)
+		}
+	}
+
+	if !c.IsVisible {
+		w.WriteHeader(404)
+		return
+	}
+	if !c.IsRegOpen {
+		w.WriteHeader(400)
+		// Registration not open
+		fmt.Fprintf(w, "{\"err\": 2}")
+		return
+	}
+
+	p := models.ContestParticipation{
+		User:    uid,
+		Contest: int32(cid),
+		Type:    models.ParticipationTypeContestant,
+	}
+	if err := p.Create(); err != nil {
+		panic(err)
+	}
+
+	// Success
+	fmt.Fprintf(w, "{\"err\": 0}")
 }
 
 // XXX: For debug use
@@ -79,5 +122,6 @@ func contestCreateHandler(w http.ResponseWriter, r *http.Request) {
 func init() {
 	registerRouterFunc("/contest/list", contestListHandler, "GET")
 	registerRouterFunc("/contest/{cid:[0-9]+}/info", contestInfoHandler, "GET")
+	registerRouterFunc("/contest/{cid:[0-9]+}/join", contestJoinHandler, "POST")
 	registerRouterFunc("/contest/create", contestCreateHandler, "POST")
 }

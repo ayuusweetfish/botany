@@ -128,6 +128,10 @@
 - **details** (string) 长篇详细说明
 - **is_reg_open** (boolean) 是否公开接受报名
 - **owner** (UserShort) 创建者
+- **my_role** (number) 自己的参加情况
+	- **-1** 未登录或未报名
+	- **0** 作为选手参加
+	- **1** 拥有管理权限（管理员或创建者）
 
 ### 比赛数据结构 ContestShort
 
@@ -173,6 +177,14 @@
 
 响应
 - 一个 Contest
+
+### 比赛报名 POST /contest/{cid}/join
+
+响应 200
+- 空对象 {}，报名成功或此前已报名
+
+响应 400
+- 空对象 {}，比赛不开放报名 —— 前端处理正确时不应出现此项
 
 ### 自己的提交历史 GET /contest/{cid}/my
 

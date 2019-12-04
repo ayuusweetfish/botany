@@ -1,6 +1,9 @@
 package models
 
-import "strconv"
+import (
+	"database/sql"
+	"strconv"
+)
 
 type Contest struct {
 	Id     int32
@@ -47,6 +50,7 @@ const (
 )
 
 type ContestMatchScript struct {
+	Id       int32
 	Contest  int32
 	Hook     int8
 	Contents string
@@ -69,15 +73,35 @@ func init() {
 		"uid INTEGER NOT NULL REFERENCES users(id)",
 		"contest INTEGER NOT NULL REFERENCES contest(id)",
 		"type SMALLINT NOT NULL",
+		"ADD PRIMARY KEY (uid, contest)",
 	)
 	registerSchema("contest_match_script",
+		"id SERIAL PRIMARY KEY",
 		"contest INTEGER NOT NULL REFERENCES contest(id)",
 		"hook SMALLINT NOT NULL DEFAULT "+strconv.Itoa(MatchScriptHookManual),
 		"contents TEXT NOT NULL",
 	)
 }
 
-func (c *Contest) Representation() map[string]interface{} {
+func (c *Contest) Representation(uid int32) map[string]interface{} {
+	myRole := int8(-1)
+	if uid == c.Owner {
+		myRole = ParticipationTypeModerator
+	} else if uid != -1 {
+		p := ContestParticipation{
+			User:    uid,
+			Contest: c.Id,
+		}
+		if err := p.Read(); err != nil {
+			if err != sql.ErrNoRows {
+				panic(err)
+			}
+			// No participation, keep myRole as -1
+		} else {
+			myRole = p.Type
+		}
+	}
+
 	return map[string]interface{}{
 		"id":          c.Id,
 		"title":       c.Title,
@@ -88,6 +112,7 @@ func (c *Contest) Representation() map[string]interface{} {
 		"details":     c.Details,
 		"is_reg_open": c.IsRegOpen,
 		"owner":       c.Rel.Owner.ShortRepresentation(),
+		"my_role":     myRole,
 	}
 }
 
@@ -178,4 +203,34 @@ func (c *Contest) LoadRel() error {
 func (c *Contest) Update() error {
 	// TODO
 	return nil
+}
+
+func (p *ContestParticipation) Create() error {
+	_, err := db.Exec("INSERT INTO "+
+		"contest_participation(uid, contest, type) "+
+		"VALUES ($1, $2, $3) ON CONFLICT DO NOTHING",
+		p.User,
+		p.Contest,
+		p.Type,
+	)
+	return err
+}
+
+func (p *ContestParticipation) Read() error {
+	err := db.QueryRow("SELECT type "+
+		"FROM contest_participation WHERE uid = $1 AND contest = $2",
+		p.User,
+		p.Contest,
+	).Scan(&p.Type)
+	return err
+}
+
+func (p *ContestParticipation) Update() error {
+	_, err := db.Exec("UPDATE contest_participation SET "+
+		"type = $1 WHERE uid = $1 AND contest = $2",
+		p.Type,
+		p.User,
+		p.Contest,
+	)
+	return err
 }
