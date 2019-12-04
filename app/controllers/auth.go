@@ -101,7 +101,9 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 	if ok {
 		middlewareAuthGrant(w, r, u.Id)
 		w.WriteHeader(200)
-		fmt.Fprintf(w, "{}")
+		enc := json.NewEncoder(w)
+		enc.SetEscapeHTML(false)
+		enc.Encode(u.Representation())
 	} else {
 		w.WriteHeader(400)
 		fmt.Fprintf(w, "{}")

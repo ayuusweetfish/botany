@@ -31,7 +31,7 @@
 
 ## 普适
 
-请求参数均为纯文本 `key=val&key=val`，响应内容均为 JSON。
+请求参数均为 application/x-www-form-urlencoded 格式 `key=val&key=val`，响应内容均为 JSON。
 
 状态码：
 - 任何时候返回 401 表示未登录，应该重定向到登录页面，登录后返回当前页面。
@@ -58,7 +58,7 @@
 
 ### 用户数据结构 UserShort
 
-仅包含 User 的 **id**, **handle**, **nickname**
+仅包含 User 的 **id**, **handle**, **privilege**，**nickname**
 
 ### 验证码 GET /captcha
 
@@ -93,10 +93,11 @@
 - **password** (string) 不可逆哈希后的密码
 
 响应 200
-- 空对象 {}，会设置 Cookie，以后的请求不必特殊处理
+- 一个 UserShort
+- 会设置 Cookie，以后的请求不必特殊处理
 
 响应 400
-- 空对象 {}，登录失败
+- 空对象 {}，登录名或密码错误
 
 
 ## 比赛

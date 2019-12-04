@@ -59,9 +59,10 @@ func (u *User) Representation() map[string]interface{} {
 
 func (u *User) ShortRepresentation() map[string]interface{} {
 	return map[string]interface{}{
-		"id":       u.Id,
-		"handle":   u.Handle,
-		"nickname": u.Nickname,
+		"id":        u.Id,
+		"handle":    u.Handle,
+		"privilege": u.Privilege,
+		"nickname":  u.Nickname,
 	}
 }
 
