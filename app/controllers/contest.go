@@ -30,17 +30,29 @@ func contestListHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("]"))
 }
 
-func contestInfoHandler(w http.ResponseWriter, r *http.Request) {
+// Retrieves the contest referred to in the URL parameter
+// Returns the object without relationships loaded; or
+// an empty one with an Id of -1 if none is found
+func middlewareReferredContest(w http.ResponseWriter, r *http.Request) models.Contest {
 	cid, _ := strconv.Atoi(mux.Vars(r)["cid"])
 	c := models.Contest{Id: int32(cid)}
 	if err := c.Read(); err != nil {
 		if err == sql.ErrNoRows {
-			w.WriteHeader(404)
-			return
+			return models.Contest{Id: -1}
 		} else {
 			panic(err)
 		}
 	}
+	return c
+}
+
+func contestInfoHandler(w http.ResponseWriter, r *http.Request) {
+	c := middlewareReferredContest(w, r)
+	if c.Id == -1 {
+		w.WriteHeader(404)
+		return
+	}
+
 	c.LoadRel()
 
 	uid := middlewareAuthRetrieve(w, r)
@@ -57,31 +69,21 @@ func contestJoinHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	cid, _ := strconv.Atoi(mux.Vars(r)["cid"])
-	c := models.Contest{Id: int32(cid)}
-	if err := c.Read(); err != nil {
-		if err == sql.ErrNoRows {
-			w.WriteHeader(404)
-			return
-		} else {
-			panic(err)
-		}
-	}
-
-	if !c.IsVisible {
+	c := middlewareReferredContest(w, r)
+	if c.Id == -1 || !c.IsVisible {
 		w.WriteHeader(404)
 		return
 	}
 	if !c.IsRegOpen {
 		w.WriteHeader(400)
 		// Registration not open
-		fmt.Fprintf(w, "{\"err\": 2}")
+		fmt.Fprintf(w, "{}")
 		return
 	}
 
 	p := models.ContestParticipation{
 		User:    uid,
-		Contest: int32(cid),
+		Contest: c.Id,
 		Type:    models.ParticipationTypeContestant,
 	}
 	if err := p.Create(); err != nil {
@@ -89,7 +91,85 @@ func contestJoinHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Success
-	fmt.Fprintf(w, "{\"err\": 0}")
+	fmt.Fprintf(w, "{}")
+}
+
+// curl http://localhost:3434/contest/1/submit -i -H "Cookie: auth=..." -d "code=123%20456"
+func contestSubmitHandler(w http.ResponseWriter, r *http.Request) {
+	uid := middlewareAuthRetrieve(w, r)
+	if uid == -1 {
+		w.WriteHeader(401)
+		return
+	}
+
+	c := middlewareReferredContest(w, r)
+	if c.Id == -1 || !c.IsVisible {
+		w.WriteHeader(404)
+		return
+	}
+
+	// Look for the participation record
+	p := models.ContestParticipation{
+		User:    uid,
+		Contest: c.Id,
+	}
+	if err := p.Read(); err != nil {
+		if err == sql.ErrNoRows {
+			w.WriteHeader(400)
+			// Have not participated in this contest
+			fmt.Fprintf(w, "{\"err\": -1}")
+			return
+		} else {
+			panic(err)
+		}
+	}
+
+	// TODO: Check submission length and character set
+
+	// Create a new submission
+	s := models.Submission{
+		User:     uid,
+		Contest:  c.Id,
+		Contents: r.PostFormValue("code"),
+	}
+	if err := s.Create(); err != nil {
+		panic(err)
+	}
+	s.LoadRel()
+
+	// Success
+	enc := json.NewEncoder(w)
+	enc.SetEscapeHTML(false)
+	enc.Encode(map[string]interface{}{
+		"err":        0,
+		"submission": s.ShortRepresentation(),
+	})
+}
+
+func contestSubmissionHandler(w http.ResponseWriter, r *http.Request) {
+	// TODO: Disallow viewing of others' code during a contest for non-moderators
+
+	c := middlewareReferredContest(w, r)
+	if c.Id == -1 || !c.IsVisible {
+		w.WriteHeader(404)
+		return
+	}
+
+	sid, _ := strconv.Atoi(mux.Vars(r)["sid"])
+	s := models.Submission{Id: int32(sid)}
+	if err := s.Read(); err != nil {
+		if err == sql.ErrNoRows {
+			w.WriteHeader(404)
+			return
+		} else {
+			panic(err)
+		}
+	}
+	s.LoadRel()
+
+	enc := json.NewEncoder(w)
+	enc.SetEscapeHTML(false)
+	enc.Encode(s.Representation())
 }
 
 // XXX: For debug use
@@ -123,5 +203,7 @@ func init() {
 	registerRouterFunc("/contest/list", contestListHandler, "GET")
 	registerRouterFunc("/contest/{cid:[0-9]+}/info", contestInfoHandler, "GET")
 	registerRouterFunc("/contest/{cid:[0-9]+}/join", contestJoinHandler, "POST")
+	registerRouterFunc("/contest/{cid:[0-9]+}/submit", contestSubmitHandler, "POST")
+	registerRouterFunc("/contest/{cid:[0-9]+}/submission/{sid:[0-9]+}", contestSubmissionHandler, "GET")
 	registerRouterFunc("/contest/create", contestCreateHandler, "POST")
 }
