@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"regexp"
 
 	"github.com/gorilla/mux"
 )
@@ -63,7 +64,16 @@ func signupHandler(w http.ResponseWriter, r *http.Request) {
 	u.Handle = s
 	u.Email = email
 
-	// TODO: Validate email format
+	// TODO: Validate email format.
+	// Now it is not complete because there are some situations this one cannot handle.
+	// For example the email .list@gmail.com or list..list@gmail.com is not correct according to RFC 5322.
+	re := regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$")
+	if !re.MatchString(u.Email) {
+		w.WriteHeader(400)
+		fmt.Fprintf(w, "{\"err\": [-1]}")
+		return
+	}
+
 	// TODO: Look for an existing user with the same handle or email
 
 	u.Password = p
