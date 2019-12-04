@@ -27,7 +27,7 @@ func contestListHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		enc.Encode(c.ShortRepresentation())
 	}
-	w.Write([]byte("]"))
+	w.Write([]byte("]\n"))
 }
 
 // Retrieves the contest referred to in the URL parameter
@@ -172,6 +172,37 @@ func contestSubmissionHandler(w http.ResponseWriter, r *http.Request) {
 	enc.Encode(s.Representation())
 }
 
+func contestSubmissionHistoryHandler(w http.ResponseWriter, r *http.Request) {
+	uid := middlewareAuthRetrieve(w, r)
+	if uid == -1 {
+		w.WriteHeader(401)
+		return
+	}
+
+	c := middlewareReferredContest(w, r)
+	if c.Id == -1 || !c.IsVisible {
+		w.WriteHeader(404)
+		return
+	}
+
+	ss, err := models.SubmissionHistory(uid, c.Id, 5)
+	if err != nil {
+		panic(err)
+	}
+
+	// XXX: Avoid duplication?
+	w.Write([]byte("["))
+	enc := json.NewEncoder(w)
+	enc.SetEscapeHTML(false)
+	for i, s := range ss {
+		if i != 0 {
+			w.Write([]byte(","))
+		}
+		enc.Encode(s.ShortRepresentation())
+	}
+	w.Write([]byte("]\n"))
+}
+
 // XXX: For debug use
 // curl http://localhost:3434/contest/create -i -H "Cookie: auth=..." -d ""
 func contestCreateHandler(w http.ResponseWriter, r *http.Request) {
@@ -205,5 +236,6 @@ func init() {
 	registerRouterFunc("/contest/{cid:[0-9]+}/join", contestJoinHandler, "POST")
 	registerRouterFunc("/contest/{cid:[0-9]+}/submit", contestSubmitHandler, "POST")
 	registerRouterFunc("/contest/{cid:[0-9]+}/submission/{sid:[0-9]+}", contestSubmissionHandler, "GET")
+	registerRouterFunc("/contest/{cid:[0-9]+}/my", contestSubmissionHistoryHandler, "GET")
 	registerRouterFunc("/contest/create", contestCreateHandler, "POST")
 }

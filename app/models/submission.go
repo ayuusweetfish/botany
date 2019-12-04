@@ -85,6 +85,33 @@ func (s *Submission) Read() error {
 	return err
 }
 
+func SubmissionHistory(uid int32, cid int32, limit int) ([]Submission, error) {
+	rows, err := db.Query("SELECT "+
+		"submission.id, submission.created_at, submission.status, "+
+		"users.id, users.handle, users.privilege, users.nickname "+
+		"FROM submission "+
+		"LEFT JOIN users ON submission.uid = users.id "+
+		"WHERE uid = $1 AND contest = $2 "+
+		"ORDER BY submission.created_at DESC LIMIT $3",
+		uid, cid, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	ss := []Submission{}
+	for rows.Next() {
+		s := Submission{User: uid, Contest: cid}
+		err := rows.Scan(&s.Id, &s.CreatedAt, &s.Status,
+			&s.Rel.User.Id, &s.Rel.User.Handle,
+			&s.Rel.User.Privilege, &s.Rel.User.Nickname)
+		if err != nil {
+			return nil, err
+		}
+		ss = append(ss, s)
+	}
+	return ss, rows.Err()
+}
+
 func (s *Submission) LoadRel() error {
 	s.Rel.User.Id = s.User
 	if err := s.Rel.User.ReadById(); err != nil {
