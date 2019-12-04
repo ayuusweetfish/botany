@@ -99,7 +99,7 @@
 响应 400
 - 空对象 {}，登录名或密码错误
 
-### 当前帐号 GET /whoami
+### :construction: 当前帐号 GET /whoami
 
 响应 200
 - 一个 UserShort
@@ -107,7 +107,7 @@
 响应 400
 - 空对象 {}，未登录
 
-### 个人主页 GET /user/{handle}/profile
+### :construction: 个人主页 GET /user/{handle}/profile
 
 响应
 - **user** (User) 帐号信息
@@ -211,7 +211,7 @@
 	- **2** 代码包含不合法字符
 	- **-1** 未报名比赛 —— 前端检查严格时不应出现此项
 
-### 排行榜 GET /contest/{cid}/ranklist
+### :construction: 排行榜 GET /contest/{cid}/ranklist
 
 响应
 - 一个数组，按排名从高到低排序，每个元素如下
@@ -220,12 +220,12 @@
 	- **lose_count** (number) 败场数
 	- **rating** (number) 匹配积分
 
-### 对局列表 GET /contest/{cid}/matches
+### :construction: 对局列表 GET /contest/{cid}/matches
 
 响应
 - 若干 MatchShort 组成的数组，从最新到最旧排序
 
-### 对局详情 GET /contest/{cid}/match/{mid}
+### :construction: 对局详情 GET /contest/{cid}/match/{mid}
 
 响应
 - 一个 Match
