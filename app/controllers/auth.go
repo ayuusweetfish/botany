@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"net/http"
 
-	_ "github.com/gorilla/mux"
+	"github.com/gorilla/mux"
 )
 
 // Returns a user ID
@@ -110,15 +110,21 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// XXX: For debug use
-// curl http://localhost:3434/check_auth -i -H "Cookie: auth=..."
-func checkAuthHandler(w http.ResponseWriter, r *http.Request) {
+// curl http://localhost:3434/whoami -i -H "Cookie: auth=..."
+func whoAmIHandler(w http.ResponseWriter, r *http.Request) {
 	uid := middlewareAuthRetrieve(w, r)
 	if uid == -1 {
 		w.WriteHeader(401)
 	} else {
+		u := models.User{Id: uid}
+		if err := u.ReadById(); err != nil {
+			panic(err)
+		}
+
 		w.WriteHeader(200)
-		fmt.Fprintf(w, "Your ID is %d\n", uid)
+		enc := json.NewEncoder(w)
+		enc.SetEscapeHTML(false)
+		enc.Encode(u.ShortRepresentation())
 	}
 }
 
@@ -132,10 +138,34 @@ func captchaGetHandler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+func profileHandler(w http.ResponseWriter, r *http.Request) {
+	u := models.User{Handle: mux.Vars(r)["handle"]}
+
+	if err := u.ReadByHandle(); err != nil {
+		if err == sql.ErrNoRows {
+			// No such user
+			w.WriteHeader(404)
+			return
+		} else {
+			panic(err)
+		}
+	}
+
+	enc := json.NewEncoder(w)
+	enc.SetEscapeHTML(false)
+	enc.Encode(map[string]interface{}{
+		"user":     u.Representation(),
+		"contests": []int{}, // TODO
+		"matches":  []int{}, // TODO
+	})
+}
+
 func init() {
 	registerRouterFunc("/signup", signupHandler, "POST")
 	registerRouterFunc("/login", loginHandler, "POST")
-	registerRouterFunc("/check_auth", checkAuthHandler, "GET")
+	registerRouterFunc("/whoami", whoAmIHandler, "GET")
 
 	registerRouterFunc("/captcha", captchaGetHandler, "GET")
+
+	registerRouterFunc("/user/{handle:[a-zA-Z0-9-_]+}/profile", profileHandler, "GET")
 }

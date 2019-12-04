@@ -99,20 +99,20 @@
 响应 400
 - 空对象 {}，登录名或密码错误
 
-### :construction: 当前帐号 GET /whoami
+### 当前帐号 GET /whoami
 
 响应 200
 - 一个 UserShort
 
-响应 400
+响应 401
 - 空对象 {}，未登录
 
-### :construction: 个人主页 GET /user/{handle}/profile
+### 个人主页 GET /user/{handle}/profile
 
 响应
 - **user** (User) 帐号信息
-- **contests** ([ContestShort]) 参与的比赛列表
-- **matches** ([MatchShort]) 最近对局列表
+- :construction: **contests** ([ContestShort]) 参与的比赛列表
+- :construction: **matches** ([MatchShort]) 最近对局列表
 
 
 ## 比赛
