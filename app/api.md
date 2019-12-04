@@ -184,6 +184,20 @@
 响应
 - 一个 Submission
 
+### 提交代码 POST /contest/{cid}/submit
+
+请求
+- **code** (string) 代码
+
+响应 200
+- **err** (number) 0
+- **submission** (SubmissionShort) 本次提交记录
+
+响应 400
+- **err** (number) 错误代码
+	- **1** 代码超过长度限制
+	- **2** 代码包含不合法字符
+
 ### 排行榜 GET /contest/{cid}/ranklist
 
 响应
