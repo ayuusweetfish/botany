@@ -114,6 +114,19 @@
 - :construction: **contests** ([ContestShort]) 参与的比赛列表
 - :construction: **matches** ([MatchShort]) 最近对局列表
 
+### :construction: 赋予或撤回主办权限 POST /user/{handle}/promote
+
+请求
+- **set** (boolean) true 表示赋予权限，false 表示取消权限
+
+响应 200
+- 空对象 {}
+- 无论前后权限是否变化，都正常返回
+
+响应 403
+- 空对象 {}
+- 无站长权限 —— 前端检查严格时不应出现此项
+
 
 ## 比赛
 
@@ -167,6 +180,43 @@
 ### 对局数据结构 MatchShort
 
 不包含 Match 的 **details**
+
+### :construction: 创建比赛 POST /contest/create
+
+请求
+- **title** (string) 标题
+- **banner** (string) Banner 图片链接（暂不使用）
+- **start_time** (number) 开始时刻的 Unix 时间戳，单位为秒
+- **end_time** (number) 结束时刻的 Unix 时间戳，单位为秒
+- **desc** (string) 简要描述
+- **details** (string) 长篇详细说明
+- **is_visible** (boolean) 是否公开显示
+- **is_reg_open** (boolean) 是否公开接受报名
+
+响应 200
+- 空对象 {}
+- 无论是否变更可见性都正常返回
+
+响应 400
+- 空对象 {}
+- 任何一项信息过长、过短或不合法 —— 前端检查严格时不应出现此项
+
+响应 403
+- 空对象 {}
+- 无主办权限 —— 前端检查严格时不应出现此项
+
+### :construction: 公开或隐藏比赛 POST /contest/{cid}/publish
+
+请求
+- **set** (boolean) true 表示设为公开，false 表示设为隐藏
+
+响应 200
+- 空对象 {}
+- 无论前后可见性是否变化，都正常返回
+
+响应 403
+- 空对象 {}
+- 无站长权限 —— 前端检查严格时不应出现此项
 
 ### 比赛列表 GET /contest/list
 
