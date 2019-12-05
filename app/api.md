@@ -247,8 +247,12 @@
 
 ### 提交详情 GET /contest/{cid}/submission/{sid}
 
-响应
+响应 200
 - 一个 Submission
+
+响应 403
+- 空对象 {}
+- 普通参赛者不能在比赛期间查看不属于自己的提交 —— 前端处理正确时不应出现此项
 
 ### 提交代码 POST /contest/{cid}/submit
 

@@ -139,7 +139,6 @@ func contestSubmitHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func contestSubmissionHandler(w http.ResponseWriter, r *http.Request) {
-	// TODO: Disallow viewing of others' code during a contest for non-moderators
 	uid := middlewareAuthRetrieve(w, r)
 
 	c := middlewareReferredContest(w, r)
@@ -158,7 +157,15 @@ func contestSubmissionHandler(w http.ResponseWriter, r *http.Request) {
 			panic(err)
 		}
 	}
+
 	s.LoadRel()
+
+	// Disallow viewing of others' code during a contest for non-moderators
+	if !s.IsVisibleTo(uid) {
+		w.WriteHeader(403)
+		fmt.Fprintf(w, "{}")
+		return
+	}
 
 	enc := json.NewEncoder(w)
 	enc.SetEscapeHTML(false)

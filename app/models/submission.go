@@ -125,3 +125,10 @@ func (s *Submission) Update() error {
 	// TODO
 	return nil
 }
+
+// Call after LoadRel()
+func (s *Submission) IsVisibleTo(uid int32) bool {
+	return s.User == uid ||
+		s.Rel.Contest.HasEnded() ||
+		s.Rel.Contest.ParticipationOf(uid) == ParticipationTypeModerator
+}

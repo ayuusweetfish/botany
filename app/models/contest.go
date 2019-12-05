@@ -3,6 +3,7 @@ package models
 import (
 	"database/sql"
 	"strconv"
+	"time"
 )
 
 type Contest struct {
@@ -185,6 +186,10 @@ func (c *Contest) LoadRel() error {
 func (c *Contest) Update() error {
 	// TODO
 	return nil
+}
+
+func (c *Contest) HasEnded() bool {
+	return time.Now().Unix() >= c.EndTime
 }
 
 func (c *Contest) ParticipationOf(uid int32) int8 {
