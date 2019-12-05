@@ -74,7 +74,33 @@ func signupHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO: Look for an existing user with the same handle or email
+	// check whether a user with the same handle or email is existing
+	userExist := true
+	if err := u.ReadByHandle(); err != nil {
+		if err == sql.ErrNoRows {
+			userExist = false
+		} else {
+			panic(err)
+		}
+	}
+	if userExist {
+		w.WriteHeader(400)
+		fmt.Fprintf(w, "{\"err\": [1]}")
+		return
+	}
+	userExist = true
+	if err := u.ReadByEmail(); err != nil {
+		if err == sql.ErrNoRows {
+			userExist = false
+		} else {
+			panic(err)
+		}
+	}
+	if userExist {
+		w.WriteHeader(400)
+		fmt.Fprintf(w, "{\"err\": [2]}")
+		return
+	}
 
 	u.Password = p
 	u.Nickname = nickname

@@ -92,19 +92,25 @@ func (u *User) Create() error {
 	return err
 }
 
-func (u *User) Read(byHandle bool) error {
+func (u *User) read(field string) error {
 	var row *sql.Row
-	if byHandle {
+	if field == "handle" {
 		row = db.QueryRow("SELECT "+
 			"id, handle, email, password, privilege, joined_at, nickname "+
 			"FROM users WHERE handle = $1",
 			u.Handle,
 		)
-	} else {
+	} else if field == "id" {
 		row = db.QueryRow("SELECT "+
 			"id, handle, email, password, privilege, joined_at, nickname "+
 			"FROM users WHERE id = $1",
 			u.Id,
+		)
+	} else if field == "email" {
+		row = db.QueryRow("SELECT "+
+			"id, handle, email, password, privilege, joined_at, nickname "+
+			"FROM users WHERE id = $1",
+			u.Email,
 		)
 	}
 	err := row.Scan(&u.Id, &u.Handle, &u.Email,
@@ -113,11 +119,15 @@ func (u *User) Read(byHandle bool) error {
 }
 
 func (u *User) ReadById() error {
-	return u.Read(false)
+	return u.read("id")
 }
 
 func (u *User) ReadByHandle() error {
-	return u.Read(true)
+	return u.read("handle")
+}
+
+func (u *User) ReadByEmail() error {
+	return u.read("email")
 }
 
 func (u *User) Update() error {
