@@ -9,9 +9,9 @@
       </el-col>
       <el-col :span="6" v-if="$route.meta.navbarType === 'main'" align='left'>
         <div style="display: inline; color:gray">|</div>
-        <el-button type="text" class="navbar-item" @click="goGamelist">比赛列表</el-button>
+        <router-link class="navbar-item" to="/">比赛列表</router-link>
         <div style="display: inline; color:gray">|</div>
-        <el-button type="text" class="navbar-item" @click="goPersonalinfo">个人信息</el-button>
+        <router-link class="navbar-item" to="/profile">个人信息</router-link>
         <div style="display: inline; color:gray">|</div>
       </el-col>
       <el-col :span="12" v-if="$route.meta.navbarType === 'game'" align='left'>
@@ -65,11 +65,11 @@ export default {
     }
   },
   methods: {
+    changeTitle (title) {
+      console.log(title)
+    },
     handleCommand(command) {
       this.$router.push('/')
-    },
-    goGamelist(){
-      this.$router.push('/gamelist')
     },
     goGamemain(){
       this.$router.push('/gamemain')
@@ -125,5 +125,6 @@ export default {
   font-size: 18px;
   color: grey;
   height: 30px;
+  text-decoration: none;
 }
 </style>

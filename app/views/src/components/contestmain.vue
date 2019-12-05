@@ -2,7 +2,11 @@
   <div>
     <el-row style="margin-bottom: 10px">
       <el-col :span="24">
-        <el-card class="game-title" body-style="display: flex; justify-content: space-between; height: 200px; align-items: flex-end">
+        <el-card 
+          class="game-title"
+          :style="{backgroundImage: 'url('+bannerUrl+')'}"
+          body-style="display: flex; justify-content: space-between; height: 200px; align-items: flex-end"
+          >
           <div style="display: inline-flex">GStrategy by SSAST</div>
           <el-button type="primary" size="large" style="display: inline-flex;">报名参加</el-button>
         </el-card>
@@ -48,8 +52,21 @@
 
 export default {
   name: 'contestmain',
+  created () {
+    this.bannerUrl = 'https://www.csgowallpapers.com/assets/images/original/mossawi_518842827528_20150625022423_816788567695.png'
+    const loading = this.$loading({lock: true, text:'查询比赛信息'})
+    this.$axios.get(
+      '/contest/' + this.$route.query.id + '/info'
+    ).then(res=>{
+      
+    })
+    this.$store.commit('setSiteName', )
+  },
   data () {
     return {
+      cid: '',
+      title: '',
+      bannerUrl: '',
       events: [
         {
           time: '2019-01-01',
@@ -80,8 +97,8 @@ export default {
 <style scoped>
   .game-title{
     font-size: 36px;
-    background-image: url('../assets/demo2.png');
-    background-repeat: no-repeat;
+    background-size: 100% auto;
+    background-position: center;
     border-radius: 5px;
   }
 </style>

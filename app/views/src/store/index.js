@@ -10,22 +10,35 @@ export default new Vuex.Store({
     handle: '',
     email: '',
     privilege: -1,
-    nickname: ''
+    nickname: '',
+    sitename: '',
+    routeList: '',
+    beforeLog: null
   },
   mutations: {
     setRouteList (state, val) {
       state.routeList = val
     },
     login (state, val) {
-      state.userid = val.userid
-      state.usertype = val.usertype
-      state.username = val.username
+      state.id = val.id
+      state.handle = val.handle
+      state.email = val.email
+      state.privilege = val.privilege
+      state.nickname = val.nickname
     },
     logout (state) {
-      state.username = ''
+      state.id = ''
+      state.handle = ''
+      state.email = ''
+      state.nickname = ''
+      state.privilege = -1
       state.routeList = []
-      state.usertype = ''
-      state.userid = ''
+    },
+    setPageBefore (state, val) {
+      state.beforeLog = val
+    },
+    enterSubSite (state, val) {
+      state.sitename = val
     }
   },
   plugins: [createPersistedState()]

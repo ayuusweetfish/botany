@@ -6,10 +6,12 @@ import router from './router'
 import ElementUI from 'element-ui'
 import axios from 'axios'
 import qs from 'querystring'
+import utils from './utils'
 import 'element-ui/lib/theme-chalk/index.css'
 
 Vue.config.productionTip = false
 Vue.use(ElementUI)
+Vue.use(utils)
 
 Vue.prototype.$axios = axios
 axios.defaults.baseURL = '/api'

@@ -17,7 +17,7 @@ Vue.use(Router)
 export default new Router({
   routes: [
     {
-      path: '/',
+      path: '/login',
       name: 'login',
       component: login,
       meta: {
@@ -33,7 +33,7 @@ export default new Router({
       }
     },
     {
-      path: '/contest_list',
+      path: '/',
       name: 'contest_list',
       component: contestlist,
       meta: {

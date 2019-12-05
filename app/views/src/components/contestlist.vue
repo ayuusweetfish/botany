@@ -1,11 +1,13 @@
 <template>
   <el-card>
-    <el-table :data="games" @row-click="goGamemain">
-      <el-table-column :label="title">
+    <el-table :data="contests" @row-click="goContestMain">
+      <el-table-column :label="title" >
         <template slot-scope="scope">
           <div><div class="important">名称：</div><div class="normal">{{scope.row.name}}</div></div>
           <div><div class="important">时间：</div><div class="normal">{{scope.row.time}}</div></div>
           <div><div class="important">说明：</div><div class="normal">{{scope.row.info}}</div></div>
+          <div v-if="scope.row.regOpen"><div class="important">开放报名中</div></div>
+          <div v-else><div class="normal">不开放报名</div></div>
         </template>
       </el-table-column>
     </el-table>
@@ -16,51 +18,48 @@
 export default {
   name: 'contestlist',
   created () {
-    this.getGameList()
+    this.getContestList()
   },
   data () {
     return {
       title: '当前共有2场比赛正在进行',
-      games: [
-        {
-          name: 'GStrategy',
-          time: '2019-09-01 to 2020-01-01',
-          info: 'a SSAST game.'
-        },
-        {
-          name: 'GStrategy2',
-          time: '2019-09-02 to 2020-01-02',
-          info: 'a SSAST game.'
-        }
-      ]
+      contests: []
     }
   },
   methods: {
-    getGameList () {
+    getContestList () {
       const loading = this.$loading({lock: true, text: '正在查询比赛列表'})
       this.$axios.get(
-        '/gamelist'
+        '/contest/list'
       ).then(res => {
-        this.total = res.data.total
-        res.data.games.forEach(element => {
-          this.games.push({
+        this.contests = []
+        res.data.forEach(element => {
+          let timeStartStr = this.$functions.dateTimeString(element.start_time)
+          let timeEndStr = this.$functions.dateTimeString(element.end_time)
+          this.contests.push({
             id: element.id,
-            name: element.name,
-            time: element.time_start + ' 到 ' + element.time_end,
-            info: element.info
+            name: element.title,
+            time: timeStartStr + ' 到 ' + timeEndStr,
+            info: element.desc,
+            regOpen: element.is_reg_open
           })
         })
+        this.total = this.contests.length
         this.title = '当前共有' + this.total + '场比赛正在进行'
         loading.close()
       // eslint-disable-next-line handle-callback-err
       }).catch(err => {
-        this.$message.error('查询比赛列表失败')
         loading.close()
+        this.$message.error('查询比赛列表失败')
       })
     },
-    goGamemain (x, y, z) {
-      console.log('clicked')
-      this.$router.push('gamemain')
+    goContestMain (obj) {
+      this.$router.push({
+        path: '/contest_main',
+        query: {
+          id: obj.id
+        }
+      })
     }
   }
 }

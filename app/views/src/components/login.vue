@@ -7,42 +7,33 @@
       <el-form
         ref="loginform"
         :model="loginInfo"
-        label-suffix="left"
-        label-width="0px"
+        label-position="right"
+        label-width="100px"
+        hide-required-asterisk
         :rules="rules"
       >
         <el-row>
-          <el-col :span="5">
-            <div align="right" class="login-title">账号：</div>
-          </el-col>
-          <el-col :span="19">
-            <el-form-item prop="handle" :error="loginErrHandle">
-              <el-input
-                type="text"
-                v-model="loginInfo.handle"
-                placeholder="请输入账号"
-                auto-complete="off"
-                prefix-icon="el-icon-user-solid"
-              ></el-input>
-            </el-form-item>
-          </el-col>
+          <el-form-item prop="handle" :error="loginErrHandle" label="用户名：">
+            <el-input
+              type="text"
+              v-model="loginInfo.handle"
+              placeholder="请输入账号"
+              auto-complete="off"
+              prefix-icon="el-icon-user-solid"
+            ></el-input>
+          </el-form-item>
         </el-row>
 
         <el-row>
-          <el-col :span="5">
-            <div align="right" class="login-title">密码：</div>
-          </el-col>
-          <el-col :span="19">
-            <el-form-item prop="password" :error="loginErrPswd">
-              <el-input
-                type="password"
-                v-model="loginInfo.password"
-                placeholder="请输入密码"
-                auto-complete="off"
-                prefix-icon="el-icon-lock"
-              ></el-input>
-            </el-form-item>
-          </el-col>
+          <el-form-item prop="password" :error="loginErrPswd" label="密码：">
+            <el-input
+              type="password"
+              v-model="loginInfo.password"
+              placeholder="请输入密码"
+              auto-complete="off"
+              prefix-icon="el-icon-lock"
+            ></el-input>
+          </el-form-item>
         </el-row>
 
         <!-- <el-row>
@@ -71,7 +62,7 @@
           <el-button type="primary" @click="login" style="width: 80%">登录</el-button>
         </el-col>
         <el-col :span="12">
-          <el-button @click="goRegister" style="width: 80%">注册</el-button>
+          <el-button @click="goSignup" style="width: 80%">注册</el-button>
         </el-col>
       </el-row>
       <!--<el-row>
@@ -138,22 +129,19 @@ export default {
             'handle': this.loginInfo.handle,
             'password': this.loginInfo.password
           })
-          // let params = new URLSearchParams()
-          // params.append('username', this.loginInfo.username)
-          // params.append('password', this.loginInfo.password)
-          // params.append('captcha', this.loginInfo.captcha)
           this.$axios.post(
             '/login',
-            params,
+            params
           ).then(res => {
-            // let logindata = {
-            //   username: this.loginInfo.username,
-            //   userid: res.data.uid,
-            //   usertype: res.data.usertype
-            // }
-            // this.$store.commit('login', logindata)
+            let logindata = {
+              'id': res.data.id,
+              'handle': res.data.handle,
+              'privilege': parseInt(res.data.privilege),
+              'nickname': res.data.nickname
+            }
+            this.$store.commit('login', logindata)
             loading.close()
-            this.$router.push('/gamelist')
+            this.$router.push('/')
           }).catch(err => {
             loading.close()
             this.$message.error('登录失败')
@@ -171,7 +159,7 @@ export default {
         }
       })
     },
-    goRegister () {
+    goSignup () {
       this.$router.push('/signup')
     }
   }

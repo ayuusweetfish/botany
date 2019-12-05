@@ -87,6 +87,9 @@
 <script>
 export default {
   name: 'profile',
+  created () {
+    console.log(this.$route.query)
+  },
   data () {
     return {
       major: [
