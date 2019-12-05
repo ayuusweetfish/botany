@@ -109,7 +109,9 @@ func contestSubmitHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if c.ParticipationOf(uid) == -1 {
+	participation := c.ParticipationOf(uid)
+	if participation == -1 ||
+		(participation != models.ParticipationTypeModerator && !c.IsRunning()) {
 		// Did not participate
 		w.WriteHeader(403)
 		fmt.Fprintf(w, "{}")

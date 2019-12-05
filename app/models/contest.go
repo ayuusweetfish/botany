@@ -188,8 +188,16 @@ func (c *Contest) Update() error {
 	return nil
 }
 
+func (c *Contest) HasStarted() bool {
+	return time.Now().Unix() >= c.StartTime
+}
+
 func (c *Contest) HasEnded() bool {
 	return time.Now().Unix() >= c.EndTime
+}
+
+func (c *Contest) IsRunning() bool {
+	return c.HasStarted() && !c.HasEnded()
 }
 
 func (c *Contest) ParticipationOf(uid int32) int8 {
