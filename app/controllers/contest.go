@@ -104,6 +104,7 @@ func contestSubmitHandler(w http.ResponseWriter, r *http.Request) {
 
 	c := middlewareReferredContest(w, r)
 	if c.Id == -1 || !c.IsVisible {
+		// Nonexistent or invisible contest
 		w.WriteHeader(404)
 		return
 	}
@@ -115,9 +116,9 @@ func contestSubmitHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	if err := p.Read(); err != nil {
 		if err == sql.ErrNoRows {
-			w.WriteHeader(400)
-			// Have not participated in this contest
-			fmt.Fprintf(w, "{\"err\": -1}")
+			// Did not participate
+			w.WriteHeader(403)
+			fmt.Fprintf(w, "{}")
 			return
 		} else {
 			panic(err)
