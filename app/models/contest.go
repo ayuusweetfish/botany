@@ -84,24 +84,6 @@ func init() {
 }
 
 func (c *Contest) Representation(uid int32) map[string]interface{} {
-	myRole := int8(-1)
-	if uid == c.Owner {
-		myRole = ParticipationTypeModerator
-	} else if uid != -1 {
-		p := ContestParticipation{
-			User:    uid,
-			Contest: c.Id,
-		}
-		if err := p.Read(); err != nil {
-			if err != sql.ErrNoRows {
-				panic(err)
-			}
-			// No participation, keep myRole as -1
-		} else {
-			myRole = p.Type
-		}
-	}
-
 	return map[string]interface{}{
 		"id":          c.Id,
 		"title":       c.Title,
@@ -112,7 +94,7 @@ func (c *Contest) Representation(uid int32) map[string]interface{} {
 		"details":     c.Details,
 		"is_reg_open": c.IsRegOpen,
 		"owner":       c.Rel.Owner.ShortRepresentation(),
-		"my_role":     myRole,
+		"my_role":     c.ParticipationOf(uid),
 	}
 }
 
@@ -203,6 +185,31 @@ func (c *Contest) LoadRel() error {
 func (c *Contest) Update() error {
 	// TODO
 	return nil
+}
+
+func (c *Contest) ParticipationOf(uid int32) int8 {
+	if c.Owner == uid {
+		return ParticipationTypeModerator
+	}
+
+	// Look for the participation record
+	p := ContestParticipation{
+		User:    uid,
+		Contest: c.Id,
+	}
+	if err := p.Read(); err != nil {
+		if err == sql.ErrNoRows {
+			// Did not participate
+			return -1
+		} else {
+			panic(err)
+		}
+	}
+	return p.Type
+}
+
+func (c *Contest) IsVisibleTo(uid int32) bool {
+	return c.IsVisible || c.ParticipationOf(uid) != -1
 }
 
 func (p *ContestParticipation) Create() error {

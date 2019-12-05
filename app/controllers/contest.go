@@ -70,7 +70,7 @@ func contestJoinHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	c := middlewareReferredContest(w, r)
-	if c.Id == -1 || !c.IsVisible {
+	if c.Id == -1 || !c.IsVisibleTo(uid) {
 		w.WriteHeader(404)
 		return
 	}
@@ -103,26 +103,17 @@ func contestSubmitHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	c := middlewareReferredContest(w, r)
-	if c.Id == -1 || !c.IsVisible {
+	if c.Id == -1 || !c.IsVisibleTo(uid) {
 		// Nonexistent or invisible contest
 		w.WriteHeader(404)
 		return
 	}
 
-	// Look for the participation record
-	p := models.ContestParticipation{
-		User:    uid,
-		Contest: c.Id,
-	}
-	if err := p.Read(); err != nil {
-		if err == sql.ErrNoRows {
-			// Did not participate
-			w.WriteHeader(403)
-			fmt.Fprintf(w, "{}")
-			return
-		} else {
-			panic(err)
-		}
+	if c.ParticipationOf(uid) == -1 {
+		// Did not participate
+		w.WriteHeader(403)
+		fmt.Fprintf(w, "{}")
+		return
 	}
 
 	// TODO: Check submission length and character set
@@ -149,9 +140,10 @@ func contestSubmitHandler(w http.ResponseWriter, r *http.Request) {
 
 func contestSubmissionHandler(w http.ResponseWriter, r *http.Request) {
 	// TODO: Disallow viewing of others' code during a contest for non-moderators
+	uid := middlewareAuthRetrieve(w, r)
 
 	c := middlewareReferredContest(w, r)
-	if c.Id == -1 || !c.IsVisible {
+	if c.Id == -1 || !c.IsVisibleTo(uid) {
 		w.WriteHeader(404)
 		return
 	}
@@ -181,7 +173,7 @@ func contestSubmissionHistoryHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	c := middlewareReferredContest(w, r)
-	if c.Id == -1 || !c.IsVisible {
+	if c.Id == -1 || !c.IsVisibleTo(uid) {
 		w.WriteHeader(404)
 		return
 	}
