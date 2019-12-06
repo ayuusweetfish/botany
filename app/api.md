@@ -224,6 +224,7 @@
 
 响应
 - 若干 ContestShort 组成的数组
+- 只返回对当前用户可见的比赛
 
 ### 比赛信息 GET /contest/{cid}/info
 

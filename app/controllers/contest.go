@@ -13,6 +13,8 @@ import (
 )
 
 func contestListHandler(w http.ResponseWriter, r *http.Request) {
+	uid := middlewareAuthRetrieve(w, r)
+
 	cs, err := models.ContestReadAll()
 	if err != nil {
 		panic(err)
@@ -21,8 +23,16 @@ func contestListHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("["))
 	enc := json.NewEncoder(w)
 	enc.SetEscapeHTML(false)
-	for i, c := range cs {
-		if i != 0 {
+	first := true
+	for _, c := range cs {
+		// Skip invisible contests
+		if !c.IsVisibleTo(uid) {
+			continue
+		}
+
+		if first {
+			first = false
+		} else {
 			w.Write([]byte(","))
 		}
 		enc.Encode(c.ShortRepresentation())
@@ -59,6 +69,41 @@ func contestInfoHandler(w http.ResponseWriter, r *http.Request) {
 	enc := json.NewEncoder(w)
 	enc.SetEscapeHTML(false)
 	enc.Encode(c.Representation(uid))
+}
+
+// curl http://localhost:3434/contest/1/publish -i -H "Cookie: auth=..." -d "set=true"
+func contestPublishHandler(w http.ResponseWriter, r *http.Request) {
+	uid := middlewareAuthRetrieve(w, r)
+	if uid == -1 {
+		w.WriteHeader(401)
+		return
+	}
+
+	u := models.User{Id: uid}
+	if err := u.ReadById(); err != nil {
+		// Session ensures that the user exists
+		panic(err)
+	}
+	if u.Privilege != models.UserPrivilegeSuperuser {
+		// No privilege
+		w.WriteHeader(403)
+		fmt.Fprintf(w, "{}")
+		return
+	}
+
+	c := middlewareReferredContest(w, r)
+	if c.Id == -1 {
+		// No such contest
+		w.WriteHeader(404)
+		return
+	}
+
+	c.IsVisible = (r.PostFormValue("set") == "true")
+	if err := c.Update(); err != nil {
+		panic(err)
+	}
+
+	fmt.Fprintf(w, "{}")
 }
 
 // curl http://localhost:3434/contest/1/join -i -H "Cookie: auth=..." -d ""
@@ -234,6 +279,7 @@ func contestCreateHandler(w http.ResponseWriter, r *http.Request) {
 
 func init() {
 	registerRouterFunc("/contest/list", contestListHandler, "GET")
+	registerRouterFunc("/contest/{cid:[0-9]+}/publish", contestPublishHandler, "POST")
 	registerRouterFunc("/contest/{cid:[0-9]+}/info", contestInfoHandler, "GET")
 	registerRouterFunc("/contest/{cid:[0-9]+}/join", contestJoinHandler, "POST")
 	registerRouterFunc("/contest/{cid:[0-9]+}/submit", contestSubmitHandler, "POST")

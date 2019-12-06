@@ -184,8 +184,23 @@ func (c *Contest) LoadRel() error {
 }
 
 func (c *Contest) Update() error {
-	// TODO
-	return nil
+	_, err := db.Exec("UPDATE contest SET "+
+		"title = $1, banner = $2, owner = $3, "+
+		"start_time = $4, end_time = $5, descr = $6, "+
+		"details = $7, is_visible = $8, is_reg_open = $9 "+
+		"WHERE id = $10",
+		c.Title,
+		c.Banner,
+		c.Owner,
+		c.StartTime,
+		c.EndTime,
+		c.Desc,
+		c.Details,
+		c.IsVisible,
+		c.IsRegOpen,
+		c.Id,
+	)
+	return err
 }
 
 func (c *Contest) HasStarted() bool {
