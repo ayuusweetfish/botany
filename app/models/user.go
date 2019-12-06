@@ -109,7 +109,7 @@ func (u *User) read(field string) error {
 	} else if field == "email" {
 		row = db.QueryRow("SELECT "+
 			"id, handle, email, password, privilege, joined_at, nickname "+
-			"FROM users WHERE id = $1",
+			"FROM users WHERE email = $1",
 			u.Email,
 		)
 	}
