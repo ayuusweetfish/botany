@@ -49,9 +49,9 @@ func (m *Match) Create() error {
 
 func (m *Match) ShortRepresentation() map[string]interface{} {
 	return map[string]interface{}{
-		"id":          m.Id,
-		"contest":     m.Contest,
-		"parties":     m.Rel,
+		"id":      m.Id,
+		"contest": m.Contest,
+		"parties": m.Rel,
 	}
 }
 
@@ -84,7 +84,7 @@ func ReadByContest(contest int32) ([]Match, error) {
 	s := Submission{}
 	m := Match{Contest: contest}
 	var matchId int32 = -1
-	matchEnd := 0  // true means one match finished.
+	matchEnd := 0 // true means one match finished.
 	for rows.Next() {
 		err = rows.Scan(&m.Id, &s.Id, &s.User, &s.CreatedAt, &s.Status)
 		if err != nil {
