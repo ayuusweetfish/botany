@@ -1,7 +1,7 @@
 export default {
-  install(Vue, options) {
+  install (Vue, options) {
     Vue.prototype.$functions = {
-      dateStrings(timestamp) {
+      dateStrings (timestamp) {
         let date = new Date(timestamp)
         let Y = date.getFullYear()
         let M = date.getMonth() + 1 < 10 ? '0' + (date.getMonth() + 1) : date.getMonth() + 1
@@ -18,7 +18,7 @@ export default {
           'ss': s
         }
       },
-      dateTimeString(timestamp) {
+      dateTimeString (timestamp) {
         let date = new Date(timestamp)
         let Y = date.getFullYear()
         let M = date.getMonth() + 1 < 10 ? '0' + (date.getMonth() + 1) : date.getMonth() + 1
@@ -28,14 +28,14 @@ export default {
         let s = date.getSeconds() < 10 ? '0' + date.getSeconds() : date.getSeconds()
         return Y + '-' + M + '-' + D + ' ' + h + ':' + m + ':' + s
       },
-      dateString(timestamp) {
+      dateString (timestamp) {
         let date = new Date(timestamp)
         let Y = date.getFullYear()
         let M = date.getMonth() + 1 < 10 ? '0' + (date.getMonth() + 1) : date.getMonth() + 1
         let D = date.getDate() < 10 ? '0' + date.getDate() : date.getDate()
         return Y + '-' + M + '-' + D
       },
-      globalValidator(rule, value, callback) {
+      globalValidator (rule, value, callback) {
         if (value.match(new RegExp('[~#^$%&!?%* ]'))) {
           callback(new Error('输入了非法字符'))
         } else {
@@ -49,6 +49,11 @@ export default {
         'organizer': 1,
         'superuser': 2
       },
+      role: {
+        'notIn': -1,
+        'imIn': 0,
+        'moderator': 1
+      }
     }
   }
 }

@@ -76,7 +76,10 @@
 export default {
   name: 'login',
   created () {
-    // this.getCaptcha()
+    if (this.$route.query.next) {
+      this.nextRoute = this.$route.query.next
+      console.log(this.nextRoute)
+    }
   },
   data () {
     return {
@@ -90,6 +93,9 @@ export default {
       loginErrHandle: '',
       loginErrPswd: '',
       loginErrCpch: '',
+      nextRoute: {
+        path: '/'
+      },
       rules: {
         handle: [
           {required: true, message: '请输入账号', trigger: 'blur'},
@@ -141,9 +147,11 @@ export default {
             }
             this.$store.commit('login', logindata)
             loading.close()
-            this.$router.push('/')
+            console.log(this.nextRoute)
+            this.$router.push(this.nextRoute)
           }).catch(err => {
             loading.close()
+            console.log(err)
             this.$message.error('登录失败')
             if (err.response.data.error === 'wrong captcha') {
               this.loginErrCpch = '验证码错误'
@@ -160,7 +168,12 @@ export default {
       })
     },
     goSignup () {
-      this.$router.push('/signup')
+      this.$router.push({
+        path: '/signup',
+        query: {
+          next: this.nextRoute
+        }
+      })
     }
   }
 }

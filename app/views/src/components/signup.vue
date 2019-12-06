@@ -104,6 +104,9 @@
 export default {
   name: 'signup',
   created () {
+    if (this.$route.query.next) {
+      this.nextRoute = this.$route.query.next
+    }
     this.getCaptcha()
   },
   data () {
@@ -128,6 +131,9 @@ export default {
       }
     }
     return {
+      nextRoute: {
+        path: '/login'
+      },
       signupInfo: {
         handle: '',
         password: '',
@@ -216,7 +222,12 @@ export default {
             this.$alert('注册成功，请登录', '成功', {
               confirmButtonText: '确定',
               callback: action => {
-                this.$router.push('/login')
+                this.$router.push({
+                  path: '/login',
+                  query: {
+                    next: this.nextRoute
+                  }
+                })
               }
             })
           }).catch(err => {
@@ -242,7 +253,12 @@ export default {
       })
     },
     goLogin () {
-      this.$router.replace('/')
+      this.$router.push({
+        path: '/login',
+        query: {
+          next: this.nextRoute
+        }
+      })
     }
   }
 }

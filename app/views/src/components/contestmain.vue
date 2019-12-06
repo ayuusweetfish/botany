@@ -2,13 +2,19 @@
   <div>
     <el-row style="margin-bottom: 10px">
       <el-col :span="24">
-        <el-card 
+        <el-card
           class="game-title"
           :style="{backgroundImage: 'url('+bannerUrl+')'}"
           body-style="display: flex; justify-content: space-between; height: 200px; align-items: flex-end"
+        >
+          <div style="display: inline-flex">{{title}}</div>
+          <el-button
+            v-if="myRole===$consts.role.notIn && isRegOpen"
+            type="primary" size="large"
+            style="display: inline-flex;"
           >
-          <div style="display: inline-flex">GStrategy by SSAST</div>
-          <el-button type="primary" size="large" style="display: inline-flex;">报名参加</el-button>
+            报名参加
+          </el-button>
         </el-card>
       </el-col>
     </el-row>
@@ -32,15 +38,8 @@
         <el-card>
           <div align="left" style="font-size: 24px; font-weight: 600">赛事简介</div>
           <div align="left">
-            <p>赛事主办方：软件学院科协</p>
-            <p>决赛赛制：双败淘汰制</p>
-            <p>**more info**</p>
-            <p>**more info**</p>
-            <p>**more info**</p>
-            <p>**more info**</p>
-            <p>**more info**</p>
-            <p>**more info**</p>
-            <p>**more info**</p>
+            <p>赛事主办方：{{owner.nickname}}</p>
+            <p>{{desc}}</p>
           </div>
         </el-card>
       </el-col>
@@ -53,42 +52,49 @@
 export default {
   name: 'contestmain',
   created () {
+    this.cid = this.$route.query.id
     this.bannerUrl = 'https://www.csgowallpapers.com/assets/images/original/mossawi_518842827528_20150625022423_816788567695.png'
-    const loading = this.$loading({lock: true, text:'查询比赛信息'})
+    const loading = this.$loading({lock: true, text: '查询比赛信息'})
     this.$axios.get(
-      '/contest/' + this.$route.query.id + '/info'
-    ).then(res=>{
-      
+      '/contest/' + this.cid + '/info'
+    ).then(res => {
+      this.events = []
+      this.events.push({
+        time: this.$functions.dateTimeString(res.data.end_time),
+        event: '比赛结束',
+        color: 'gray'
+      })
+      this.events.push({
+        time: this.$functions.dateTimeString(res.data.start_time),
+        event: '比赛开始',
+        color: 'green'
+      })
+      // this.bannerUrl = res.data.banner
+      this.desc = res.data.desc
+      this.isRegOpen = res.data.is_reg_open
+      this.isVisible = res.data.is_visible
+      this.myRole = res.data.my_role
+      this.owner = res.data.owner
+      this.title = res.data.title
+      this.$store.commit('enterSubSite', this.title)
+      loading.close()
+    }).catch(err => {
+      console.log(err)
+      loading.close()
+      this.$message.error('查询失败，请刷新')
     })
-    this.$store.commit('setSiteName', )
   },
   data () {
     return {
       cid: '',
       title: '',
       bannerUrl: '',
-      events: [
-        {
-          time: '2019-01-01',
-          event: '总决赛',
-          color: 'gray'
-        },
-        {
-          time: '2019-11-01',
-          event: '排名赛开始',
-          color: 'gray'
-        },
-        {
-          time: '2019-10-01',
-          event: '可以开始非排名比赛',
-          color: 'green'
-        },
-        {
-          time: '2019-09-01',
-          event: '比赛资源上传',
-          color: 'green'
-        }
-      ]
+      isRegOpen: false,
+      isVisible: false,
+      desc: false,
+      myRole: this.$consts.role.notIn,
+      owner: '',
+      events: []
     }
   }
 }
