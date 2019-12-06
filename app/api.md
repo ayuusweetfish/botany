@@ -175,9 +175,7 @@
 - **id** (number) ID
 - **parties** 参与对局的各方，每个元素如下
 	- **submission** (SubmissionShort) 提交记录
-	- **score** (number) 本场得分
-	- **is_winner** (boolean) 是否获胜
-- **report** (string) 对局报告，交给动画播放器
+- **report** (object) 对局报告，交给动画播放器
 
 ### 对局数据结构 MatchShort
 
@@ -278,9 +276,8 @@
 响应
 - 一个数组，按排名从高到低排序，每个元素如下
 	- **participant** (UserShort) 参赛者
-	- **win_count** (number) 胜场数
-	- **lose_count** (number) 败场数
 	- **rating** (number) 匹配积分
+	- **performance** (string) 额外战绩数据
 
 ### :construction: 对局列表 GET /contest/{cid}/matches
 
