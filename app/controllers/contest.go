@@ -44,6 +44,7 @@ func contestListHandler(w http.ResponseWriter, r *http.Request) {
 // Returns the object without relationships loaded; or
 // an empty one with an Id of -1 if none is found
 func middlewareReferredContest(w http.ResponseWriter, r *http.Request) models.Contest {
+	// TODO: Return empty contest for unauthorized access
 	cid, _ := strconv.Atoi(mux.Vars(r)["cid"])
 	c := models.Contest{Id: int32(cid)}
 	if err := c.Read(); err != nil {

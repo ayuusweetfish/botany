@@ -26,6 +26,8 @@ func middlewareAuthRetrieve(w http.ResponseWriter, r *http.Request) int32 {
 	} else {
 		return -1
 	}
+
+	// TODO: Retrieve the user struct and store it in a context
 }
 
 func middlewareAuthGrant(w http.ResponseWriter, r *http.Request, uid int32) {

@@ -23,7 +23,7 @@
 | 报名       | Join        | —                          | Enter              |
 | 排行       | Ranklist    | —                          | Ranking, Board     |
 | 主页       | Profile     | —                          | Personal           |
-| 发布比赛   | Publish     | —                          | Publicize, 公开    |
+| 发布比赛   | Publish     | —                          | Publicize          |
 
 不用 Username 的原因是希望区分登录名 Handle 和昵称 Nickname。  
 不用 Player 的原因是希望区分比赛的人 Participant 和对局的代码 Party。
@@ -207,10 +207,10 @@
 - 空对象 {}
 - 无主办权限 —— 前端检查严格时不应出现此项
 
-### :construction: 公开或隐藏比赛 POST /contest/{cid}/publish
+### 发布或隐藏比赛 POST /contest/{cid}/publish
 
 请求
-- **set** (boolean) true 表示设为公开，false 表示设为隐藏
+- **set** (boolean) true 表示设为公开显示，false 表示设为隐藏
 
 响应 200
 - 空对象 {}
