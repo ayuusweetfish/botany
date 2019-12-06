@@ -43,8 +43,7 @@ func contestListHandler(w http.ResponseWriter, r *http.Request) {
 // Retrieves the contest referred to in the URL parameter
 // Returns the object without relationships loaded; or
 // an empty one with an Id of -1 if none is found
-func middlewareReferredContest(w http.ResponseWriter, r *http.Request) models.Contest {
-	// TODO: Return empty contest for unauthorized access
+func middlewareReferredContest(w http.ResponseWriter, r *http.Request, u models.User) models.Contest {
 	cid, _ := strconv.Atoi(mux.Vars(r)["cid"])
 	c := models.Contest{Id: int32(cid)}
 	if err := c.Read(); err != nil {
@@ -54,11 +53,17 @@ func middlewareReferredContest(w http.ResponseWriter, r *http.Request) models.Co
 			panic(err)
 		}
 	}
-	return c
+	if c.IsVisibleTo(u) {
+		return c
+	} else {
+		return models.Contest{Id: -1}
+	}
 }
 
 func contestInfoHandler(w http.ResponseWriter, r *http.Request) {
-	c := middlewareReferredContest(w, r)
+	u := middlewareAuthRetrieve(w, r)
+
+	c := middlewareReferredContest(w, r, u)
 	if c.Id == -1 {
 		w.WriteHeader(404)
 		return
@@ -66,7 +71,6 @@ func contestInfoHandler(w http.ResponseWriter, r *http.Request) {
 
 	c.LoadRel()
 
-	u := middlewareAuthRetrieve(w, r)
 	enc := json.NewEncoder(w)
 	enc.SetEscapeHTML(false)
 	enc.Encode(c.Representation(u))
@@ -87,7 +91,7 @@ func contestPublishHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	c := middlewareReferredContest(w, r)
+	c := middlewareReferredContest(w, r, u)
 	if c.Id == -1 {
 		// No such contest
 		w.WriteHeader(404)
@@ -110,7 +114,7 @@ func contestJoinHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	c := middlewareReferredContest(w, r)
+	c := middlewareReferredContest(w, r, u)
 	if c.Id == -1 || !c.IsVisibleTo(u) {
 		w.WriteHeader(404)
 		return
@@ -143,7 +147,7 @@ func contestSubmitHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	c := middlewareReferredContest(w, r)
+	c := middlewareReferredContest(w, r, u)
 	if c.Id == -1 || !c.IsVisibleTo(u) {
 		// Nonexistent or invisible contest
 		w.WriteHeader(404)
@@ -184,7 +188,7 @@ func contestSubmitHandler(w http.ResponseWriter, r *http.Request) {
 func contestSubmissionHandler(w http.ResponseWriter, r *http.Request) {
 	u := middlewareAuthRetrieve(w, r)
 
-	c := middlewareReferredContest(w, r)
+	c := middlewareReferredContest(w, r, u)
 	if c.Id == -1 || !c.IsVisibleTo(u) {
 		w.WriteHeader(404)
 		return
@@ -222,7 +226,7 @@ func contestSubmissionHistoryHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	c := middlewareReferredContest(w, r)
+	c := middlewareReferredContest(w, r, u)
 	if c.Id == -1 || !c.IsVisibleTo(u) {
 		w.WriteHeader(404)
 		return

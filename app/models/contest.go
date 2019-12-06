@@ -216,7 +216,7 @@ func (c *Contest) IsRunning() bool {
 }
 
 func (c *Contest) ParticipationOf(u User) int8 {
-	if c.Owner == u.Id {
+	if c.Owner == u.Id || u.Privilege == UserPrivilegeSuperuser {
 		return ParticipationTypeModerator
 	}
 
