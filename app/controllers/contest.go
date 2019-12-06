@@ -62,7 +62,6 @@ func middlewareReferredContest(w http.ResponseWriter, r *http.Request, u models.
 
 func contestInfoHandler(w http.ResponseWriter, r *http.Request) {
 	u := middlewareAuthRetrieve(w, r)
-
 	c := middlewareReferredContest(w, r, u)
 	if c.Id == -1 {
 		w.WriteHeader(404)
@@ -250,6 +249,31 @@ func contestSubmissionHistoryHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("]\n"))
 }
 
+func contestRanklistHandler(w http.ResponseWriter, r *http.Request) {
+	u := middlewareAuthRetrieve(w, r)
+	c := middlewareReferredContest(w, r, u)
+	if c.Id == -1 {
+		w.WriteHeader(404)
+		return
+	}
+
+	ps, err := c.AllParticipations()
+	if err != nil {
+		panic(err)
+	}
+
+	w.Write([]byte("["))
+	enc := json.NewEncoder(w)
+	enc.SetEscapeHTML(false)
+	for i, p := range ps {
+		if i != 0 {
+			w.Write([]byte(","))
+		}
+		enc.Encode(p.Representation())
+	}
+	w.Write([]byte("]\n"))
+}
+
 // XXX: For debug use
 // curl http://localhost:3434/contest/create -i -H "Cookie: auth=..." -d ""
 func contestCreateHandler(w http.ResponseWriter, r *http.Request) {
@@ -285,5 +309,6 @@ func init() {
 	registerRouterFunc("/contest/{cid:[0-9]+}/submit", contestSubmitHandler, "POST")
 	registerRouterFunc("/contest/{cid:[0-9]+}/submission/{sid:[0-9]+}", contestSubmissionHandler, "GET")
 	registerRouterFunc("/contest/{cid:[0-9]+}/my", contestSubmissionHistoryHandler, "GET")
+	registerRouterFunc("/contest/{cid:[0-9]+}/ranklist", contestRanklistHandler, "GET")
 	registerRouterFunc("/contest/create", contestCreateHandler, "POST")
 }

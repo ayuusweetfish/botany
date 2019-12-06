@@ -76,7 +76,7 @@ func init() {
 		"uid INTEGER NOT NULL REFERENCES users(id)",
 		"contest INTEGER NOT NULL REFERENCES contest(id)",
 		"type SMALLINT NOT NULL",
-		"rating BIGINT NOT NULL",
+		"rating BIGINT NOT NULL DEFAULT 1500",
 		"performance TEXT NOT NULL DEFAULT ''",
 		"ADD PRIMARY KEY (uid, contest)",
 	)
@@ -187,6 +187,35 @@ func (c *Contest) LoadRel() error {
 	return c.Rel.Owner.ReadById()
 }
 
+func (c *Contest) AllParticipations() ([]ContestParticipation, error) {
+	rows, err := db.Query("SELECT "+
+		"contest_participation.type, "+
+		"contest_participation.rating, "+
+		"contest_participation.performance, "+
+		"users.id, users.handle, users.privilege, users.nickname "+
+		"FROM contest_participation "+
+		"LEFT JOIN users ON contest_participation.uid = users.id "+
+		"WHERE contest = $1 "+
+		"ORDER BY contest_participation.rating DESC",
+		c.Id)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	ps := []ContestParticipation{}
+	for rows.Next() {
+		p := ContestParticipation{Contest: c.Id}
+		err := rows.Scan(&p.Type, &p.Rating, &p.Performance,
+			&p.Rel.User.Id, &p.Rel.User.Handle,
+			&p.Rel.User.Privilege, &p.Rel.User.Nickname)
+		if err != nil {
+			return nil, err
+		}
+		ps = append(ps, p)
+	}
+	return ps, rows.Err()
+}
+
 func (c *Contest) Update() error {
 	_, err := db.Exec("UPDATE contest SET "+
 		"title = $1, banner = $2, owner = $3, "+
@@ -242,6 +271,14 @@ func (c *Contest) ParticipationOf(u User) int8 {
 
 func (c *Contest) IsVisibleTo(u User) bool {
 	return c.IsVisible || c.ParticipationOf(u) != -1
+}
+
+func (p *ContestParticipation) Representation() map[string]interface{} {
+	return map[string]interface{}{
+		"participant": p.Rel.User.ShortRepresentation(),
+		"rating":      p.Rating,
+		"performance": p.Performance,
+	}
 }
 
 func (p *ContestParticipation) Create() error {
