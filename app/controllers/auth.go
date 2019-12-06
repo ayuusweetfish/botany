@@ -14,20 +14,26 @@ import (
 )
 
 // Returns a user ID
-func middlewareAuthRetrieve(w http.ResponseWriter, r *http.Request) int32 {
+func middlewareAuthRetrieve(w http.ResponseWriter, r *http.Request) models.User {
 	session, err := globals.SessionStore.Get(r, "auth")
 	if err != nil {
 		panic(err)
 	}
 
 	id, ok := session.Values["uid"].(int32)
-	if ok {
-		return id
-	} else {
-		return -1
+	if !ok {
+		return models.User{Id: -1}
 	}
 
-	// TODO: Retrieve the user struct and store it in a context
+	u := models.User{Id: id}
+	if err := u.ReadById(); err != nil {
+		if err == sql.ErrNoRows {
+			return models.User{Id: -1}
+		} else {
+			panic(err)
+		}
+	}
+	return u
 }
 
 func middlewareAuthGrant(w http.ResponseWriter, r *http.Request, uid int32) {
@@ -150,15 +156,10 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 
 // curl http://localhost:3434/whoami -i -H "Cookie: auth=..."
 func whoAmIHandler(w http.ResponseWriter, r *http.Request) {
-	uid := middlewareAuthRetrieve(w, r)
-	if uid == -1 {
+	u := middlewareAuthRetrieve(w, r)
+	if u.Id == -1 {
 		w.WriteHeader(401)
 	} else {
-		u := models.User{Id: uid}
-		if err := u.ReadById(); err != nil {
-			panic(err)
-		}
-
 		w.WriteHeader(200)
 		enc := json.NewEncoder(w)
 		enc.SetEscapeHTML(false)

@@ -84,7 +84,7 @@ func init() {
 	)
 }
 
-func (c *Contest) Representation(uid int32) map[string]interface{} {
+func (c *Contest) Representation(u User) map[string]interface{} {
 	return map[string]interface{}{
 		"id":          c.Id,
 		"title":       c.Title,
@@ -95,7 +95,7 @@ func (c *Contest) Representation(uid int32) map[string]interface{} {
 		"details":     c.Details,
 		"is_reg_open": c.IsRegOpen,
 		"owner":       c.Rel.Owner.ShortRepresentation(),
-		"my_role":     c.ParticipationOf(uid),
+		"my_role":     c.ParticipationOf(u),
 	}
 }
 
@@ -215,14 +215,14 @@ func (c *Contest) IsRunning() bool {
 	return c.HasStarted() && !c.HasEnded()
 }
 
-func (c *Contest) ParticipationOf(uid int32) int8 {
-	if c.Owner == uid {
+func (c *Contest) ParticipationOf(u User) int8 {
+	if c.Owner == u.Id {
 		return ParticipationTypeModerator
 	}
 
 	// Look for the participation record
 	p := ContestParticipation{
-		User:    uid,
+		User:    u.Id,
 		Contest: c.Id,
 	}
 	if err := p.Read(); err != nil {
@@ -236,8 +236,8 @@ func (c *Contest) ParticipationOf(uid int32) int8 {
 	return p.Type
 }
 
-func (c *Contest) IsVisibleTo(uid int32) bool {
-	return c.IsVisible || c.ParticipationOf(uid) != -1
+func (c *Contest) IsVisibleTo(u User) bool {
+	return c.IsVisible || c.ParticipationOf(u) != -1
 }
 
 func (p *ContestParticipation) Create() error {

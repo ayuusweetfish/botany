@@ -127,8 +127,8 @@ func (s *Submission) Update() error {
 }
 
 // Call after LoadRel()
-func (s *Submission) IsVisibleTo(uid int32) bool {
-	return s.User == uid ||
+func (s *Submission) IsVisibleTo(u User) bool {
+	return s.User == u.Id ||
 		s.Rel.Contest.HasEnded() ||
-		s.Rel.Contest.ParticipationOf(uid) == ParticipationTypeModerator
+		s.Rel.Contest.ParticipationOf(u) == ParticipationTypeModerator
 }

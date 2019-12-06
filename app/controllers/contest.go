@@ -13,7 +13,7 @@ import (
 )
 
 func contestListHandler(w http.ResponseWriter, r *http.Request) {
-	uid := middlewareAuthRetrieve(w, r)
+	u := middlewareAuthRetrieve(w, r)
 
 	cs, err := models.ContestReadAll()
 	if err != nil {
@@ -26,7 +26,7 @@ func contestListHandler(w http.ResponseWriter, r *http.Request) {
 	first := true
 	for _, c := range cs {
 		// Skip invisible contests
-		if !c.IsVisibleTo(uid) {
+		if !c.IsVisibleTo(u) {
 			continue
 		}
 
@@ -66,25 +66,20 @@ func contestInfoHandler(w http.ResponseWriter, r *http.Request) {
 
 	c.LoadRel()
 
-	uid := middlewareAuthRetrieve(w, r)
+	u := middlewareAuthRetrieve(w, r)
 	enc := json.NewEncoder(w)
 	enc.SetEscapeHTML(false)
-	enc.Encode(c.Representation(uid))
+	enc.Encode(c.Representation(u))
 }
 
 // curl http://localhost:3434/contest/1/publish -i -H "Cookie: auth=..." -d "set=true"
 func contestPublishHandler(w http.ResponseWriter, r *http.Request) {
-	uid := middlewareAuthRetrieve(w, r)
-	if uid == -1 {
+	u := middlewareAuthRetrieve(w, r)
+	if u.Id == -1 {
 		w.WriteHeader(401)
 		return
 	}
 
-	u := models.User{Id: uid}
-	if err := u.ReadById(); err != nil {
-		// Session ensures that the user exists
-		panic(err)
-	}
 	if u.Privilege != models.UserPrivilegeSuperuser {
 		// No privilege
 		w.WriteHeader(403)
@@ -109,14 +104,14 @@ func contestPublishHandler(w http.ResponseWriter, r *http.Request) {
 
 // curl http://localhost:3434/contest/1/join -i -H "Cookie: auth=..." -d ""
 func contestJoinHandler(w http.ResponseWriter, r *http.Request) {
-	uid := middlewareAuthRetrieve(w, r)
-	if uid == -1 {
+	u := middlewareAuthRetrieve(w, r)
+	if u.Id == -1 {
 		w.WriteHeader(401)
 		return
 	}
 
 	c := middlewareReferredContest(w, r)
-	if c.Id == -1 || !c.IsVisibleTo(uid) {
+	if c.Id == -1 || !c.IsVisibleTo(u) {
 		w.WriteHeader(404)
 		return
 	}
@@ -128,7 +123,7 @@ func contestJoinHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	p := models.ContestParticipation{
-		User:    uid,
+		User:    u.Id,
 		Contest: c.Id,
 		Type:    models.ParticipationTypeContestant,
 	}
@@ -142,20 +137,20 @@ func contestJoinHandler(w http.ResponseWriter, r *http.Request) {
 
 // curl http://localhost:3434/contest/1/submit -i -H "Cookie: auth=..." -d "code=123%20456"
 func contestSubmitHandler(w http.ResponseWriter, r *http.Request) {
-	uid := middlewareAuthRetrieve(w, r)
-	if uid == -1 {
+	u := middlewareAuthRetrieve(w, r)
+	if u.Id == -1 {
 		w.WriteHeader(401)
 		return
 	}
 
 	c := middlewareReferredContest(w, r)
-	if c.Id == -1 || !c.IsVisibleTo(uid) {
+	if c.Id == -1 || !c.IsVisibleTo(u) {
 		// Nonexistent or invisible contest
 		w.WriteHeader(404)
 		return
 	}
 
-	participation := c.ParticipationOf(uid)
+	participation := c.ParticipationOf(u)
 	if participation == -1 ||
 		(participation != models.ParticipationTypeModerator && !c.IsRunning()) {
 		// Did not participate
@@ -168,7 +163,7 @@ func contestSubmitHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Create a new submission
 	s := models.Submission{
-		User:     uid,
+		User:     u.Id,
 		Contest:  c.Id,
 		Contents: r.PostFormValue("code"),
 	}
@@ -187,10 +182,10 @@ func contestSubmitHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func contestSubmissionHandler(w http.ResponseWriter, r *http.Request) {
-	uid := middlewareAuthRetrieve(w, r)
+	u := middlewareAuthRetrieve(w, r)
 
 	c := middlewareReferredContest(w, r)
-	if c.Id == -1 || !c.IsVisibleTo(uid) {
+	if c.Id == -1 || !c.IsVisibleTo(u) {
 		w.WriteHeader(404)
 		return
 	}
@@ -209,7 +204,7 @@ func contestSubmissionHandler(w http.ResponseWriter, r *http.Request) {
 	s.LoadRel()
 
 	// Disallow viewing of others' code during a contest for non-moderators
-	if !s.IsVisibleTo(uid) {
+	if !s.IsVisibleTo(u) {
 		w.WriteHeader(403)
 		fmt.Fprintf(w, "{}")
 		return
@@ -221,19 +216,19 @@ func contestSubmissionHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func contestSubmissionHistoryHandler(w http.ResponseWriter, r *http.Request) {
-	uid := middlewareAuthRetrieve(w, r)
-	if uid == -1 {
+	u := middlewareAuthRetrieve(w, r)
+	if u.Id == -1 {
 		w.WriteHeader(401)
 		return
 	}
 
 	c := middlewareReferredContest(w, r)
-	if c.Id == -1 || !c.IsVisibleTo(uid) {
+	if c.Id == -1 || !c.IsVisibleTo(u) {
 		w.WriteHeader(404)
 		return
 	}
 
-	ss, err := models.SubmissionHistory(uid, c.Id, 5)
+	ss, err := models.SubmissionHistory(u.Id, c.Id, 5)
 	if err != nil {
 		panic(err)
 	}
@@ -254,8 +249,8 @@ func contestSubmissionHistoryHandler(w http.ResponseWriter, r *http.Request) {
 // XXX: For debug use
 // curl http://localhost:3434/contest/create -i -H "Cookie: auth=..." -d ""
 func contestCreateHandler(w http.ResponseWriter, r *http.Request) {
-	uid := middlewareAuthRetrieve(w, r)
-	if uid == -1 {
+	u := middlewareAuthRetrieve(w, r)
+	if u.Id == -1 {
 		w.WriteHeader(401)
 		return
 	}
@@ -263,7 +258,7 @@ func contestCreateHandler(w http.ResponseWriter, r *http.Request) {
 	c := models.Contest{
 		Title:     "Grand Contest",
 		Banner:    "",
-		Owner:     uid,
+		Owner:     u.Id,
 		StartTime: 0,
 		EndTime:   365 * 86400,
 		Desc:      "Really big contest",
