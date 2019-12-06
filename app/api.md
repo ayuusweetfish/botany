@@ -73,6 +73,7 @@
 - **password** (string) 不可逆哈希后的密码
 - **email** (string) 电子邮箱
 - **nickname** (string) 昵称
+- :construction: **bio** (string) 个性签名
 - **captcha_key** (string) 此前获得的验证码 key
 - **captcha_value** (string) 验证码填写值
 
@@ -115,6 +116,33 @@
 - **user** (User) 帐号信息
 - :construction: **contests** ([ContestShort]) 参与的比赛列表
 - :construction: **matches** ([MatchShort]) 最近对局列表
+
+### :construction: 修改个人信息 POST /user/{handle}/profile/edit
+
+请求
+- **email** (string) 电子邮箱
+- **nickname** (string) 昵称
+- **bio** (string) 个性签名
+
+响应 200
+- 空对象 {}
+
+响应 403 —— 前端处理正确时不应出现此项
+- 空对象 {}
+- 除站长外，不能修改其他人的个人信息
+
+### :construction: 修改密码 POST /user/{handle}/password
+
+请求
+- **old** (string) 不可逆哈希后的原密码
+- **new** (string) 不可逆哈希后的新密码
+
+响应 200
+- 空对象 {}
+
+响应 403 —— 前端处理正确时不应出现此项
+- 空对象 {}
+- 除站长外，不能修改其他人的个人信息
 
 ### :construction: 赋予或撤回主办权限 POST /user/{handle}/promote
 
@@ -271,7 +299,7 @@
 - 空对象 {}
 - 未报名比赛或比赛未开始 —— 前端检查严格时不应出现此项
 
-### :construction: 排行榜 GET /contest/{cid}/ranklist
+### 排行榜 GET /contest/{cid}/ranklist
 
 响应
 - 一个数组，按排名从高到低排序，每个元素如下
