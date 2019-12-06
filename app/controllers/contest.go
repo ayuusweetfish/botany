@@ -230,6 +230,12 @@ func contestSubmissionHistoryHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(404)
 		return
 	}
+	if c.ParticipationOf(u) == -1 {
+		// Did not participate
+		w.WriteHeader(403)
+		fmt.Fprintf(w, "[]")
+		return
+	}
 
 	ss, err := models.SubmissionHistory(u.Id, c.Id, 5)
 	if err != nil {
