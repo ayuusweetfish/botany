@@ -119,7 +119,7 @@ func contestJoinHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if !c.IsRegOpen {
-		w.WriteHeader(400)
+		w.WriteHeader(403)
 		// Registration not open
 		fmt.Fprintf(w, "{}")
 		return
