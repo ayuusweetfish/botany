@@ -239,6 +239,14 @@
 - 空对象 {}
 - 无主办权限 —— 前端检查严格时不应出现此项
 
+### :construction: 修改比赛 POST /contest/{cid}/edit
+
+请求
+- 同 /contest/create
+
+响应 200, 400, 403
+- 同 /contest/create
+
 ### 发布或隐藏比赛 POST /contest/{cid}/publish
 
 请求
@@ -275,8 +283,12 @@
 
 ### 自己的提交历史 GET /contest/{cid}/my
 
-响应
+响应 200
 - 若干 SubmissionShort 组成的数组，从最新到最旧排序
+
+:construction: 响应 400
+- 空数组 []
+- 未报名比赛或比赛未开始 —— 前端检查严格时不应出现此项
 
 ### 提交详情 GET /contest/{cid}/submission/{sid}
 
