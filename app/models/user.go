@@ -131,17 +131,21 @@ func (u *User) ReadByEmail() error {
 }
 
 func (u *User) Update() error {
-	u.hashPassword()
-
 	_, err := db.Exec("UPDATE users SET "+
-		"handle = $1, email = $2, password = $3, privilege = $4, nickname = $5 "+
-		"WHERE id = $1",
+		"handle = $1, email = $2, privilege = $3, nickname = $4 "+
+		"WHERE id = $5",
 		u.Handle,
 		u.Email,
-		u.Password,
 		u.Privilege,
 		u.Nickname,
+		u.Id,
 	)
+	return err
+}
+
+func (u *User) UpdatePassword() error {
+	u.hashPassword()
+	_, err := db.Exec("UPDATE users SET password = $1 WHERE id = $2", u.Password, u.Id)
 	return err
 }
 
