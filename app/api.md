@@ -316,3 +316,14 @@
 
 响应
 - 一个 Match
+
+### :construction: 手动发起对局 POST /contest/{cid}/match/manual
+
+请求
+- **submissions** (string) 参与对局的各提交记录编号，用逗号分隔，如 `1,2,3`
+
+响应 200
+- 一个 MatchShort
+
+响应 403
+- 非管理员不能手动发起对局
