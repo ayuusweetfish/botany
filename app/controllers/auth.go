@@ -173,7 +173,7 @@ func logoutHandler(w http.ResponseWriter, r *http.Request) {
 func whoAmIHandler(w http.ResponseWriter, r *http.Request) {
 	u := middlewareAuthRetrieve(w, r)
 	if u.Id == -1 {
-		w.WriteHeader(401)
+		w.WriteHeader(400)
 	} else {
 		w.WriteHeader(200)
 		enc := json.NewEncoder(w)
