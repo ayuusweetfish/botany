@@ -34,9 +34,11 @@ const (
 )
 
 type ContestParticipation struct {
-	User    int32
-	Contest int32
-	Type    int8
+	User        int32
+	Contest     int32
+	Type        int8
+	Rating      int64
+	Performance string
 
 	Rel struct {
 		User    User
@@ -74,6 +76,8 @@ func init() {
 		"uid INTEGER NOT NULL REFERENCES users(id)",
 		"contest INTEGER NOT NULL REFERENCES contest(id)",
 		"type SMALLINT NOT NULL",
+		"rating BIGINT NOT NULL",
+		"performance TEXT NOT NULL DEFAULT ''",
 		"ADD PRIMARY KEY (uid, contest)",
 	)
 	registerSchema("contest_match_script",
@@ -242,28 +246,33 @@ func (c *Contest) IsVisibleTo(u User) bool {
 
 func (p *ContestParticipation) Create() error {
 	_, err := db.Exec("INSERT INTO "+
-		"contest_participation(uid, contest, type) "+
-		"VALUES ($1, $2, $3) ON CONFLICT DO NOTHING",
+		"contest_participation(uid, contest, type, rating, performance) "+
+		"VALUES ($1, $2, $3, $4, $5) ON CONFLICT DO NOTHING",
 		p.User,
 		p.Contest,
 		p.Type,
+		p.Rating,
+		p.Performance,
 	)
 	return err
 }
 
 func (p *ContestParticipation) Read() error {
-	err := db.QueryRow("SELECT type "+
+	err := db.QueryRow("SELECT type, rating, performance "+
 		"FROM contest_participation WHERE uid = $1 AND contest = $2",
 		p.User,
 		p.Contest,
-	).Scan(&p.Type)
+	).Scan(&p.Type, &p.Rating, &p.Performance)
 	return err
 }
 
 func (p *ContestParticipation) Update() error {
 	_, err := db.Exec("UPDATE contest_participation SET "+
-		"type = $1 WHERE uid = $1 AND contest = $2",
+		"type = $1, rating = $2, performance = $3 "+
+		"WHERE uid = $4 AND contest = $5",
 		p.Type,
+		p.Rating,
+		p.Performance,
 		p.User,
 		p.Contest,
 	)

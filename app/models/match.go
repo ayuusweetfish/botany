@@ -14,8 +14,6 @@ type Match struct {
 type MatchParty struct {
 	Match      int32
 	Submission int32
-	Score      int32
-	IsWinner   bool
 
 	Rel struct {
 		Match      Match
@@ -32,8 +30,6 @@ func init() {
 	registerSchema("match_party",
 		"match INTEGER NOT NULL REFERENCES match(id)",
 		"submission INTEGER NOT NULL REFERENCES submission(id)",
-		"score INTEGER NOT NULL DEFAULT 0",
-		"is_winner BOOLEAN NOT NULL",
 	)
 }
 
