@@ -154,6 +154,21 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// curl http://localhost:3434/logout -i -H "Cookie: auth=..." -d ""
+func logoutHandler(w http.ResponseWriter, r *http.Request) {
+	session, err := globals.SessionStore.Get(r, "auth")
+	if err != nil {
+		panic(err)
+	}
+
+	// Delete session
+	session.Options.MaxAge = -1
+	err = session.Save(r, w)
+	if err != nil {
+		panic(err)
+	}
+}
+
 // curl http://localhost:3434/whoami -i -H "Cookie: auth=..."
 func whoAmIHandler(w http.ResponseWriter, r *http.Request) {
 	u := middlewareAuthRetrieve(w, r)
@@ -202,6 +217,7 @@ func profileHandler(w http.ResponseWriter, r *http.Request) {
 func init() {
 	registerRouterFunc("/signup", signupHandler, "POST")
 	registerRouterFunc("/login", loginHandler, "POST")
+	registerRouterFunc("/logout", logoutHandler, "POST")
 	registerRouterFunc("/whoami", whoAmIHandler, "GET")
 
 	registerRouterFunc("/captcha", captchaGetHandler, "GET")
