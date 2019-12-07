@@ -102,6 +102,7 @@ func (c *Contest) Representation(u User) map[string]interface{} {
 		"end_time":    c.EndTime,
 		"desc":        c.Desc,
 		"details":     c.Details,
+		"is_visible":  c.IsVisible,
 		"is_reg_open": c.IsRegOpen,
 		"owner":       c.Rel.Owner.ShortRepresentation(),
 		"my_role":     c.ParticipationOf(u),

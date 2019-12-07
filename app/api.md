@@ -190,6 +190,7 @@
 - **end_time** (number) 结束时刻的 Unix 时间戳，单位为秒
 - **desc** (string) 简要描述
 - **details** (string) 长篇详细说明
+- **is_visible** (boolean) 是否公开显示
 - **is_reg_open** (boolean) 是否公开接受报名
 - **owner** (UserShort) 创建者
 - **my_role** (number) 自己的参加情况
