@@ -82,11 +82,12 @@ func (u *User) Create() error {
 	// lib/pq driver does not support LastInsertId()
 	// https://github.com/lib/pq/issues/24
 	err := db.QueryRow("INSERT INTO "+
-		"users(handle, email, password, joined_at, nickname) "+
-		"VALUES ($1, $2, $3, $4, $5) RETURNING id",
+		"users(handle, email, password, privilege, joined_at, nickname) "+
+		"VALUES ($1, $2, $3, $4, $5, $6) RETURNING id",
 		u.Handle,
 		u.Email,
 		u.Password,
+		u.Privilege,
 		u.JoinedAt,
 		u.Nickname,
 	).Scan(&u.Id)
