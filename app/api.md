@@ -123,7 +123,7 @@
 - :construction: **contests** ([ContestShort]) 参与的比赛列表
 - :construction: **matches** ([MatchShort]) 最近对局列表
 
-### :construction: 修改个人信息 POST /user/{handle}/profile/edit
+### 修改个人信息 POST /user/{handle}/profile/edit
 
 请求
 - **email** (string) 电子邮箱
@@ -137,11 +137,11 @@
 - 空对象 {}
 - 除站长外，不能修改其他人的个人信息
 
-### :construction: 修改密码 POST /user/{handle}/password
+### 修改密码 POST /user/{handle}/password
 
 请求
-- **old** (string) 不可逆哈希后的原密码
-- **new** (string) 不可逆哈希后的新密码
+- **old** (string) 原密码
+- **new** (string) 新密码
 
 响应 200
 - 空对象 {}

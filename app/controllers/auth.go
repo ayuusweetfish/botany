@@ -253,6 +253,51 @@ func profileEditHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "{}")
 }
 
+func passwordEditHandler(w http.ResponseWriter, r *http.Request) {
+	u := middlewareAuthRetrieve(w, r)
+	if u.Id == -1 {
+		w.WriteHeader(401)
+		return
+	}
+
+	user := models.User{Handle: mux.Vars(r)["handle"]}
+	if u.Handle != user.Handle {
+		if u.Privilege != models.UserPrivilegeSuperuser {
+			// this user is not superuser
+			// and the user's handle is not the same with the user whose info is being updated
+			w.WriteHeader(403)
+			fmt.Fprintf(w, "{}")
+			return
+		}
+	}
+
+	if err := user.ReadByHandle(); err != nil {
+		if err == sql.ErrNoRows {
+			w.WriteHeader(404)
+			return
+		} else {
+			panic(err)
+		}
+	}
+
+	old := r.PostFormValue("old")
+	new := r.PostFormValue("new")
+
+	// the old password is wrong
+	if !user.VerifyPassword(old) {
+		w.WriteHeader(403)
+		fmt.Fprintf(w, "{}")
+		return
+	}
+
+	user.Password = new
+	if err := user.UpdatePassword(); err != nil {
+		panic(err)
+	}
+	w.WriteHeader(200)
+	fmt.Fprintf(w, "{}")
+}
+
 func init() {
 	registerRouterFunc("/signup", signupHandler, "POST")
 	registerRouterFunc("/login", loginHandler, "POST")
@@ -263,4 +308,5 @@ func init() {
 
 	registerRouterFunc("/user/{handle:[a-zA-Z0-9-_]+}/profile", profileHandler, "GET")
 	registerRouterFunc("/user/{handle:[a-zA-Z0-9-_]+}/profile/edit", profileEditHandler, "POST")
+	registerRouterFunc("/user/{handle:[a-zA-Z0-9-_]+}/password", passwordEditHandler, "POST")
 }
