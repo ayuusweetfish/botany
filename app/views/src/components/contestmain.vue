@@ -81,36 +81,7 @@ export default {
   created () {
     this.cid = this.$route.query.id
     this.bannerUrl = 'https://www.csgowallpapers.com/assets/images/original/mossawi_518842827528_20150625022423_816788567695.png'
-    const loading = this.$loading({lock: true, text: '查询比赛信息'})
-    this.$axios.get(
-      '/contest/' + this.cid + '/info'
-    ).then(res => {
-      this.events = []
-      this.events.push({
-        time: this.$functions.dateTimeString(res.data.end_time),
-        event: '比赛结束',
-        color: 'gray'
-      })
-      this.events.push({
-        time: this.$functions.dateTimeString(res.data.start_time),
-        event: '比赛开始',
-        color: 'green'
-      })
-      // this.bannerUrl = res.data.banner
-      this.desc = res.data.desc
-      this.isRegOpen = res.data.is_reg_open
-      this.isVisible = res.data.is_visible
-      this.myRole = res.data.my_role
-      this.owner = res.data.owner
-      this.title = res.data.title
-      this.$store.commit('enterSubSite', res.data)
-      console.log(res.data)
-      loading.close()
-    }).catch(err => {
-      console.log(err)
-      loading.close()
-      this.$message.error('查询失败，请刷新')
-    })
+    this.getContestInfo()
   },
   data () {
     return {
@@ -150,10 +121,68 @@ export default {
       })
     },
     publishContest () {
-
+      const loading = this.$loading({lock: true, text: '处理中'})
+      let param = this.$qs.stringify({set: true})
+      this.$axios.post(
+        '/contest/' + this.cid + '/publish',
+        param
+      ).then(res => {
+        loading.close()
+        this.$message.success('发布成功')
+        this.getContestInfo()
+      }).catch(err => {
+        console.log(err)
+        loading.close()
+        this.$message.error('发布失败，请重试')
+      })
     },
     hideContest () {
-
+      const loading = this.$loading({lock: true, text: '处理中'})
+      let param = this.$qs.stringify({set: false})
+      this.$axios.post(
+        '/contest/' + this.cid + '/publish',
+        param
+      ).then(res => {
+        loading.close()
+        this.$message.success('隐藏成功')
+        this.getContestInfo()
+      }).catch(err => {
+        console.log(err)
+        loading.close()
+        this.$message.error('隐藏失败，请重试')
+      })
+    },
+    getContestInfo () {
+      const loading = this.$loading({lock: true, text: '查询比赛信息'})
+      this.$axios.get(
+        '/contest/' + this.cid + '/info'
+      ).then(res => {
+        this.events = []
+        this.events.push({
+          time: this.$functions.dateTimeString(res.data.end_time),
+          event: '比赛结束',
+          color: 'gray'
+        })
+        this.events.push({
+          time: this.$functions.dateTimeString(res.data.start_time),
+          event: '比赛开始',
+          color: 'green'
+        })
+        // this.bannerUrl = res.data.banner
+        this.desc = res.data.desc
+        this.isRegOpen = res.data.is_reg_open
+        this.isVisible = res.data.is_visible
+        this.myRole = res.data.my_role
+        this.owner = res.data.owner
+        this.title = res.data.title
+        this.$store.commit('enterSubSite', res.data)
+        console.log(res.data)
+        loading.close()
+      }).catch(err => {
+        console.log(err)
+        loading.close()
+        this.$message.error('查询失败，请刷新')
+      })
     }
   }
 }

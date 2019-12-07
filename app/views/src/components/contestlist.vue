@@ -32,7 +32,7 @@ export default {
   },
   data () {
     return {
-      title: '当前共有2场比赛正在进行',
+      title: '',
       contests: []
     }
   },
@@ -55,7 +55,7 @@ export default {
           })
         })
         this.total = this.contests.length
-        this.title = '当前共有' + this.total + '场比赛正在进行'
+        this.title = '当前共有' + this.total + '场比赛'
         loading.close()
       // eslint-disable-next-line handle-callback-err
       }).catch(err => {
