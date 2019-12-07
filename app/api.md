@@ -225,6 +225,7 @@
 - **details** (string) 长篇详细说明
 - **is_visible** (boolean) 是否公开显示
 - **is_reg_open** (boolean) 是否公开接受报名
+- **moderators** ([number]) 管理员的 ID 列表，用逗号分隔
 
 响应 200
 - **id** (number) 新比赛的 ID

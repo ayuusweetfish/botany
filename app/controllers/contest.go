@@ -41,7 +41,7 @@ func contestListHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("]\n"))
 }
 
-func parseRequestContest(r *http.Request) (models.Contest, bool) {
+func parseRequestContest(r *http.Request) (models.Contest, []int64, bool) {
 	title := r.PostFormValue("title")
 	banner := r.PostFormValue("banner")
 	startTime, err1 := strconv.ParseInt(r.PostFormValue("start_time"), 10, 64)
@@ -52,9 +52,18 @@ func parseRequestContest(r *http.Request) (models.Contest, bool) {
 	isRegOpen := (r.PostFormValue("is_reg_open") == "true")
 
 	if err1 != nil || err2 != nil || startTime >= endTime {
-		return models.Contest{}, false
+		return models.Contest{}, nil, false
 	}
 	// TODO: Check validity of other parameters
+
+	mods := []int64{}
+	for _, mod := range strings.Split(r.PostFormValue("moderators"), ",") {
+		uid, err := strconv.ParseInt(mod, 10, 64)
+		if err != nil {
+			return models.Contest{}, nil, false
+		}
+		mods = append(mods, uid)
+	}
 
 	c := models.Contest{
 		Title:     title,
@@ -66,11 +75,11 @@ func parseRequestContest(r *http.Request) (models.Contest, bool) {
 		IsVisible: isVisible,
 		IsRegOpen: isRegOpen,
 	}
-	return c, true
+	return c, mods, true
 }
 
 // curl http://localhost:3434/contest/create -i -H "Cookie: auth=..." -d
-// "title=Grand+Contest&banner=1.png&start_time=0&end_time=1576000000&desc=Really+big+contest&details=Lorem+ipsum+dolor+sit+amet&is_visible=true&is_reg_open=true"
+// "title=Grand+Contest&banner=1.png&start_time=0&end_time=1576000000&desc=Really+big+contest&details=Lorem+ipsum+dolor+sit+amet&is_visible=true&is_reg_open=true&moderators=1,2,4"
 func contestCreateHandler(w http.ResponseWriter, r *http.Request) {
 	u := middlewareAuthRetrieve(w, r)
 	if u.Id == -1 {
@@ -84,7 +93,7 @@ func contestCreateHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	c, ok := parseRequestContest(r)
+	c, mods, ok := parseRequestContest(r)
 	if !ok {
 		// Malformed request
 		w.WriteHeader(400)
@@ -94,6 +103,9 @@ func contestCreateHandler(w http.ResponseWriter, r *http.Request) {
 
 	c.Owner = u.Id
 	if err := c.Create(); err != nil {
+		panic(err)
+	}
+	if err := c.UpdateModerators(mods); err != nil {
 		panic(err)
 	}
 
@@ -138,7 +150,7 @@ func contestEditHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	cNew, ok := parseRequestContest(r)
+	cNew, mods, ok := parseRequestContest(r)
 	if !ok {
 		// Malformed request
 		w.WriteHeader(400)
@@ -149,6 +161,9 @@ func contestEditHandler(w http.ResponseWriter, r *http.Request) {
 	cNew.Id = c.Id
 	cNew.Owner = u.Id
 	if err := cNew.Update(); err != nil {
+		panic(err)
+	}
+	if err := c.UpdateModerators(mods); err != nil {
 		panic(err)
 	}
 

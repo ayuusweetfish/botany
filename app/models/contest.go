@@ -2,6 +2,7 @@ package models
 
 import (
 	"database/sql"
+	"fmt"
 	"strconv"
 	"time"
 )
@@ -76,7 +77,7 @@ func init() {
 		"uid INTEGER NOT NULL REFERENCES users(id)",
 		"contest INTEGER NOT NULL REFERENCES contest(id)",
 		"type SMALLINT NOT NULL",
-		"rating BIGINT NOT NULL DEFAULT 1500",
+		"rating BIGINT NOT NULL DEFAULT 0",
 		"performance TEXT NOT NULL DEFAULT ''",
 		"ADD PRIMARY KEY (uid, contest)",
 	)
@@ -234,6 +235,34 @@ func (c *Contest) Update() error {
 		c.Id,
 	)
 	return err
+}
+
+func (c *Contest) UpdateModerators(uids []int64) error {
+	_, err := db.Exec("DELETE FROM contest_participation "+
+		"WHERE contest = $1 AND type = $2",
+		c.Id,
+		ParticipationTypeModerator)
+	if err != nil {
+		return err
+	}
+
+	if len(uids) > 0 {
+		stmt := "INSERT INTO contest_participation" +
+			"(uid, contest, type, rating, performance) VALUES "
+		vals := []interface{}{}
+		for i, uid := range uids {
+			if i != 0 {
+				stmt += ", "
+			}
+			stmt += fmt.Sprintf("($%d, $%d, $%d, 0, '')", i*3+1, i*3+2, i*3+3)
+			vals = append(vals, uid, c.Id, ParticipationTypeModerator)
+		}
+		if _, err := db.Exec(stmt, vals...); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (c *Contest) HasStarted() bool {
