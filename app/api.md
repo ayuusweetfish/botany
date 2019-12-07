@@ -237,13 +237,21 @@
 - 空对象 {}
 - 无主办权限 —— 前端检查严格时不应出现此项
 
-### :construction: 修改比赛 POST /contest/{cid}/edit
+### 修改比赛 POST /contest/{cid}/edit
 
 请求
 - 同 /contest/create
 
-响应 200, 400, 403
-- 同 /contest/create
+响应 200
+- 空对象 {}
+
+响应 400
+- 空对象 {}
+- 任何一项信息过长、过短或不合法 —— 前端检查严格时不应出现此项
+
+响应 403
+- 空对象 {}
+- 不是比赛拥有者 —— 前端检查严格时不应出现此项
 
 ### 发布或隐藏比赛 POST /contest/{cid}/publish
 

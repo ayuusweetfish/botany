@@ -70,7 +70,7 @@ func parseRequestContest(r *http.Request) (models.Contest, bool) {
 }
 
 // curl http://localhost:3434/contest/create -i -H "Cookie: auth=..." -d
-// "title=Grand+Contest&banner=1.png&start_time=0&end_time=1576000000&desc=Really+big+contest&Lorem+ipsum+dolor+sit+amet&is_visible=true&is_reg_open=true"
+// "title=Grand+Contest&banner=1.png&start_time=0&end_time=1576000000&desc=Really+big+contest&details=Lorem+ipsum+dolor+sit+amet&is_visible=true&is_reg_open=true"
 func contestCreateHandler(w http.ResponseWriter, r *http.Request) {
 	u := middlewareAuthRetrieve(w, r)
 	if u.Id == -1 {
@@ -118,6 +118,41 @@ func middlewareReferredContest(w http.ResponseWriter, r *http.Request, u models.
 	} else {
 		return models.Contest{Id: -1}
 	}
+}
+
+func contestEditHandler(w http.ResponseWriter, r *http.Request) {
+	u := middlewareAuthRetrieve(w, r)
+	if u.Id == -1 {
+		w.WriteHeader(401)
+		return
+	}
+
+	c := middlewareReferredContest(w, r, u)
+	if c.Id == -1 {
+		w.WriteHeader(404)
+		return
+	}
+	if u.Id != c.Owner {
+		w.WriteHeader(403)
+		fmt.Fprintf(w, "{}")
+		return
+	}
+
+	cNew, ok := parseRequestContest(r)
+	if !ok {
+		// Malformed request
+		w.WriteHeader(400)
+		fmt.Fprintf(w, "{}")
+		return
+	}
+
+	cNew.Id = c.Id
+	cNew.Owner = u.Id
+	if err := cNew.Update(); err != nil {
+		panic(err)
+	}
+
+	fmt.Fprintf(w, "{}")
 }
 
 func contestInfoHandler(w http.ResponseWriter, r *http.Request) {
@@ -441,6 +476,7 @@ func contestMatchDetailsHandler(w http.ResponseWriter, r *http.Request) {
 func init() {
 	registerRouterFunc("/contest/list", contestListHandler, "GET")
 	registerRouterFunc("/contest/create", contestCreateHandler, "POST")
+	registerRouterFunc("/contest/{cid:[0-9]+}/edit", contestEditHandler, "POST")
 	registerRouterFunc("/contest/{cid:[0-9]+}/publish", contestPublishHandler, "POST")
 	registerRouterFunc("/contest/{cid:[0-9]+}/info", contestInfoHandler, "GET")
 	registerRouterFunc("/contest/{cid:[0-9]+}/join", contestJoinHandler, "POST")
