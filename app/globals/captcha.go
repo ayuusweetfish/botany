@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-var config = base64Captcha.ConfigDigit{
+var captchaConfig = base64Captcha.ConfigDigit{
 	Height:     80,
 	Width:      240,
 	MaxSkew:    0.7,
@@ -16,7 +16,7 @@ var config = base64Captcha.ConfigDigit{
 }
 
 func CaptchaCreate() (string, string) {
-	idKey, captcha := base64Captcha.GenerateCaptcha("", config)
+	idKey, captcha := base64Captcha.GenerateCaptcha("", captchaConfig)
 	base64string := base64Captcha.CaptchaWriteToBase64Encoding(captcha)
 	return idKey, base64string
 }

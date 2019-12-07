@@ -1,6 +1,11 @@
 {
   "app_port": 3434,
   "db_name": "dbqwq",
-  "db_user": "uwu",
-  "db_password": ""
+  "db_user": "postgres",
+  "db_password": "",
+  "cookie_key_pairs": [
+    "vertraulich",
+    "0123456789abcdef"
+  ],
+  "api_prefix": "/api"
 }

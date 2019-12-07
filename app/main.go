@@ -6,37 +6,16 @@ import (
 	"github.com/kawa-yoiko/botany/app/models"
 
 	"database/sql"
-	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
-	"os"
 
 	"github.com/gorilla/sessions"
 	_ "github.com/lib/pq"
 )
 
-type Config struct {
-	AppPort    int    `json:"app_port"`
-	DbName     string `json:"db_name"`
-	DbUser     string `json:"db_user"`
-	DbPassword string `json:"db_password"`
-}
-
-func LoadConfiguration(file string) Config {
-	var c Config
-	f, err := os.Open(file)
-	defer f.Close()
-	if err != nil {
-		log.Fatalln(err)
-	}
-	decoder := json.NewDecoder(f)
-	decoder.Decode(&c)
-	return c
-}
-
 func main() {
-	config := LoadConfiguration("config.json")
+	config := globals.Config()
 	port := config.AppPort
 
 	db, err := sql.Open("postgres",
@@ -48,11 +27,18 @@ func main() {
 	}
 	defer db.Close()
 
-	globals.SessionStore = sessions.NewCookieStore([]byte("vertraulich"))
+	keyPairs := [][]byte{}
+	for i, s := range config.CookieKeyPairs {
+		if i%2 == 1 && len(s) != 16 && len(s) != 24 && len(s) != 32 {
+			log.Fatalf("Size of key should be 16, 24 or 32 bytes ('%s' is %d bytes)", s, len(s))
+		}
+		keyPairs = append(keyPairs, []byte(s))
+	}
+	globals.SessionStore = sessions.NewCookieStore(keyPairs...)
 
 	models.InitializeSchemata(db)
-	http.HandleFunc("/", controllers.GetGlobalRouterFunc())
+	http.HandleFunc("/", controllers.GetRootRouterFunc())
 
-	log.Printf("Listening on http://localhost:%d/\n", port)
+	log.Printf("Listening on http://localhost:%d%s\n", port, config.ApiPrefix)
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", port), nil))
 }
