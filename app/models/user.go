@@ -98,7 +98,7 @@ func (u *User) read(field string) error {
 	var row *sql.Row
 	if field == "handle" {
 		row = db.QueryRow("SELECT "+
-			"id, handle, email, password, privilege, joined_at, nickname, bio"+
+			"id, handle, email, password, privilege, joined_at, nickname, bio "+
 			"FROM users WHERE handle = $1",
 			u.Handle,
 		)
