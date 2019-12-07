@@ -1,24 +1,28 @@
 package controllers
 
 import (
+	"github.com/kawa-yoiko/botany/app/globals"
+
 	"net/http"
 
 	"github.com/gorilla/mux"
 )
 
 var router *mux.Router
+var apiRouter *mux.Router
 
 func registerRouterFunc(path string, fn func(http.ResponseWriter, *http.Request), methods ...string) {
 	if router == nil {
 		router = mux.NewRouter()
+		apiRouter = router.PathPrefix(globals.Config().ApiPrefix).Subrouter()
 	}
 	if len(methods) == 0 {
 		methods = []string{"GET"}
 	}
-	router.HandleFunc(path, fn).Methods(methods...)
+	apiRouter.HandleFunc(path, fn).Methods(methods...)
 }
 
-func GetGlobalRouterFunc() func(w http.ResponseWriter, req *http.Request) {
+func GetRootRouterFunc() func(w http.ResponseWriter, req *http.Request) {
 	return func(w http.ResponseWriter, req *http.Request) {
 		defer func() {
 			if e := recover(); e != nil {

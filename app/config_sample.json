@@ -6,5 +6,6 @@
   "cookie_key_pairs": [
     "vertraulich",
     "0123456789abcdef"
-  ]
+  ],
+  "api_prefix": "/api"
 }
