@@ -34,13 +34,13 @@
           </template>
         </el-table-column>
       </el-table>
-      <el-pagination 
-        :total="total" 
-        :current-page="1" 
-        :page-size="20" 
-        @current-change="handleCurrentChange" 
+      <el-pagination
+        :total="total"
+        :current-page="1"
+        :page-size="20"
+        @current-change="handleCurrentChange"
         :pager-count="11"
-        layout="prev, pager, next, jumper, ->, total" 
+        layout="prev, pager, next, jumper, ->, total"
       >
       </el-pagination>
     </el-card>
@@ -49,19 +49,19 @@
 
 <script>
 export default {
-  name: 'gameranking',
-  data() {
+  name: 'ranklist',
+  data () {
     let ls = []
-    for(let i = 0; i < 20; ++i){
+    for (let i = 0; i < 20; ++i) {
       ls.push({
-          ranking: (i+1).toString(),
-          name: 'USERNAME',
-          email: 'EMAIL@ADDR.com',
-          win: '20',
-          loss: '20',
-          rate: '50%',
-          mmr: '1000'
-        })
+        ranking: (i + 1).toString(),
+        name: 'USERNAME',
+        email: 'EMAIL@ADDR.com',
+        win: '20',
+        loss: '20',
+        rate: '50%',
+        mmr: '1000'
+      })
     }
     return {
       players: ls,
@@ -70,7 +70,7 @@ export default {
     }
   },
   methods: {
-    handleCurrentChange(val){
+    handleCurrentChange (val) {
 
     }
   }
