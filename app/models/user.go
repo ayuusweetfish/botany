@@ -164,3 +164,24 @@ func (u *User) EmailCheck() bool {
 	re := regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$")
 	return re.MatchString(u.Email)
 }
+
+func UserSearchByHandle(handle string) ([]User, error) {
+	rows, err := db.Query("SELECT "+
+		"id, handle, privilege, nickname "+
+		"FROM users WHERE handle LIKE '%' || $1 || '%' LIMIT 5",
+		handle)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	us := []User{}
+	for rows.Next() {
+		u := User{}
+		err := rows.Scan(&u.Id, &u.Handle, &u.Privilege, &u.Nickname)
+		if err != nil {
+			return nil, err
+		}
+		us = append(us, u)
+	}
+	return us, rows.Err()
+}

@@ -349,6 +349,25 @@ func promoteHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "{}")
 }
 
+func userSearchHandler(w http.ResponseWriter, r *http.Request) {
+	h := mux.Vars(r)["handle"]
+	us, err := models.UserSearchByHandle(h)
+	if err != nil {
+		panic(err)
+	}
+
+	w.Write([]byte("["))
+	enc := json.NewEncoder(w)
+	enc.SetEscapeHTML(false)
+	for i, u := range us {
+		if i != 0 {
+			w.Write([]byte(","))
+		}
+		enc.Encode(u.ShortRepresentation())
+	}
+	w.Write([]byte("]\n"))
+}
+
 func init() {
 	registerRouterFunc("/signup", signupHandler, "POST")
 	registerRouterFunc("/login", loginHandler, "POST")
@@ -361,4 +380,6 @@ func init() {
 	registerRouterFunc("/user/{handle:[a-zA-Z0-9-_]+}/profile/edit", profileEditHandler, "POST")
 	registerRouterFunc("/user/{handle:[a-zA-Z0-9-_]+}/password", passwordEditHandler, "POST")
 	registerRouterFunc("/user/{handle:[a-zA-Z0-9-_]+}/promote", promoteHandler, "POST")
+
+	registerRouterFunc("/user_search/{handle:[a-zA-Z0-9-_]+}", userSearchHandler, "GET")
 }
