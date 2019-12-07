@@ -1,6 +1,7 @@
 package models
 
 import (
+	"regexp"
 	"strconv"
 	"time"
 
@@ -132,12 +133,13 @@ func (u *User) ReadByEmail() error {
 
 func (u *User) Update() error {
 	_, err := db.Exec("UPDATE users SET "+
-		"handle = $1, email = $2, privilege = $3, nickname = $4 "+
-		"WHERE id = $5",
+		"handle = $1, email = $2, privilege = $3, nickname = $4, bio = $5"+
+		"WHERE id = $6",
 		u.Handle,
 		u.Email,
 		u.Privilege,
 		u.Nickname,
+		u.Bio,
 		u.Id,
 	)
 	return err
@@ -152,4 +154,12 @@ func (u *User) UpdatePassword() error {
 func (u *User) VerifyPassword(pw string) bool {
 	err := bcrypt.CompareHashAndPassword([]byte(u.Password), []byte(pw))
 	return err == nil
+}
+
+func (u *User) EmailCheck() bool {
+	// Now it is not complete because there are some situations this one cannot handle.
+	// For example the email .list@gmail.com or list..list@gmail.com is not correct according to RFC 5322.
+
+	re := regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$")
+	return re.MatchString(u.Email)
 }

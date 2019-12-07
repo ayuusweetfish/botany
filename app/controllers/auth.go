@@ -7,10 +7,8 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"net/http"
-	"regexp"
-
 	"github.com/gorilla/mux"
+	"net/http"
 )
 
 // Returns a User struct
@@ -75,8 +73,7 @@ func signupHandler(w http.ResponseWriter, r *http.Request) {
 	// TODO: Validate email format.
 	// Now it is not complete because there are some situations this one cannot handle.
 	// For example the email .list@gmail.com or list..list@gmail.com is not correct according to RFC 5322.
-	re := regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$")
-	if !re.MatchString(u.Email) {
+	if !u.EmailCheck() {
 		w.WriteHeader(400)
 		fmt.Fprintf(w, "{\"err\": [-1]}")
 		return
@@ -242,6 +239,25 @@ func profileEditHandler(w http.ResponseWriter, r *http.Request) {
 	user.Email = r.PostFormValue("email")
 	user.Nickname = r.PostFormValue("nickname")
 	user.Bio = r.PostFormValue("bio")
+
+	if !user.EmailCheck() {
+		w.WriteHeader(400)
+		fmt.Fprintf(w, "{\"err\": [-1]}")
+		return
+	}
+
+	// Check if the mail is available
+	e := models.User{Email: user.Email}
+	err := e.ReadByEmail()
+	if err != nil && err != sql.ErrNoRows {
+		// this user is not existed but the error is not no rows
+		panic(err)
+	} else if err == nil && e.Id != user.Id {
+		// this user is existed and it is not the user whose info is being edited
+		w.WriteHeader(400)
+		fmt.Fprintf(w, "{\"err\":[1]}")
+		return
+	}
 
 	if err := user.Update(); err != nil {
 		panic(err)
