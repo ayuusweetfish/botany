@@ -329,10 +329,12 @@
 响应
 - 若干 MatchShort 组成的数组，从最新到最旧排序
 
-### :construction: 对局详情 GET /contest/{cid}/match/{mid}
+### 对局详情 GET /contest/{cid}/match/{mid}
 
 响应
 - 一个 Match
+
+注：比赛不存在、对局不存在或对局不属于比赛均认为 404
 
 ### 手动发起对局 POST /contest/{cid}/match/manual
 

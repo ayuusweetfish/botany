@@ -78,6 +78,12 @@ func (m *Match) ShortRepresentation() map[string]interface{} {
 	}
 }
 
+func (m *Match) Representation() map[string]interface{} {
+	r := m.ShortRepresentation()
+	r["report"] = m.Report
+	return r
+}
+
 func (m *Match) Read() error {
 	err := db.QueryRow("SELECT "+
 		"contest, report "+

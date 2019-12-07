@@ -348,6 +348,37 @@ func contestMatchManualHandler(w http.ResponseWriter, r *http.Request) {
 	enc.Encode(m.ShortRepresentation())
 }
 
+func contestMatchDetailsHandler(w http.ResponseWriter, r *http.Request) {
+	u := middlewareAuthRetrieve(w, r)
+	c := middlewareReferredContest(w, r, u)
+	if c.Id == -1 {
+		w.WriteHeader(404)
+		return
+	}
+
+	mid, _ := strconv.Atoi(mux.Vars(r)["mid"])
+	m := models.Match{Id: int32(mid)}
+	if err := m.Read(); err != nil {
+		if err == sql.ErrNoRows {
+			// No such match
+			w.WriteHeader(404)
+			return
+		} else {
+			panic(err)
+		}
+	}
+	if m.Contest != c.Id {
+		// Match not in contest
+		w.WriteHeader(404)
+		return
+	}
+	m.LoadRel()
+
+	enc := json.NewEncoder(w)
+	enc.SetEscapeHTML(false)
+	enc.Encode(m.Representation())
+}
+
 // XXX: For debug use
 // curl http://localhost:3434/contest/create -i -H "Cookie: auth=..." -d ""
 func contestCreateHandler(w http.ResponseWriter, r *http.Request) {
@@ -386,5 +417,6 @@ func init() {
 	registerRouterFunc("/contest/{cid:[0-9]+}/ranklist", contestRanklistHandler, "GET")
 	registerRouterFunc("/contest/{cid:[0-9]+}/matches", contestMatchesHandler, "GET")
 	registerRouterFunc("/contest/{cid:[0-9]+}/match/manual", contestMatchManualHandler, "POST")
+	registerRouterFunc("/contest/{cid:[0-9]+}/match/{mid:[0-9]+}", contestMatchDetailsHandler, "GET")
 	registerRouterFunc("/contest/create", contestCreateHandler, "POST")
 }
