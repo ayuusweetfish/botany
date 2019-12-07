@@ -41,6 +41,65 @@ func contestListHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("]\n"))
 }
 
+func parseRequestContest(r *http.Request) (models.Contest, bool) {
+	title := r.PostFormValue("title")
+	banner := r.PostFormValue("banner")
+	startTime, err1 := strconv.ParseInt(r.PostFormValue("start_time"), 10, 64)
+	endTime, err2 := strconv.ParseInt(r.PostFormValue("end_time"), 10, 64)
+	desc := r.PostFormValue("desc")
+	details := r.PostFormValue("details")
+	isVisible := (r.PostFormValue("is_visible") == "true")
+	isRegOpen := (r.PostFormValue("is_reg_open") == "true")
+
+	if err1 != nil || err2 != nil || startTime >= endTime {
+		return models.Contest{}, false
+	}
+	// TODO: Check validity of other parameters
+
+	c := models.Contest{
+		Title:     title,
+		Banner:    banner,
+		StartTime: startTime,
+		EndTime:   endTime,
+		Desc:      desc,
+		Details:   details,
+		IsVisible: isVisible,
+		IsRegOpen: isRegOpen,
+	}
+	return c, true
+}
+
+// curl http://localhost:3434/contest/create -i -H "Cookie: auth=..." -d
+// "title=Grand+Contest&banner=1.png&start_time=0&end_time=1576000000&desc=Really+big+contest&Lorem+ipsum+dolor+sit+amet&is_visible=true&is_reg_open=true"
+func contestCreateHandler(w http.ResponseWriter, r *http.Request) {
+	u := middlewareAuthRetrieve(w, r)
+	if u.Id == -1 {
+		w.WriteHeader(401)
+		return
+	}
+	if u.Privilege < models.UserPrivilegeOrganizer {
+		// Insufficient privilege
+		w.WriteHeader(403)
+		fmt.Fprintf(w, "{}")
+		return
+	}
+
+	c, ok := parseRequestContest(r)
+	if !ok {
+		// Malformed request
+		w.WriteHeader(400)
+		fmt.Fprintf(w, "{}")
+		return
+	}
+
+	c.Owner = u.Id
+	if err := c.Create(); err != nil {
+		panic(err)
+	}
+
+	fmt.Fprintf(w, "{\"id\": %d}", c.Id)
+}
+
 // Retrieves the contest referred to in the URL parameter
 // Returns the object without relationships loaded; or
 // an empty one with an Id of -1 if none is found
@@ -379,35 +438,9 @@ func contestMatchDetailsHandler(w http.ResponseWriter, r *http.Request) {
 	enc.Encode(m.Representation())
 }
 
-// XXX: For debug use
-// curl http://localhost:3434/contest/create -i -H "Cookie: auth=..." -d ""
-func contestCreateHandler(w http.ResponseWriter, r *http.Request) {
-	u := middlewareAuthRetrieve(w, r)
-	if u.Id == -1 {
-		w.WriteHeader(401)
-		return
-	}
-
-	c := models.Contest{
-		Title:     "Grand Contest",
-		Banner:    "",
-		Owner:     u.Id,
-		StartTime: 0,
-		EndTime:   365 * 86400,
-		Desc:      "Really big contest",
-		Details:   "Lorem ipsum dolor sit amet",
-		IsVisible: true,
-		IsRegOpen: true,
-	}
-	if err := c.Create(); err != nil {
-		panic(err)
-	}
-
-	fmt.Fprintf(w, "{\"id\": %d}", c.Id)
-}
-
 func init() {
 	registerRouterFunc("/contest/list", contestListHandler, "GET")
+	registerRouterFunc("/contest/create", contestCreateHandler, "POST")
 	registerRouterFunc("/contest/{cid:[0-9]+}/publish", contestPublishHandler, "POST")
 	registerRouterFunc("/contest/{cid:[0-9]+}/info", contestInfoHandler, "GET")
 	registerRouterFunc("/contest/{cid:[0-9]+}/join", contestJoinHandler, "POST")
@@ -418,5 +451,4 @@ func init() {
 	registerRouterFunc("/contest/{cid:[0-9]+}/matches", contestMatchesHandler, "GET")
 	registerRouterFunc("/contest/{cid:[0-9]+}/match/manual", contestMatchManualHandler, "POST")
 	registerRouterFunc("/contest/{cid:[0-9]+}/match/{mid:[0-9]+}", contestMatchDetailsHandler, "GET")
-	registerRouterFunc("/contest/create", contestCreateHandler, "POST")
 }

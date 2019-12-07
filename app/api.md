@@ -214,7 +214,7 @@
 
 不包含 Match 的 **report**
 
-### :construction: 创建比赛 POST /contest/create
+### 创建比赛 POST /contest/create
 
 请求
 - **title** (string) 标题
@@ -227,8 +227,7 @@
 - **is_reg_open** (boolean) 是否公开接受报名
 
 响应 200
-- 空对象 {}
-- 无论是否变更可见性都正常返回
+- **id** (number) 新比赛的 ID
 
 响应 400
 - 空对象 {}
