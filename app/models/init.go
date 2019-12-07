@@ -26,12 +26,7 @@ func InitializeSchemata(dbInput *sql.DB) {
 		db.Exec(cmd)
 		for _, columnDesc := range schema.columns {
 			columnName := strings.SplitN(columnDesc, " ", 2)[0]
-			if columnName == "ADD" {
-				// Constraint
-				schema := "ALTER TABLE " + schema.table + " " + columnDesc
-				println(schema)
-				db.Exec(schema)
-			} else {
+			if columnName != "ADD" {
 				// Column
 				row := db.QueryRow("SELECT COUNT(*) FROM information_schema.columns "+
 					"WHERE table_name = $1 AND column_name = $2",
@@ -49,6 +44,17 @@ func InitializeSchemata(dbInput *sql.DB) {
 				} else {
 					// println("Column " + columnName + " already exists, skipping")
 				}
+			}
+		}
+	}
+	for _, schema := range schemata {
+		for _, columnDesc := range schema.columns {
+			columnName := strings.SplitN(columnDesc, " ", 2)[0]
+			if columnName == "ADD" {
+				// Constraint
+				schema := "ALTER TABLE " + schema.table + " " + columnDesc
+				println(schema)
+				db.Exec(schema)
 			}
 		}
 	}

@@ -32,12 +32,14 @@ type Submission struct {
 func init() {
 	registerSchema("submission",
 		"id SERIAL PRIMARY KEY",
-		"uid INTEGER NOT NULL REFERENCES users(id)",
-		"contest INTEGER NOT NULL REFERENCES contest(id)",
+		"uid INTEGER NOT NULL",
+		"contest INTEGER NOT NULL",
 		"created_at BIGINT NOT NULL",
 		"status SMALLINT NOT NULL DEFAULT "+strconv.Itoa(SubmissionStatusPending),
 		"message TEXT NOT NULL DEFAULT ''",
 		"contents TEXT NOT NULL",
+		"ADD CONSTRAINT fk_users FOREIGN KEY (uid) REFERENCES users (id)",
+		"ADD CONSTRAINT fk_contest FOREIGN KEY (contest) REFERENCES contest (id)",
 	)
 }
 

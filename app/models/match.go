@@ -24,12 +24,15 @@ type MatchParty struct {
 func init() {
 	registerSchema("match",
 		"id SERIAL PRIMARY KEY",
-		"contest INTEGER NOT NULL REFERENCES contest(id)",
+		"contest INTEGER NOT NULL",
 		"report TEXT NOT NULL DEFAULT ''",
+		"ADD CONSTRAINT fk_contest FOREIGN KEY (contest) REFERENCES contest (id)",
 	)
 	registerSchema("match_party",
-		"match INTEGER NOT NULL REFERENCES match(id)",
-		"submission INTEGER NOT NULL REFERENCES submission(id)",
+		"match INTEGER NOT NULL",
+		"submission INTEGER NOT NULL",
+		"ADD CONSTRAINT fk_match FOREIGN KEY (match) REFERENCES match (id)",
+		"ADD CONSTRAINT fk_submission FOREIGN KEY (submission) REFERENCES submission (id)",
 	)
 }
 
