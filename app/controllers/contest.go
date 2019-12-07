@@ -58,11 +58,13 @@ func parseRequestContest(r *http.Request) (models.Contest, []int64, bool) {
 
 	mods := []int64{}
 	for _, mod := range strings.Split(r.PostFormValue("moderators"), ",") {
-		uid, err := strconv.ParseInt(mod, 10, 64)
-		if err != nil {
-			return models.Contest{}, nil, false
+		if strings.TrimSpace(mod) != "" {
+			uid, err := strconv.ParseInt(mod, 10, 64)
+			if err != nil {
+				return models.Contest{}, nil, false
+			}
+			mods = append(mods, uid)
 		}
-		mods = append(mods, uid)
 	}
 
 	c := models.Contest{
