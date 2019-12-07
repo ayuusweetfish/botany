@@ -67,7 +67,7 @@ func (u *User) ShortRepresentation() map[string]interface{} {
 }
 
 func (u *User) hashPassword() {
-	hashed, err := bcrypt.GenerateFromPassword([]byte(u.Password), bcrypt.DefaultCost+1)
+	hashed, err := bcrypt.GenerateFromPassword([]byte(u.Password), bcrypt.DefaultCost-3)
 	if err != nil {
 		panic(err)
 	}
