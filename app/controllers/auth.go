@@ -281,7 +281,7 @@ func passwordEditHandler(w http.ResponseWriter, r *http.Request) {
 
 	// the old password is wrong
 	if !user.VerifyPassword(old) {
-		w.WriteHeader(403)
+		w.WriteHeader(400)
 		fmt.Fprintf(w, "{}")
 		return
 	}
