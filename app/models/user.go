@@ -97,25 +97,25 @@ func (u *User) read(field string) error {
 	var row *sql.Row
 	if field == "handle" {
 		row = db.QueryRow("SELECT "+
-			"id, handle, email, password, privilege, joined_at, nickname "+
+			"id, handle, email, password, privilege, joined_at, nickname, bio"+
 			"FROM users WHERE handle = $1",
 			u.Handle,
 		)
 	} else if field == "id" {
 		row = db.QueryRow("SELECT "+
-			"id, handle, email, password, privilege, joined_at, nickname "+
+			"id, handle, email, password, privilege, joined_at, nickname, bio "+
 			"FROM users WHERE id = $1",
 			u.Id,
 		)
 	} else if field == "email" {
 		row = db.QueryRow("SELECT "+
-			"id, handle, email, password, privilege, joined_at, nickname "+
+			"id, handle, email, password, privilege, joined_at, nickname, bio "+
 			"FROM users WHERE email = $1",
 			u.Email,
 		)
 	}
 	err := row.Scan(&u.Id, &u.Handle, &u.Email,
-		&u.Password, &u.Privilege, &u.JoinedAt, &u.Nickname)
+		&u.Password, &u.Privilege, &u.JoinedAt, &u.Nickname, &u.Bio)
 	return err
 }
 
