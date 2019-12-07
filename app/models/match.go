@@ -48,11 +48,22 @@ func (m *Match) Create() error {
 }
 
 func (m *Match) ShortRepresentation() map[string]interface{} {
+	var submissions []map[string]interface{}
+	for _, item := range m.Rel.Parties {
+		item.LoadRel()
+		submissions = append(submissions, item.ShortRepresentation())
+	}
 	return map[string]interface{}{
 		"id":      m.Id,
 		"contest": m.Contest,
-		"parties": m.Rel,
+		"parties": submissions,
 	}
+}
+
+func (m *Match) Representation() map[string]interface{} {
+	matchMap := m.ShortRepresentation()
+	matchMap["report"] = m.Report
+	return matchMap
 }
 
 func (m *Match) Read() error {
@@ -64,6 +75,41 @@ func (m *Match) Read() error {
 		&m.Report,
 	)
 	return err
+}
+
+func (m *Match) ReadById(matchId int32) error {
+	m.Id = matchId
+	err := m.Read()
+	if err != nil {
+		return err
+	}
+	return m.LoadRel()
+}
+
+func ReadMatches(contest int32) ([]Match, error) {
+	rows, err := db.Query("SELECT "+
+		"match.id, match.report "+
+		"FROM match WHERE match.contest = $1",
+		contest)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	ms := []Match{}
+	m := Match{Contest:contest}
+	for rows.Next() {
+		err = rows.Scan(&m.Id, &m.Report)
+		if err != nil {
+			return nil, err
+		}
+		err = m.LoadRel()
+		if err != nil {
+			fmt.Println(err)
+			return nil, err
+		}
+		ms = append(ms, m)
+	}
+	return ms, nil
 }
 
 func ReadByContest(contest int32) ([]Match, error) {
@@ -109,6 +155,26 @@ func ReadByContest(contest int32) ([]Match, error) {
 
 func (m *Match) LoadRel() error {
 	m.Rel.Contest.Id = m.Contest
+	rows, err := db.Query("SELECT "+
+		"s.id, s.uid, "+
+		"s.created_at, s.status "+
+		"FROM match_party "+
+		"LEFT JOIN submission s ON match_party.submission = s.id "+
+		"WHERE match_party.match = $1 ",
+		m.Id)
+	if err != nil {
+		fmt.Println("bad", err)
+		return err
+	}
+	defer rows.Close()
+	s := Submission{}
+	for rows.Next() {
+		err = rows.Scan(&s.Id, &s.User, &s.CreatedAt, &s.Status)
+		if err != nil {
+			return err
+		}
+		m.Rel.Parties = append(m.Rel.Parties, s)
+	}
 	return m.Rel.Contest.Read()
 }
 

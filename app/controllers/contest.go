@@ -315,7 +315,7 @@ func contestMatchesHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	matches, err := models.ReadByContest(c.Id)
+	matches, err := models.ReadMatches(c.Id)
 	if err != nil {
 		w.WriteHeader(404)
 		return
@@ -335,6 +335,26 @@ func contestMatchesHandler(w http.ResponseWriter, r *http.Request) {
 	enc.Encode(rightparam)
 }
 
+func contestSingleMatchHandler(w http.ResponseWriter, r *http.Request) {
+	u := middlewareAuthRetrieve(w, r)
+	c := middlewareReferredContest(w, r, u)
+	if c.Id == -1 {
+		w.WriteHeader(404)
+		return
+	}
+	mid, _ := strconv.Atoi(mux.Vars(r)["mid"])
+	m := models.Match{}
+	fmt.Println("is ok", mid)
+	err := m.ReadById(int32(mid))
+	if err != nil {
+		w.WriteHeader(404)
+		return
+	}
+	enc := json.NewEncoder(w)
+	enc.SetEscapeHTML(false)
+	enc.Encode(m.Representation())
+}
+
 func init() {
 	registerRouterFunc("/contest/list", contestListHandler, "GET")
 	registerRouterFunc("/contest/{cid:[0-9]+}/publish", contestPublishHandler, "POST")
@@ -345,5 +365,6 @@ func init() {
 	registerRouterFunc("/contest/{cid:[0-9]+}/my", contestSubmissionHistoryHandler, "GET")
 	registerRouterFunc("/contest/{cid:[0-9]+}/ranklist", contestRanklistHandler, "GET")
 	registerRouterFunc("/contest/create", contestCreateHandler, "POST")
-	registerRouterFunc("/contest/{cid:[0-9]+/matches}", contestMatchesHandler, "GET")
+	registerRouterFunc("/contest/{cid:[0-9]+}/matches", contestMatchesHandler, "GET")
+	registerRouterFunc("/contest/{cid:[0-9]+}/match/{mid:[0-9]+}", contestSingleMatchHandler, "GET")
 }
