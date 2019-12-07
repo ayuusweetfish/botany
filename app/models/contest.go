@@ -261,6 +261,7 @@ func (c *Contest) UpdateModerators(uids []int64) error {
 			stmt += fmt.Sprintf("($%d, $%d, $%d, 0, '')", i*3+1, i*3+2, i*3+3)
 			vals = append(vals, uid, c.Id, ParticipationTypeModerator)
 		}
+		stmt += " ON CONFLICT (uid, contest) DO UPDATE SET type = " + strconv.Itoa(ParticipationTypeModerator)
 		if _, err := db.Exec(stmt, vals...); err != nil {
 			return err
 		}
