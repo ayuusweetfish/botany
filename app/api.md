@@ -150,7 +150,7 @@
 - 空对象 {}
 - 除站长外，不能修改其他人的个人信息
 
-### :construction: 赋予或撤回主办权限 POST /user/{handle}/promote
+### 赋予或撤回主办权限 POST /user/{handle}/promote
 
 请求
 - **set** (boolean) true 表示赋予权限，false 表示取消权限
