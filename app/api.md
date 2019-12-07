@@ -207,13 +207,12 @@
 ### 对局数据结构 Match
 
 - **id** (number) ID
-- **parties** 参与对局的各方，每个元素如下
-	- **submission** (SubmissionShort) 提交记录
+- **parties** ([SubmissionShort]) 参与对局的各方，每个元素为一个提交记录
 - **report** (object) 对局报告，交给动画播放器
 
 ### 对局数据结构 MatchShort
 
-不包含 Match 的 **details**
+不包含 Match 的 **report**
 
 ### :construction: 创建比赛 POST /contest/create
 
@@ -335,7 +334,7 @@
 响应
 - 一个 Match
 
-### :construction: 手动发起对局 POST /contest/{cid}/match/manual
+### 手动发起对局 POST /contest/{cid}/match/manual
 
 请求
 - **submissions** (string) 参与对局的各提交记录编号，用逗号分隔，如 `1,2,3`
@@ -343,5 +342,10 @@
 响应 200
 - 一个 MatchShort
 
+响应 400
+- 空对象 {}
+- 格式不正确
+
 响应 403
+- 空对象 {}
 - 非管理员不能手动发起对局

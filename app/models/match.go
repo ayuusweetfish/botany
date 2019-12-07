@@ -1,7 +1,5 @@
 package models
 
-import "fmt"
-
 type Match struct {
 	Id      int32
 	Contest int32
@@ -32,26 +30,52 @@ func init() {
 	registerSchema("match_party",
 		"match INTEGER NOT NULL REFERENCES match(id)",
 		"submission INTEGER NOT NULL REFERENCES submission(id)",
-		"score INTEGER NOT NULL DEFAULT 0",
-		"is_winner BOOLEAN NOT NULL",
 	)
 }
 
 func (m *Match) Create() error {
+	// TODO: Combine into an transaction
 	err := db.QueryRow("INSERT INTO "+
 		"match(contest, report) "+
 		"VALUES ($1, $2) RETURNING id",
 		m.Contest,
 		m.Report,
 	).Scan(&m.Id)
-	return err
+	if err != nil {
+		return err
+	}
+
+	// Create MatchParty records
+	for i, s := range m.Rel.Parties {
+		_, err := db.Exec("INSERT INTO "+
+			"match_party(match, submission) VALUES ($1, $2)",
+			m.Id, s.Id)
+		if err != nil {
+			return err
+		}
+		err = s.Read()
+		if err != nil {
+			return err
+		}
+		err = s.LoadRel()
+		if err != nil {
+			return err
+		}
+		m.Rel.Parties[i] = s
+	}
+
+	return nil
 }
 
 func (m *Match) ShortRepresentation() map[string]interface{} {
+	parties := []map[string]interface{}{}
+	for _, p := range m.Rel.Parties {
+		parties = append(parties, p.ShortRepresentation())
+	}
 	return map[string]interface{}{
 		"id":      m.Id,
-		"contest": m.Contest,
-		"parties": m.Rel,
+		"parties": parties,
+		"report":  m.Report,
 	}
 }
 
@@ -76,7 +100,6 @@ func ReadByContest(contest int32) ([]Match, error) {
 		"WHERE match.contest = $1 ",
 		contest)
 	if err != nil {
-		fmt.Println("bad", err)
 		return nil, err
 	}
 	defer rows.Close()
