@@ -75,7 +75,6 @@ func (m *Match) ShortRepresentation() map[string]interface{} {
 	return map[string]interface{}{
 		"id":      m.Id,
 		"parties": parties,
-		"report":  m.Report,
 	}
 }
 
@@ -90,49 +89,55 @@ func (m *Match) Read() error {
 	return err
 }
 
-func ReadByContest(contest int32) ([]Match, error) {
-	rows, err := db.Query("SELECT "+
-		"match.id, s.id, s.uid, "+
-		"s.created_at, s.status "+
-		"FROM match "+
-		"LEFT JOIN match_party ON match.id = match_party.match "+
-		"LEFT JOIN submission s ON match_party.submission = s.id "+
-		"WHERE match.contest = $1 ",
-		contest)
+func ReadByContest(cid int32) ([]Match, error) {
+	rows, err := db.Query("SELECT id FROM match WHERE contest = $1", cid)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 	ms := []Match{}
-	s := Submission{}
-	m := Match{Contest: contest}
-	var matchId int32 = -1
-	matchEnd := 0 // true means one match finished.
 	for rows.Next() {
-		err = rows.Scan(&m.Id, &s.Id, &s.User, &s.CreatedAt, &s.Status)
+		m := Match{Contest: cid}
+		err := rows.Scan(&m.Id)
 		if err != nil {
 			return nil, err
 		}
-		if matchId == -1 {
-			matchId = m.Id
-		} else if matchId != m.Id {
-			m.Id, matchId = matchId, m.Id
-			ms = append(ms, m)
-			m.Id = matchId
-			matchEnd = 1
-		}
-		m.Rel.Parties = append(m.Rel.Parties, s)
-		matchEnd = 0
-	}
-	if matchEnd == 0 {
+		// TODO: Optimize
+		m.LoadRel()
 		ms = append(ms, m)
 	}
-	return ms, nil
+	return ms, rows.Err()
 }
 
 func (m *Match) LoadRel() error {
 	m.Rel.Contest.Id = m.Contest
-	return m.Rel.Contest.Read()
+	if err := m.Rel.Contest.Read(); err != nil {
+		return err
+	}
+
+	// Find out all parties
+	rows, err := db.Query("SELECT submission FROM match_party "+
+		"WHERE match = $1", m.Id)
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+	m.Rel.Parties = []Submission{}
+	for rows.Next() {
+		// TODO: Optimize
+		s := Submission{}
+		if err := rows.Scan(&s.Id); err != nil {
+			return err
+		}
+		if err := s.Read(); err != nil {
+			return err
+		}
+		if err := s.LoadRel(); err != nil {
+			return err
+		}
+		m.Rel.Parties = append(m.Rel.Parties, s)
+	}
+	return rows.Err()
 }
 
 func (m *Match) Update() error {

@@ -324,7 +324,7 @@
 	- **rating** (number) 匹配积分
 	- **performance** (string) 额外战绩数据
 
-### :construction: 对局列表 GET /contest/{cid}/matches
+### 对局列表 GET /contest/{cid}/matches
 
 响应
 - 若干 MatchShort 组成的数组，从最新到最旧排序
