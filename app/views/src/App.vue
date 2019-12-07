@@ -1,11 +1,11 @@
 <template>
   <div id="app">
     <el-row class = "topbar" type="flex" justify="space-between">
-      <el-col :span="8" v-if="$route.meta.navbarType !== 'game'" class="topbar-tittle">
+      <el-col :span="8" v-if="$route.meta.navbarType !== 'contest'" class="topbar-tittle">
         <div align='left' @click="$router.push('/')" style="cursor: pointer">Botany-Demo</div>
       </el-col>
-      <el-col :span="8" v-if="$route.meta.navbarType === 'game'" class="topbar-tittle">
-        <div style="display: inline">{{$store.state.sitename}}</div>
+      <el-col :span="8" v-if="$route.meta.navbarType === 'contest'" class="topbar-tittle">
+        <div style="display: inline">{{$store.state.contestInfo.title}}</div>
         <div style="display: inline">@Botany</div>
       </el-col>
       <!-- <el-col :span="6" v-if="$route.meta.navbarType === 'main'" align='left'>
@@ -15,23 +15,18 @@
         <router-link class="navbar-item" to="/profile">个人信息</router-link>
         <div style="display: inline; color:gray">|</div>
       </el-col> -->
-      <el-col :span="10" v-if="$route.meta.navbarType === 'game'" align='center'>
-        <div style="display: inline; color:gray">|</div>
+      <el-col :span="10" v-if="$route.meta.navbarType === 'contest'" align='center'>
         <router-link class="navbar-item" :to="{path:'/contest_main', query: {id: $route.query.id}}">比赛首页</router-link>
-        <div style="display: inline; color:gray">|</div>
         <router-link class="navbar-item" :to="{path:'/contest_detail', query: {id: $route.query.id}}">参赛指南</router-link>
+        <router-link v-if="checkRouteValid('imIn')" class="navbar-item" :to="{path: '/submission', query: {id: $route.query.id}}">我的代码</router-link>
+        <!-- <el-button type="text" class="navbar-item" @click="gocontestranking">查看排行</el-button>
         <div style="display: inline; color:gray">|</div>
-        <!-- <el-button type="text" class="navbar-item" @click="goCoding">我的代码</el-button>
-        <div style="display: inline; color:gray">|</div>
-        <el-button type="text" class="navbar-item" @click="goGameranking">查看排行</el-button>
-        <div style="display: inline; color:gray">|</div>
-        <el-button type="text" class="navbar-item" @click="goGamevss">查看对局</el-button>
-        <div style="display: inline; color:gray">|</div>-->
+        <el-button type="text" class="navbar-item" @click="gocontestvss">查看对局</el-button>
+        <div style="display: inline; color:gray">|</div> -->
         <router-link class="navbar-item" to="/">返回</router-link>
-        <div style="display: inline; color:gray">|</div>
       </el-col>
       <el-col :span="4" v-if="$route.meta.navbarType !== 'none'">
-        <el-dropdown v-if="$store.state.handle" :hide-on-click="false" @command="handleCommand" trigger="click">
+        <el-dropdown v-if="$store.state.handle" :hide-on-click="true" @command="handleCommand" trigger="click">
           <span class="el-dropdown-link" style="cursor: pointer;">
             <el-avatar :src="defaultAva"></el-avatar>
           </span>
@@ -41,7 +36,9 @@
             <el-dropdown-item :disabled="true" class="info-dropdown-item" style="color: grey">{{translatePrivilege($store.state.privilege)}}</el-dropdown-item>
             <el-dropdown-item :disabled="true" class="info-dropdown-item">账号：{{$store.state.handle}}</el-dropdown-item>
             <el-dropdown-item :disabled="true" class="info-dropdown-item">UID：{{$store.state.id}}</el-dropdown-item>
-            <el-dropdown-item command="toProfile" class="button-dropdown-item" style="border-top: 1px solid silver">我的资料</el-dropdown-item>
+            <router-link :to="{path: '/profile', query: {handle: $store.state.handle}}" style="text-decoration: none">
+              <el-dropdown-item class="button-dropdown-item" style="border-top: 1px solid silver">我的资料</el-dropdown-item>
+            </router-link>
             <el-dropdown-item command="logout" class="button-dropdown-item">退出登录</el-dropdown-item>
           </el-dropdown-menu>
         </el-dropdown>
@@ -69,6 +66,7 @@ export default {
   name: 'App',
   created () {
     this.$axios.get('/whoami').then(res => {
+      console.log(res.data)
       this.$store.commit('login', {
         id: res.data.id,
         handle: res.data.handle,
@@ -76,10 +74,13 @@ export default {
         nickname: res.data.nickname
       })
     }).catch(err => {
-      if (err.response.state === 401) {
+      if (err.response.state === 400) {
         this.$store.commit('logout')
       }
     })
+  },
+  beforeDestroy () {
+    this.$store.commit('logout')
   },
   data () {
     return {
@@ -93,10 +94,12 @@ export default {
       console.log(title)
     },
     goLogin () {
+      console.log(this.$route)
+      this.$store.commit('setAfterLogin', {path: this.$route.path, query: this.$route.query})
       this.$router.push({
         path: '/login',
         query: {
-          next: this.$route
+          redirect: true
         }
       })
     },
@@ -125,12 +128,21 @@ export default {
       return str
     },
     logout () {
-      this.$store.commit('logout')
-      window.location.reload()
+      this.$axios.post('/logout').then(res => {
+        this.$store.commit('logout')
+        window.location.reload()
+      }).catch(err => {
+        console.log(err)
+      })
     },
-    toProfile () {
-      console.log(window.localStorage)
-      console.log(window.cookie)
+    checkRouteValid (role) {
+      if (this.$store.state.contestInfo &&
+      this.$store.state.contestInfo.my_role &&
+      this.$store.state.contestInfo.my_role === this.$consts.role[role]) {
+        return true
+      } else {
+        return false
+      }
     }
   }
 }
@@ -145,8 +157,8 @@ export default {
   color: #2c3e50;
   margin: auto;
   margin-top: 0px;
-  min-width: 720px;
-  max-width: 1080px;
+  width: 1080px;
+  font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif
 }
 .topbar {
   border-bottom: 1px solid silver;
@@ -166,9 +178,11 @@ export default {
 }
 .navbar-item {
   font-size: 18px;
-  color: grey;
-  height: 30px;
+  font-weight: 500;
+  color:#545454;
+  line-height: 48px;
   text-decoration: none;
+  margin: 0px 10px 0px 10px;
 }
 .info-dropdown-item {
   font-size: 14px;
@@ -176,7 +190,7 @@ export default {
 }
 .button-dropdown-item {
   font-size: 14px;
-  padding: 0
+  padding: 0;
 }
 .login-button {
   font-size: 18px;

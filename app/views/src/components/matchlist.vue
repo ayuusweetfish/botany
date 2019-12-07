@@ -4,7 +4,7 @@
       <div align="left">
         <div style="display: inline">一共进行了1000场对局，你参与了其中</div><div style="display: inline; font-weight: 600">20</div><div style="display: inline">场</div>
       </div>
-      <el-table :data="games" @row-click="goDetail">
+      <el-table :data="contests" @row-click="goDetail">
         <el-table-column label="对局编号" min-width="80" align="center">
           <template slot-scope="scope">
             <div>{{scope.row.id}}</div>
@@ -64,7 +64,7 @@ export default {
       })
     }
     return {
-      games: ls,
+      contests: ls,
       total: 1000,
       page: 1
     }

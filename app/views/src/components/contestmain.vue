@@ -3,18 +3,45 @@
     <el-row style="margin-bottom: 10px">
       <el-col :span="24">
         <el-card
-          class="game-title"
+          class="contest-title"
           :style="{backgroundImage: 'url('+bannerUrl+')'}"
           body-style="display: flex; justify-content: space-between; height: 200px; align-items: flex-end"
         >
           <div style="display: inline-flex">{{title}}</div>
-          <el-button
-            v-if="myRole===$consts.role.notIn && isRegOpen"
-            type="primary" size="large"
-            style="display: inline-flex;"
-          >
-            报名参加
-          </el-button>
+          <div>
+            <el-button
+              v-if="myRole===$consts.role.notIn && isRegOpen"
+              type="primary" size="large"
+              style="display: inline-flex;"
+              @click="regIn"
+            >
+              报名参加
+            </el-button>
+            <el-button
+              v-if="myRole===$consts.role.moderator"
+              type="primary" size="large"
+              style="display: inline-flex;"
+              @click="goEdit"
+            >
+              编辑比赛
+            </el-button>
+            <el-button
+              v-if="$store.state.privilege===$consts.privilege.superuser && !isVisible"
+              type="primary" size="large"
+              style="display: inline-flex;"
+              @click="publishContest"
+            >
+              公开比赛
+            </el-button>
+            <el-button
+              v-if="$store.state.privilege===$consts.privilege.superuser && isVisible"
+              type="primary" size="large"
+              style="display: inline-flex;"
+              @click="hideContest"
+            >
+              隐藏比赛
+            </el-button>
+          </div>
         </el-card>
       </el-col>
     </el-row>
@@ -76,7 +103,8 @@ export default {
       this.myRole = res.data.my_role
       this.owner = res.data.owner
       this.title = res.data.title
-      this.$store.commit('enterSubSite', this.title)
+      this.$store.commit('enterSubSite', res.data)
+      console.log(res.data)
       loading.close()
     }).catch(err => {
       console.log(err)
@@ -96,12 +124,43 @@ export default {
       owner: '',
       events: []
     }
+  },
+  methods: {
+    regIn () {
+      const loading = this.$loading({lock: true, text: '处理中'})
+      this.$axios.post(
+        '/contest/' + this.cid + '/join'
+      ).then(res => {
+        loading.close()
+        this.$message.success('报名成功')
+        window.location.reload()
+      }).catch(err => {
+        loading.close()
+        if (err.response.status !== 401) {
+          this.$message('报名失败，请重试')
+        }
+      })
+    },
+    goEdit () {
+      this.$router.push({
+        path: '/contest_edit',
+        query: {
+          id: this.cid
+        }
+      })
+    },
+    publishContest () {
+
+    },
+    hideContest () {
+
+    }
   }
 }
 </script>
 
 <style scoped>
-  .game-title{
+  .contest-title{
     font-size: 36px;
     background-size: 100% auto;
     background-position: center;

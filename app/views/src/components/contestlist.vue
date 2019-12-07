@@ -1,7 +1,17 @@
 <template>
   <el-card>
-    <el-table :data="contests" @row-click="goContestMain">
-      <el-table-column :label="title" >
+    <div align="left" style="margin-left: 10px">
+      <router-link
+        v-if="$store.state.privilege===$consts.privilege.organizer"
+        to="/contest_create"
+        class="addcontest-link"
+      >
+      <i class="el-icon-circle-plus-outline"></i>
+      添加一场比赛
+      </router-link>
+    </div>
+    <el-table :data="contests" @row-click="goContestMain" :cell-style="{'cursor': 'pointer'}">
+      <el-table-column :label="title">
         <template slot-scope="scope">
           <div><div class="important">名称：</div><div class="normal">{{scope.row.name}}</div></div>
           <div><div class="important">时间：</div><div class="normal">{{scope.row.time}}</div></div>
@@ -73,5 +83,9 @@ export default {
   .normal{
     display: inline-block;
     font-weight: 400;
+  }
+  .addcontest-link{
+    text-decoration: none;
+    color: #409EFF;
   }
 </style>

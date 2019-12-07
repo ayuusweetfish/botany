@@ -76,9 +76,9 @@
 export default {
   name: 'login',
   created () {
-    if (this.$route.query.next) {
-      this.nextRoute = this.$route.query.next
-      console.log(this.nextRoute)
+    if (this.$route.query && this.$route.query.redirect && this.$store.state.afterLogin) {
+      this.nextRoute = this.$store.state.afterLogin
+      this.redirect = this.$route.query.redirect
     }
   },
   data () {
@@ -96,6 +96,7 @@ export default {
       nextRoute: {
         path: '/'
       },
+      redirect: false,
       rules: {
         handle: [
           {required: true, message: '请输入账号', trigger: 'blur'},
@@ -171,7 +172,7 @@ export default {
       this.$router.push({
         path: '/signup',
         query: {
-          next: this.nextRoute
+          redirect: this.redirect
         }
       })
     }

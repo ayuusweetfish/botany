@@ -10,8 +10,9 @@ export default new Vuex.Store({
     handle: '',
     privilege: -1,
     nickname: '',
-    sitename: '',
-    routeList: []
+    routeList: [],
+    contestInfo: {},
+    afterLogin: null
   },
   mutations: {
     setRouteList (state, val) {
@@ -28,12 +29,14 @@ export default new Vuex.Store({
       state.handle = ''
       state.nickname = ''
       state.privilege = -1
-    },
-    setPageBefore (state, val) {
-      state.beforeLog = val
+      state.contestInfo = {}
+      state.afterLogin = null
     },
     enterSubSite (state, val) {
-      state.sitename = val
+      state.contestInfo = val
+    },
+    setAfterLogin (state, val) {
+      state.afterLogin = val
     }
   },
   plugins: [createPersistedState()]

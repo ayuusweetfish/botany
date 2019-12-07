@@ -11,6 +11,8 @@ import ranklist from '@/components/ranklist'
 import matchlist from '@/components/matchlist'
 import match from '@/components/match'
 import profile from '@/components/profile'
+import contestcreate from '@/components/contestcreate'
+import contestedit from '@/components/contestedit'
 
 Vue.use(Router)
 
@@ -45,7 +47,7 @@ export default new Router({
       name: 'contest_main',
       component: contestmain,
       meta: {
-        navbarType: 'game'
+        navbarType: 'contest'
       }
     },
     {
@@ -53,7 +55,7 @@ export default new Router({
       name: 'contest_detail',
       component: contestdetail,
       meta: {
-        navbarType: 'game'
+        navbarType: 'contest'
       }
     },
     {
@@ -61,7 +63,7 @@ export default new Router({
       name: 'submission',
       component: submission,
       meta: {
-        navbarType: 'game'
+        navbarType: 'contest'
       }
     },
     {
@@ -69,7 +71,7 @@ export default new Router({
       name: 'ranklist',
       component: ranklist,
       meta: {
-        navbarType: 'game'
+        navbarType: 'contest'
       }
     },
     {
@@ -77,7 +79,7 @@ export default new Router({
       name: 'matchlist',
       component: matchlist,
       meta: {
-        navbarType: 'game'
+        navbarType: 'contest'
       }
     },
     {
@@ -85,7 +87,7 @@ export default new Router({
       name: 'match',
       component: match,
       meta: {
-        navbarType: 'game'
+        navbarType: 'contest'
       }
     },
     {
@@ -94,6 +96,22 @@ export default new Router({
       component: profile,
       meta: {
         navbarType: 'main'
+      }
+    },
+    {
+      path: '/contest_create',
+      name: 'contest_create',
+      component: contestcreate,
+      meta: {
+        navbarType: 'main'
+      }
+    },
+    {
+      path: '/contest_edit',
+      name: 'contest_edit',
+      component: contestedit,
+      meta: {
+        navbarType: 'contest'
       }
     }
   ]

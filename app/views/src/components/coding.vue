@@ -32,8 +32,9 @@
               :color="activity.color"
               placement="top"
             >
-            <div align="left" style="display: inline">{{activity.status}}</div>
-            <el-button type="text" size="small" style="display: inline">点击导出</el-button>
+            <div align="left">编号：{{activity.sid}}</div>
+            <div align="left">状态：{{activity.stat}}</div>
+            <el-button type="text" size="small">点击导出</el-button>
             </el-timeline-item>
           </el-timeline>
         </el-card>
@@ -68,24 +69,10 @@ export default {
   },
   data () {
     return {
+      cid: '',
       code: '',
-      history: [
-        {
-          time: '2019-10-25 11:00:00',
-          status: '处理中',
-          color: 'orange'
-        },
-        {
-          time: '2019-09-10 19:02:03',
-          status: '编译失败',
-          color: 'red'
-        },
-        {
-          time: '2019-09-10 19:00:00',
-          status: '可用',
-          color: 'green'
-        }
-      ],
+      topbarText: '尚未提交代码',
+      history: [],
       cmOptions: {
         lineNumbers: true,
         indentUnit: 2,

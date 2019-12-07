@@ -104,8 +104,9 @@
 export default {
   name: 'signup',
   created () {
-    if (this.$route.query.next) {
-      this.nextRoute = this.$route.query.next
+    if (this.$route.query && this.$route.query.redirect && this.$store.state.afterLogin) {
+      this.nextRoute = this.$store.state.afterLogin
+      this.redirect = this.$route.query.redirect
     }
     this.getCaptcha()
   },
@@ -134,6 +135,7 @@ export default {
       nextRoute: {
         path: '/login'
       },
+      redirect: false,
       signupInfo: {
         handle: '',
         password: '',
@@ -225,7 +227,7 @@ export default {
                 this.$router.push({
                   path: '/login',
                   query: {
-                    next: this.nextRoute
+                    redirect: this.redirect
                   }
                 })
               }
@@ -233,6 +235,7 @@ export default {
           }).catch(err => {
             loading.close()
             this.$message.error('注册失败，请检查表单')
+            this.getCaptcha()
             err.response.data.err.forEach(item => {
               switch (parseInt(item)) {
                 case 1:
@@ -256,7 +259,7 @@ export default {
       this.$router.push({
         path: '/login',
         query: {
-          next: this.nextRoute
+          redirect: this.redirect
         }
       })
     }

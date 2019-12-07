@@ -36,7 +36,7 @@ export default {
         return Y + '-' + M + '-' + D
       },
       globalValidator (rule, value, callback) {
-        if (value.match(new RegExp('[~#^$%&!?%* ]'))) {
+        if (value.match(new RegExp('[#^$%&!?%*]'))) {
           callback(new Error('输入了非法字符'))
         } else {
           callback()
@@ -51,8 +51,15 @@ export default {
       },
       role: {
         'notIn': -1,
-        'imIn': 0,
-        'moderator': 1
+        'imIn': 1,
+        'moderator': 0
+      },
+      codeStat: {
+        'pending': 0,
+        'compiling': 1,
+        'accepted': 9,
+        'complErr': -1,
+        'systmErr': -9
       }
     }
   }
