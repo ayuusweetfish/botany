@@ -297,6 +297,15 @@
 - 空数组 []
 - 未报名比赛或比赛未开始 —— 前端检查严格时不应出现此项
 
+### 所有提交历史 GET /contest/{cid}/submission/list
+
+响应 200
+- 若干 SubmissionShort 组成的数组，从最新到最旧排序
+
+响应 403
+- 空数组 []
+- 比赛未开始 —— 前端检查严格时不应出现此项
+
 ### 提交详情 GET /contest/{cid}/submission/{sid}
 
 响应 200

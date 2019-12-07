@@ -1,6 +1,7 @@
 package models
 
 import (
+	"database/sql"
 	"strconv"
 	"time"
 )
@@ -86,27 +87,44 @@ func (s *Submission) Read() error {
 }
 
 func SubmissionHistory(uid int32, cid int32, limit int) ([]Submission, error) {
-	rows, err := db.Query("SELECT "+
-		"submission.id, submission.created_at, submission.status, "+
-		"users.id, users.handle, users.privilege, users.nickname "+
-		"FROM submission "+
-		"LEFT JOIN users ON submission.uid = users.id "+
-		"WHERE uid = $1 AND contest = $2 "+
-		"ORDER BY submission.created_at DESC LIMIT $3",
-		uid, cid, limit)
+	var rows *sql.Rows
+	var err error
+	if uid == -1 {
+		// XXX: DRY?
+		// All submissions
+		rows, err = db.Query("SELECT "+
+			"submission.id, submission.created_at, submission.status, "+
+			"users.id, users.handle, users.privilege, users.nickname "+
+			"FROM submission "+
+			"LEFT JOIN users ON submission.uid = users.id "+
+			"WHERE contest = $1 "+
+			"ORDER BY submission.created_at DESC LIMIT $2",
+			cid, limit)
+	} else {
+		// Specific user
+		rows, err = db.Query("SELECT "+
+			"submission.id, submission.created_at, submission.status, "+
+			"users.id, users.handle, users.privilege, users.nickname "+
+			"FROM submission "+
+			"LEFT JOIN users ON submission.uid = users.id "+
+			"WHERE uid = $1 AND contest = $2 "+
+			"ORDER BY submission.created_at DESC LIMIT $3",
+			uid, cid, limit)
+	}
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 	ss := []Submission{}
 	for rows.Next() {
-		s := Submission{User: uid, Contest: cid}
+		s := Submission{Contest: cid}
 		err := rows.Scan(&s.Id, &s.CreatedAt, &s.Status,
 			&s.Rel.User.Id, &s.Rel.User.Handle,
 			&s.Rel.User.Privilege, &s.Rel.User.Nickname)
 		if err != nil {
 			return nil, err
 		}
+		s.User = s.Rel.User.Id
 		ss = append(ss, s)
 	}
 	return ss, rows.Err()
