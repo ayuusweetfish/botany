@@ -46,17 +46,20 @@ func FakeDatabase() {
 
 	// Contests
 	t := time.Now().Unix()
+	numbers := []string{"zero", "one", "two", "three", "four", "five"}
 	for i := 1; i <= 5; i++ {
+		s := "This is the description for contest number " + numbers[i] + "!\n"
+		s += "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Curabitur pretium tincidunt lacus. Nulla gravida orci a odio. Nullam varius, turpis et commodo pharetra, est eros bibendum elit, nec luctus magna felis sollicitudin mauris. Integer in mauris eu nibh euismod gravida. Duis ac tellus et risus vulputate vehicula. Donec lobortis risus a elit. Etiam tempor. Ut ullamcorper, ligula eu tempor congue, eros est euismod turpis, id tincidunt sapien risus a quam. Maecenas fermentum consequat mi. Donec fermentum. Pellentesque malesuada nulla a mi. Duis sapien sem, aliquet nec, commodo eget, consequat quis, neque. Aliquam faucibus, elit ut dictum aliquet, felis nisl adipiscing sapien, sed malesuada diam lacus eget erat. Cras mollis scelerisque nunc. Nullam arcu. Aliquam consequat. Curabitur augue lorem, dapibus quis, laoreet et, pretium ac, nisi. Aenean magna nisl, mollis quis, molestie eu, feugiat in, orci. In hac habitasse platea dictumst."
 		c := Contest{
-			Title:     "Grand Contest" + strconv.Itoa(i),
+			Title:     "Grand Contest " + strconv.Itoa(i),
 			Banner:    "banner.png",
 			Owner:     int32(1 + i),
 			StartTime: t + 3600*int64(-3+i),
 			EndTime:   t + 3600*int64(-1+i),
-			Desc:      "Really big contest #" + strconv.Itoa(i),
-			Details:   "Lorem ipsum dolor sit amet",
-			IsVisible: true,
-			IsRegOpen: true,
+			Desc:      "Really big contest, number " + numbers[i],
+			Details:   s,
+			IsVisible: i != 1,
+			IsRegOpen: i != 5,
 		}
 		if err := c.Create(); err != nil {
 			panic(err)
