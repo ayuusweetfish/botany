@@ -13,8 +13,11 @@ var apiRouter *mux.Router
 
 func registerRouterFunc(path string, fn func(http.ResponseWriter, *http.Request), methods ...string) {
 	if router == nil {
+		// Initialize API endpoint
 		router = mux.NewRouter()
 		apiRouter = router.PathPrefix(globals.Config().ApiPrefix).Subrouter()
+		// Initialize static file server
+		router.PathPrefix("/").Handler(http.FileServer(http.Dir("./views/dist/")))
 	}
 	if len(methods) == 0 {
 		methods = []string{"GET"}
