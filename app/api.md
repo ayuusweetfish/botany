@@ -193,6 +193,7 @@
 - **is_visible** (boolean) 是否公开显示
 - **is_reg_open** (boolean) 是否公开接受报名
 - **owner** (UserShort) 创建者
+- :construction: **moderators** ([number]) 管理员的 ID 列表，用逗号分隔
 - **my_role** (number) 自己的参加情况
 	- **-1** 未登录或未报名
 	- **0** 拥有管理权限（管理员或创建者）
@@ -315,8 +316,12 @@
 
 ### 所有提交历史 GET /contest/{cid}/submission/list
 
+请求
+- :construction: **start** (optional number) 分页用，返回的最新一条记录 ID 小于此数值
+
 响应 200
 - 若干 SubmissionShort 组成的数组，从最新到最旧排序
+- 分页固定为每页 20 条记录
 
 响应 403
 - 空数组 []
@@ -351,11 +356,15 @@
 
 ### 排行榜 GET /contest/{cid}/ranklist
 
+请求
+- :construction: **start** (optional number) 分页用，返回的最新一条记录排名大于此数值
+
 响应
-- 一个数组，按排名从高到低排序，每个元素如下
+- 一个数组，按排名从高到低排序，:construction: 如遇并列则按选手登录名字典序升序排列。每个元素如下
 	- **participant** (UserShort) 参赛者
 	- **rating** (number) 匹配积分
 	- **performance** (string) 额外战绩数据
+- 分页固定为每页 20 条记录
 
 ### 对局列表 GET /contest/{cid}/matches
 
