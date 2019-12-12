@@ -242,6 +242,7 @@
 - **is_visible** (boolean) 是否公开显示
 - **is_reg_open** (boolean) 是否公开接受报名
 - **moderators** ([number]) 管理员的 ID 列表，用逗号分隔
+- :construction: **script** (string) 赛制脚本
 
 响应 200
 - **id** (number) 新比赛的 ID
@@ -392,6 +393,27 @@
 响应 403
 - 空对象 {}
 - 非管理员不能手动发起对局
+
+### :construction: 赛制脚本日志 GET /contest/{cid}/match/script_log
+
+响应 200
+- 大量纯文本
+
+响应 403
+- 空响应 Content-Length: 0
+- 非管理员不能查看日志
+
+### :construction: 手动执行赛制脚本 POST /contest/{cid}/match/manual_script
+
+请求
+- **arg** (string) 需要传递的参数
+
+响应 200
+- 空对象 {}
+
+响应 403
+- 空对象 {}
+- 非管理员不能手动执行脚本
 
 
 ## 调试
