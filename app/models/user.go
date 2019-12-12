@@ -165,6 +165,57 @@ func (u *User) EmailCheck() bool {
 	return re.MatchString(u.Email)
 }
 
+func (u *User) AllContests() ([]map[string]interface{}, error) {
+	rows, err := db.Query("SELECT contest from contest_participation where uid = $1 AND type = $2", u.Id, ParticipationTypeContestant)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var allContests []map[string]interface{}
+	for rows.Next() {
+		c := Contest{}
+		err := rows.Scan(&c.Id)
+		if err != nil {
+			return nil, err
+		}
+		c.Read()
+		allContests = append(allContests, c.ShortRepresentation())
+	}
+	return allContests, rows.Err()
+}
+
+func (u *User) AllMatches() ([]map[string]interface{}, error) {
+	rows, err := db.Query("SELECT id from submission where uid = $1", u.Id)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var allMatches []map[string]interface{}
+	for rows.Next() {
+		var s int32
+		err := rows.Scan(&s)
+		if err != nil {
+			return nil, err
+		}
+		rows2, err := db.Query("SELECT match from match_party where submission = $1", s)
+		if err != nil {
+			return nil, err
+		}
+		defer rows2.Close()
+		for rows2.Next() {
+			m := Match{}
+			err := rows2.Scan(&m.Id)
+			if err != nil {
+				return nil, err
+			}
+			_ = m.Read()
+			_ = m.LoadRel()
+			allMatches = append(allMatches, m.ShortRepresentation())
+		}
+	}
+	return allMatches, rows.Err()
+}
+
 func UserSearchByHandle(handle string) ([]User, error) {
 	rows, err := db.Query("SELECT "+
 		"id, handle, privilege, nickname "+

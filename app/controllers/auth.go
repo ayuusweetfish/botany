@@ -70,9 +70,6 @@ func signupHandler(w http.ResponseWriter, r *http.Request) {
 	u.Handle = s
 	u.Email = email
 
-	// TODO: Validate email format.
-	// Now it is not complete because there are some situations this one cannot handle.
-	// For example the email .list@gmail.com or list..list@gmail.com is not correct according to RFC 5322.
 	if !u.EmailCheck() {
 		w.WriteHeader(400)
 		fmt.Fprintf(w, "{\"err\": [-1]}")
@@ -204,10 +201,12 @@ func profileHandler(w http.ResponseWriter, r *http.Request) {
 
 	enc := json.NewEncoder(w)
 	enc.SetEscapeHTML(false)
+	contests, _ := u.AllContests()
+	matches, _ := u.AllMatches()
 	enc.Encode(map[string]interface{}{
 		"user":     u.Representation(),
-		"contests": []int{}, // TODO
-		"matches":  []int{}, // TODO
+		"contests": contests,
+		"matches":  matches,
 	})
 }
 
