@@ -476,6 +476,11 @@ func contestMatchManualHandler(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 
+	// Send for match
+	if err := models.RedisSendForMatch(&m); err != nil {
+		panic(err)
+	}
+
 	enc := json.NewEncoder(w)
 	enc.SetEscapeHTML(false)
 	enc.Encode(m.ShortRepresentation())

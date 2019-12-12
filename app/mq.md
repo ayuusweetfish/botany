@@ -2,7 +2,7 @@
 
 借助 Redis 的 Stream 数据结构实现。
 
-## 编译 (key: compile)
+## 编译
 
 **Backend** Startup
 ```
@@ -29,3 +29,7 @@ RPUSH compile_result <submission-id> 1 <message>
 RPUSH compile_result <submission-id> 9 <message>
 XACK compile compile_group <redis-id>
 ```
+
+## 对局
+
+与编译基本一致，将 `compile` 和 `submission` 改为 `match`，message 改称 report 即可。
