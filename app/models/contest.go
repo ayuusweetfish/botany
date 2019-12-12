@@ -76,6 +76,16 @@ func init() {
 }
 
 func (c *Contest) Representation(u User) map[string]interface{} {
+	mods := []int32{}
+	rows, err := db.Query("SELECT uid FROM contest_participation where contest = $1 AND type = $2", c.Id, ParticipationTypeModerator)
+	if err != nil && err != sql.ErrNoRows {
+		panic(err)
+	}
+	for rows.Next() {
+		var mod int32
+		_ = rows.Scan(&mod)
+		mods = append(mods, mod)
+	}
 	return map[string]interface{}{
 		"id":          c.Id,
 		"title":       c.Title,
@@ -88,6 +98,7 @@ func (c *Contest) Representation(u User) map[string]interface{} {
 		"is_reg_open": c.IsRegOpen,
 		"script":      c.Script,
 		"owner":       c.Rel.Owner.ShortRepresentation(),
+		"moderators":  mods,
 		"my_role":     c.ParticipationOf(u),
 	}
 }

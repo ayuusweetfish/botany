@@ -119,8 +119,8 @@
 
 响应
 - **user** (User) 帐号信息
-- :construction: **contests** ([ContestShort]) 参与的比赛列表
-- :construction: **matches** ([MatchShort]) 最近对局列表
+- **contests** ([ContestShort]) 参与的比赛列表
+- **matches** ([MatchShort]) 最近对局列表
 
 ### 修改个人信息 POST /user/{handle}/profile/edit
 
@@ -193,7 +193,7 @@
 - **is_reg_open** (boolean) 是否公开接受报名
 - **script** (string) 赛制脚本
 - **owner** (UserShort) 创建者
-- :construction: **moderators** ([number]) 管理员的 ID 列表，用逗号分隔
+- **moderators** ([number]) 管理员的 ID 列表，用逗号分隔
 - **my_role** (number) 自己的参加情况
 	- **-1** 未登录或未报名
 	- **0** 拥有管理权限（管理员或创建者）
