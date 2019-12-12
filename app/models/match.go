@@ -1,8 +1,20 @@
 package models
 
+import (
+	"strconv"
+)
+
+const (
+	MatchStatusPending     = 0
+	MatchStatusRunning     = 1
+	MatchStatusDone        = 9
+	MatchStatusSystemError = -9
+)
+
 type Match struct {
 	Id      int32
 	Contest int32
+	Status  int8
 	Report  string
 
 	Rel struct {
@@ -26,6 +38,7 @@ func init() {
 	registerSchema("match",
 		"id SERIAL PRIMARY KEY",
 		"contest INTEGER NOT NULL",
+		"status SMALLINT NOT NULL DEFAULT "+strconv.Itoa(MatchStatusPending),
 		"report TEXT NOT NULL DEFAULT ''",
 		"ADD CONSTRAINT fk_contest FOREIGN KEY (contest) REFERENCES contest (id)",
 	)
@@ -80,6 +93,7 @@ func (m *Match) ShortRepresentation() map[string]interface{} {
 	return map[string]interface{}{
 		"id":      m.Id,
 		"parties": parties,
+		"status":  m.Status,
 	}
 }
 
@@ -91,10 +105,11 @@ func (m *Match) Representation() map[string]interface{} {
 
 func (m *Match) Read() error {
 	err := db.QueryRow("SELECT "+
-		"contest, report "+
+		"contest, status, report "+
 		"FROM match WHERE id = $1", m.Id,
 	).Scan(
 		&m.Contest,
+		&m.Status,
 		&m.Report,
 	)
 	return err
@@ -152,6 +167,8 @@ func (m *Match) LoadRel() error {
 }
 
 func (m *Match) Update() error {
-	// TODO
-	return nil
+	_, err := db.Exec("UPDATE match SET "+
+		"status = $1, report = $2 WHERE id = $3",
+		m.Status, m.Report, m.Id)
+	return err
 }
