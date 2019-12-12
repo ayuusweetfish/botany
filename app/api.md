@@ -73,7 +73,6 @@
 - **password** (string) 不可逆哈希后的密码
 - **email** (string) 电子邮箱
 - **nickname** (string) 昵称
-- :construction: **bio** (string) 个性签名
 - **captcha_key** (string) 此前获得的验证码 key
 - **captcha_value** (string) 验证码填写值
 
