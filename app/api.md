@@ -191,6 +191,7 @@
 - **details** (string) 长篇详细说明
 - **is_visible** (boolean) 是否公开显示
 - **is_reg_open** (boolean) 是否公开接受报名
+- **script** (string) 赛制脚本
 - **owner** (UserShort) 创建者
 - :construction: **moderators** ([number]) 管理员的 ID 列表，用逗号分隔
 - **my_role** (number) 自己的参加情况
