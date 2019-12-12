@@ -290,7 +290,6 @@
 响应
 - 若干 ContestShort 组成的数组
 - 只返回对当前用户可见的比赛
-- 不需要分页
 
 ### 比赛信息 GET /contest/{cid}/info
 
@@ -315,16 +314,16 @@
 响应 403
 - 空数组 []
 - 未报名比赛或比赛未开始 —— 前端检查严格时不应出现此项
-- 不需要分页
 
 ### 所有提交历史 GET /contest/{cid}/submission/list
 
 请求
-- :construction: **start** (optional number) 分页用，返回的最新一条记录 ID 小于此数值
+- :construction: **page** (optional number) 请求的页数
+- :construction: **count** (optional number) 每页的个数
 
 响应 200
-- 若干 SubmissionShort 组成的数组，从最新到最旧排序
-- 分页固定为每页 20 条记录
+- **total** (number) 提交历史总数
+- **submissions** ([SubmissionShort])若干 SubmissionShort 组成的数组，从最新到最旧排序
 
 响应 403
 - 空数组 []
@@ -360,19 +359,25 @@
 ### 排行榜 GET /contest/{cid}/ranklist
 
 请求
-- :construction: **start** (optional number) 分页用，返回的最新一条记录排名大于此数值
+- :construction: **page** (optional number) 请求的页数
+- :construction: **count** (optional number) 每页的个数
 
-响应
-- 一个数组，按排名从高到低排序，:construction: 如遇并列则按选手登录名字典序升序排列。每个元素如下
+响应 200
+- :construction: **total** 当前玩家总数
+- :construction: **participants** 一个数组，按排名从高到低排序，如遇并列则按选手登录名字典序升序排列。每个元素如下
 	- **participant** (UserShort) 参赛者
 	- **rating** (number) 匹配积分
 	- **performance** (string) 额外战绩数据
-- 分页固定为每页 20 条记录
 
 ### 对局列表 GET /contest/{cid}/matches
 
+请求
+- :construction: **page** (optional number) 请求的页数
+- :construction: **count** (optional number) 每页的个数
+
 响应
-- 若干 MatchShort 组成的数组，从最新到最旧排序
+- :construction: **total** (number) 对局总数
+- :construction: **matches** ([MatchShort]) 若干 MatchShort 组成的数组，从最新到最旧排序
 
 ### 对局详情 GET /contest/{cid}/match/{mid}
 
