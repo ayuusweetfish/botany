@@ -21,7 +21,7 @@ XREADGROUP GROUP compile_group compile_worker_<cwid> COUNT 1 BLOCK 1000 STREAMS 
 
 **Judge** Update compilation
 ```
-RPUSH compile_result <submission-id> 1
+RPUSH compile_result <submission-id> 1 <message>
 ```
 
 **Judge** Finish compilation

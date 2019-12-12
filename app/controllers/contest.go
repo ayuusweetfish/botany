@@ -287,7 +287,14 @@ func contestSubmitHandler(w http.ResponseWriter, r *http.Request) {
 	if err := s.Create(); err != nil {
 		panic(err)
 	}
-	s.LoadRel()
+	if err := s.LoadRel(); err != nil {
+		panic(err)
+	}
+
+	// Send for compilation
+	if err := models.RedisSendForCompilation(&s); err != nil {
+		panic(err)
+	}
 
 	// Success
 	enc := json.NewEncoder(w)
