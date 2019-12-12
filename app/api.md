@@ -119,8 +119,8 @@
 
 响应
 - **user** (User) 帐号信息
-- **contests** ([ContestShort]) 参与的比赛列表
-- **matches** ([MatchShort]) 最近对局列表
+- **contests** ([ContestShort]) 参与的比赛列表（不需要分页）
+- **matches** ([MatchShort]) 最近对局列表（需要分页）
 
 ### 修改个人信息 POST /user/{handle}/profile/edit
 
@@ -290,6 +290,7 @@
 响应
 - 若干 ContestShort 组成的数组
 - 只返回对当前用户可见的比赛
+- 不需要分页
 
 ### 比赛信息 GET /contest/{cid}/info
 
@@ -314,6 +315,7 @@
 响应 403
 - 空数组 []
 - 未报名比赛或比赛未开始 —— 前端检查严格时不应出现此项
+- 不需要分页
 
 ### 所有提交历史 GET /contest/{cid}/submission/list
 
