@@ -50,6 +50,7 @@ func parseRequestContest(r *http.Request) (models.Contest, []int64, bool) {
 	details := r.PostFormValue("details")
 	isVisible := (r.PostFormValue("is_visible") == "true")
 	isRegOpen := (r.PostFormValue("is_reg_open") == "true")
+	script := r.PostFormValue("script")
 
 	if err1 != nil || err2 != nil || startTime >= endTime {
 		return models.Contest{}, nil, false
@@ -76,12 +77,13 @@ func parseRequestContest(r *http.Request) (models.Contest, []int64, bool) {
 		Details:   details,
 		IsVisible: isVisible,
 		IsRegOpen: isRegOpen,
+		Script:    script,
 	}
 	return c, mods, true
 }
 
 // curl http://localhost:3434/contest/create -i -H "Cookie: auth=..." -d
-// "title=Grand+Contest&banner=1.png&start_time=0&end_time=1576000000&desc=Really+big+contest&details=Lorem+ipsum+dolor+sit+amet&is_visible=true&is_reg_open=true&moderators=1,2,4"
+// "title=Grand+Contest&banner=1.png&start_time=0&end_time=1576000000&desc=Really+big+contest&details=Lorem+ipsum+dolor+sit+amet&is_visible=true&is_reg_open=true&script=function+on_submission()%0Aend&moderators=1,2,4"
 func contestCreateHandler(w http.ResponseWriter, r *http.Request) {
 	u := middlewareAuthRetrieve(w, r)
 	if u.Id == -1 {

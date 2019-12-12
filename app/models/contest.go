@@ -22,10 +22,11 @@ type Contest struct {
 	IsVisible bool
 	IsRegOpen bool
 
+	Script string
+
 	Rel struct {
 		Owner          User
 		Participations []ContestParticipation
-		MatchScripts   []ContestMatchScript
 	}
 }
 
@@ -47,19 +48,6 @@ type ContestParticipation struct {
 	}
 }
 
-const (
-	MatchScriptHookManual = iota
-	MatchScriptHookSubmission
-	MatchScriptHookTimed
-)
-
-type ContestMatchScript struct {
-	Id       int32
-	Contest  int32
-	Hook     int8
-	Contents string
-}
-
 func init() {
 	registerSchema("contest",
 		"id SERIAL PRIMARY KEY",
@@ -72,6 +60,7 @@ func init() {
 		"details TEXT NOT NULL DEFAULT ''",
 		"is_visible BOOLEAN NOT NULL DEFAULT FALSE",
 		"is_reg_open BOOLEAN NOT NULL DEFAULT FALSE",
+		"script TEXT NOT NULL DEFAULT ''",
 		"ADD CONSTRAINT fk_users FOREIGN KEY (owner) REFERENCES users (id)",
 	)
 	registerSchema("contest_participation",
@@ -82,13 +71,6 @@ func init() {
 		"performance TEXT NOT NULL DEFAULT ''",
 		"ADD PRIMARY KEY (uid, contest)",
 		"ADD CONSTRAINT fk_users FOREIGN KEY (uid) REFERENCES users (id)",
-		"ADD CONSTRAINT fk_contest FOREIGN KEY (contest) REFERENCES contest (id)",
-	)
-	registerSchema("contest_match_script",
-		"id SERIAL PRIMARY KEY",
-		"contest INTEGER NOT NULL",
-		"hook SMALLINT NOT NULL DEFAULT "+strconv.Itoa(MatchScriptHookManual),
-		"contents TEXT NOT NULL",
 		"ADD CONSTRAINT fk_contest FOREIGN KEY (contest) REFERENCES contest (id)",
 	)
 }
@@ -104,6 +86,7 @@ func (c *Contest) Representation(u User) map[string]interface{} {
 		"details":     c.Details,
 		"is_visible":  c.IsVisible,
 		"is_reg_open": c.IsRegOpen,
+		"script":      c.Script,
 		"owner":       c.Rel.Owner.ShortRepresentation(),
 		"my_role":     c.ParticipationOf(u),
 	}
@@ -123,8 +106,8 @@ func (c *Contest) ShortRepresentation() map[string]interface{} {
 
 func (c *Contest) Create() error {
 	err := db.QueryRow("INSERT INTO "+
-		"contest(title, banner, owner, start_time, end_time, descr, details, is_visible, is_reg_open) "+
-		"VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id",
+		"contest(title, banner, owner, start_time, end_time, descr, details, is_visible, is_reg_open, script) "+
+		"VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id",
 		c.Title,
 		c.Banner,
 		c.Owner,
@@ -134,13 +117,14 @@ func (c *Contest) Create() error {
 		c.Details,
 		c.IsVisible,
 		c.IsRegOpen,
+		c.Script,
 	).Scan(&c.Id)
 	return err
 }
 
 func (c *Contest) Read() error {
 	err := db.QueryRow("SELECT "+
-		"title, banner, owner, start_time, end_time, descr, details, is_visible, is_reg_open "+
+		"title, banner, owner, start_time, end_time, descr, details, is_visible, is_reg_open, script "+
 		"FROM contest WHERE id = $1",
 		c.Id,
 	).Scan(
@@ -153,13 +137,14 @@ func (c *Contest) Read() error {
 		&c.Details,
 		&c.IsVisible,
 		&c.IsRegOpen,
+		&c.Script,
 	)
 	return err
 }
 
 func ContestReadAll() ([]Contest, error) {
 	rows, err := db.Query("SELECT " +
-		"id, title, banner, owner, start_time, end_time, descr, is_visible, is_reg_open " +
+		"id, title, banner, owner, start_time, end_time, descr, is_visible, is_reg_open, script " +
 		"FROM contest",
 	)
 	if err != nil {
@@ -179,6 +164,7 @@ func ContestReadAll() ([]Contest, error) {
 			&c.Desc,
 			&c.IsVisible,
 			&c.IsRegOpen,
+			&c.Script,
 		)
 		if err != nil {
 			return nil, err
@@ -225,9 +211,9 @@ func (c *Contest) AllParticipations() ([]ContestParticipation, error) {
 func (c *Contest) Update() error {
 	_, err := db.Exec("UPDATE contest SET "+
 		"title = $1, banner = $2, owner = $3, "+
-		"start_time = $4, end_time = $5, descr = $6, "+
-		"details = $7, is_visible = $8, is_reg_open = $9 "+
-		"WHERE id = $10",
+		"start_time = $4, end_time = $5, descr = $6, details = $7, "+
+		"is_visible = $8, is_reg_open = $9, script = $10 "+
+		"WHERE id = $11",
 		c.Title,
 		c.Banner,
 		c.Owner,
@@ -237,6 +223,7 @@ func (c *Contest) Update() error {
 		c.Details,
 		c.IsVisible,
 		c.IsRegOpen,
+		c.Script,
 		c.Id,
 	)
 	return err
