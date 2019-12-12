@@ -198,9 +198,9 @@ func (c *Contest) AllParticipations() ([]ContestParticipation, error) {
 		"users.id, users.handle, users.privilege, users.nickname "+
 		"FROM contest_participation "+
 		"LEFT JOIN users ON contest_participation.uid = users.id "+
-		"WHERE contest = $1 "+
+		"WHERE contest = $1 AND type = $2"+
 		"ORDER BY contest_participation.rating DESC",
-		c.Id)
+		c.Id, ParticipationTypeContestant)
 	if err != nil {
 		return nil, err
 	}
@@ -217,6 +217,39 @@ func (c *Contest) AllParticipations() ([]ContestParticipation, error) {
 		ps = append(ps, p)
 	}
 	return ps, rows.Err()
+}
+
+func (c *Contest) PartParticipation(limit, offset int) ([]ContestParticipation, int, error) {
+	rows, err := db.Query("SELECT "+
+		"contest_participation.type, "+
+		"contest_participation.rating, "+
+		"contest_participation.performance, "+
+		"users.id, users.handle, users.privilege, users.nickname "+
+		"FROM contest_participation "+
+		"LEFT JOIN users ON contest_participation.uid = users.id "+
+		"WHERE contest = $1 AND type = $2"+
+		"ORDER BY contest_participation.rating DESC LIMIT $3 OFFSET $4",
+		c.Id, ParticipationTypeContestant, limit, offset)
+	if err != nil {
+		return nil, 0, err
+	}
+	defer rows.Close()
+	ps := []ContestParticipation{}
+	for rows.Next() {
+		p := ContestParticipation{Contest: c.Id}
+		err := rows.Scan(&p.Type, &p.Rating, &p.Performance,
+			&p.Rel.User.Id, &p.Rel.User.Handle,
+			&p.Rel.User.Privilege, &p.Rel.User.Nickname)
+		if err != nil {
+			return nil, 0, err
+		}
+		ps = append(ps, p)
+	}
+	var total int
+	rows2 := db.QueryRow("SELECT COUNT(*) from contest_participation "+
+		"where contest = $1 AND type = $2", c.Id, ParticipationTypeContestant)
+	err = rows2.Scan(&total)
+	return ps, total, rows.Err()
 }
 
 func (c *Contest) Update() error {

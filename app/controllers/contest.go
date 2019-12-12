@@ -332,13 +332,13 @@ func contestSubmissionHandler(w http.ResponseWriter, r *http.Request) {
 	enc.Encode(s.Representation())
 }
 
-func contestSubmissionHistoryHandlerCommon(w http.ResponseWriter, r *http.Request, u models.User) {
+func contestSubmissionHistoryHandlerCommon(w http.ResponseWriter, r *http.Request, u models.User, subType int) {
 	c := middlewareReferredContest(w, r, u)
 	if c.Id == -1 || !c.IsVisibleTo(u) {
 		w.WriteHeader(404)
 		return
 	}
-	if u.Id != -1 && c.ParticipationOf(u) == -1 {
+	if c.ParticipationOf(u) == -1 {
 		// Querying own submission history, but did not participate
 		w.WriteHeader(403)
 		fmt.Fprintf(w, "[]")
@@ -349,37 +349,43 @@ func contestSubmissionHistoryHandlerCommon(w http.ResponseWriter, r *http.Reques
 		fmt.Fprintf(w, "[]")
 		return
 	}
-
-	ss, err := models.SubmissionHistory(u.Id, c.Id, 5)
-	if err != nil {
-		panic(err)
-	}
-
-	// XXX: Avoid duplication?
-	w.Write([]byte("["))
-	enc := json.NewEncoder(w)
-	enc.SetEscapeHTML(false)
-	for i, s := range ss {
-		if i != 0 {
-			w.Write([]byte(","))
+	if subType == 0 {
+		limit, _ := strconv.Atoi(r.URL.Query()["count"][0])
+		page, _ := strconv.Atoi(r.URL.Query()["page"][0])
+		if page <= 0 || limit <= 0 {
+			w.WriteHeader(404)
+			return
 		}
-		enc.Encode(s.ShortRepresentation())
+		ss, total, err := models.SubmissionHistory(u.Id, c.Id, limit, (page-1)*limit)
+		if err != nil {
+			panic(err)
+		}
+		// XXX: Avoid duplication?
+		enc := json.NewEncoder(w)
+		enc.SetEscapeHTML(false)
+		enc.Encode(map[string]interface{}{
+			"total":       total,
+			"submissions": ss,
+		})
+	} else if subType == 1 {
+		ss, _, err := models.SubmissionHistory(u.Id, c.Id, 0, 0)
+		if err != nil {
+			panic(err)
+		}
+		enc := json.NewEncoder(w)
+		enc.SetEscapeHTML(false)
+		enc.Encode(ss)
 	}
-	w.Write([]byte("]\n"))
 }
 
 func contestSubmissionHistoryHandlerUser(w http.ResponseWriter, r *http.Request) {
 	u := middlewareAuthRetrieve(w, r)
-	if u.Id == -1 {
-		w.WriteHeader(401)
-		return
-	}
-	contestSubmissionHistoryHandlerCommon(w, r, u)
+	contestSubmissionHistoryHandlerCommon(w, r, u, 1)
 }
 
 func contestSubmissionHistoryHandlerAll(w http.ResponseWriter, r *http.Request) {
 	u := middlewareAuthRetrieve(w, r)
-	contestSubmissionHistoryHandlerCommon(w, r, u)
+	contestSubmissionHistoryHandlerCommon(w, r, u, 0)
 }
 
 func contestRanklistHandler(w http.ResponseWriter, r *http.Request) {
@@ -389,22 +395,29 @@ func contestRanklistHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(404)
 		return
 	}
+	limit, _ := strconv.Atoi(r.URL.Query()["count"][0])
+	page, _ := strconv.Atoi(r.URL.Query()["page"][0])
+	if page <= 0 || limit <= 0 {
+		w.WriteHeader(404)
+		return
+	}
 
-	ps, err := c.AllParticipations()
+	ps, total, err := c.PartParticipation(limit, (page-1)*limit)
 	if err != nil {
 		panic(err)
 	}
 
-	w.Write([]byte("["))
+	var prs []map[string]interface{}
+	for _, p := range ps {
+		prs = append(prs, p.Representation())
+	}
+
 	enc := json.NewEncoder(w)
 	enc.SetEscapeHTML(false)
-	for i, p := range ps {
-		if i != 0 {
-			w.Write([]byte(","))
-		}
-		enc.Encode(p.Representation())
-	}
-	w.Write([]byte("]\n"))
+	enc.Encode(map[string]interface{}{
+		"total":        total,
+		"participants": prs,
+	})
 }
 
 func contestMatchesHandler(w http.ResponseWriter, r *http.Request) {
@@ -415,21 +428,42 @@ func contestMatchesHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	limit, _ := strconv.Atoi(r.URL.Query()["count"][0])
+	page, _ := strconv.Atoi(r.URL.Query()["page"][0])
+	if page <= 0 || limit <= 0 {
+		w.WriteHeader(404)
+		return
+	}
+
 	ms, err := models.ReadByContest(c.Id)
 	if err != nil {
 		panic(err)
 	}
 
-	w.Write([]byte("["))
+	total := len(ms)
+	var msr []map[string]interface{}
+	var begin int
+	var end int
+	if (page-1)*limit > total {
+		begin = total
+	} else {
+		begin = (page - 1) * limit
+	}
+	if page*limit > total {
+		end = total
+	} else {
+		end = page * limit
+	}
+	for _, m := range ms[begin:end] {
+		msr = append(msr, m.ShortRepresentation())
+	}
+
 	enc := json.NewEncoder(w)
 	enc.SetEscapeHTML(false)
-	for i, m := range ms {
-		if i != 0 {
-			w.Write([]byte(","))
-		}
-		enc.Encode(m.ShortRepresentation())
-	}
-	w.Write([]byte("]\n"))
+	enc.Encode(map[string]interface{}{
+		"total":        total,
+		"participants": msr,
+	})
 }
 
 // curl http://localhost:3434/contest/1/match/manual -i -H "Cookie: auth=..." -d "submissions=1,2,3"
