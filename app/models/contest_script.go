@@ -21,6 +21,7 @@ func (c *Contest) ResetLuaState() {
 	lStates[c.Id] = L
 
 	L.SetGlobal("get_handle", L.NewFunction(luaGetHandle))
+	L.SetGlobal("get_id", L.NewFunction(luaGetId))
 	L.SetGlobal("create_match", L.NewFunction(luaCreateMatch))
 
 	err := L.DoString(c.Script)
@@ -40,7 +41,7 @@ func (c *Contest) LuaState() *lua.LState {
 // Finds a user's handle according to their ID
 // If the ID is not found or an error happens, an empty string is returned
 func luaGetHandle(L *lua.LState) int {
-	// Arguments
+	// Argument
 	uid := L.ToInt(1)
 
 	u := User{Id: int32(uid)}
@@ -50,6 +51,22 @@ func luaGetHandle(L *lua.LState) int {
 	}
 
 	L.Push(lua.LString(u.Handle))
+	return 1
+}
+
+// Finds a user's ID according to their handle
+// If the handle is not found or an error happens, 0 is returned
+func luaGetId(L *lua.LState) int {
+	// Argument
+	handle := L.ToString(1)
+
+	u := User{Handle: handle}
+	if err := u.ReadByHandle(); err != nil {
+		L.Push(lua.LNumber(0))
+		return 1
+	}
+
+	L.Push(lua.LNumber(u.Id))
 	return 1
 }
 
