@@ -28,16 +28,18 @@ func main() {
 	}
 	defer db.Close()
 
-	redisClient := redis.NewClient(&redis.Options{
-		Addr:     fmt.Sprintf("localhost:%d", config.RedisPort),
-		Password: config.RedisPassword,
-		DB:       0,
-	})
-	_, err = redisClient.Ping().Result()
-	if err != nil {
-		log.Fatalln(err)
+	if config.RedisPort != 0 {
+		redisClient := redis.NewClient(&redis.Options{
+			Addr:     fmt.Sprintf("localhost:%d", config.RedisPort),
+			Password: config.RedisPassword,
+			DB:       0,
+		})
+		_, err = redisClient.Ping().Result()
+		if err != nil {
+			log.Fatalln(err)
+		}
+		models.InitializeRedis(redisClient)
 	}
-	models.InitializeRedis(redisClient)
 
 	keyPairs := [][]byte{}
 	for i, s := range config.CookieKeyPairs {

@@ -9,7 +9,7 @@ import (
 	"github.com/go-redis/redis"
 )
 
-var rcli *redis.Client
+var rcli *redis.Client = nil
 
 func InitializeRedis(client *redis.Client) {
 	rcli = client
@@ -28,6 +28,9 @@ func InitializeRedis(client *redis.Client) {
 }
 
 func RedisSendForCompilation(s *Submission) error {
+	if rcli == nil {
+		return nil
+	}
 	_, err := rcli.XAdd(&redis.XAddArgs{
 		Stream: "compile",
 		ID:     "*",
@@ -40,6 +43,9 @@ func RedisSendForCompilation(s *Submission) error {
 }
 
 func RedisSendForMatch(m *Match) error {
+	if rcli == nil {
+		return nil
+	}
 	values := map[string]interface{}{
 		"mid":         m.Id,
 		"party_count": len(m.Rel.Parties),
