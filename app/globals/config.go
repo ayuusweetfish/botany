@@ -7,10 +7,12 @@ import (
 )
 
 type GlobalConfig struct {
-	AppPort    int    `json:"app_port"`
-	DbName     string `json:"db_name"`
-	DbUser     string `json:"db_user"`
-	DbPassword string `json:"db_password"`
+	AppPort       int    `json:"app_port"`
+	DbName        string `json:"db_name"`
+	DbUser        string `json:"db_user"`
+	DbPassword    string `json:"db_password"`
+	RedisPort     int    `json:"redis_port"`
+	RedisPassword string `json:"redis_password"`
 
 	CookieKeyPairs []string `json:"cookie_key_pairs"`
 

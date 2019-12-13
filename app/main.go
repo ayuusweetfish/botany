@@ -10,6 +10,7 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/go-redis/redis"
 	"github.com/gorilla/sessions"
 	_ "github.com/lib/pq"
 )
@@ -26,6 +27,19 @@ func main() {
 		log.Fatalln(err)
 	}
 	defer db.Close()
+
+	if config.RedisPort != 0 {
+		redisClient := redis.NewClient(&redis.Options{
+			Addr:     fmt.Sprintf("localhost:%d", config.RedisPort),
+			Password: config.RedisPassword,
+			DB:       0,
+		})
+		_, err = redisClient.Ping().Result()
+		if err != nil {
+			log.Fatalln(err)
+		}
+		models.InitializeRedis(redisClient)
+	}
 
 	keyPairs := [][]byte{}
 	for i, s := range config.CookieKeyPairs {

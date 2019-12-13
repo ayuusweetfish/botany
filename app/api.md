@@ -225,6 +225,11 @@
 
 - **id** (number) ID
 - **parties** ([SubmissionShort]) 参与对局的各方，每个元素为一个提交记录
+- **status** (number) 状态
+	- **0** 等待处理
+	- **1** 正在运行
+	- **9** 完成
+	- **-9** 系统错误（请联系管理员）
 - **report** (object) 对局报告，交给动画播放器
 
 ### 对局数据结构 MatchShort

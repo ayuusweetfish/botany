@@ -148,8 +148,10 @@ func (s *Submission) LoadRel() error {
 }
 
 func (s *Submission) Update() error {
-	// TODO
-	return nil
+	_, err := db.Exec("UPDATE submission SET "+
+		"status = $1, message = $2 WHERE id = $3",
+		s.Status, s.Message, s.Id)
+	return err
 }
 
 // Call after LoadRel()
