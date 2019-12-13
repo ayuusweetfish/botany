@@ -54,13 +54,12 @@ func FakeDatabase() {
 local count = 0
 function on_timer(all)
     count = count + 1
-    if count < 5 then return end
+    -- if count < 5 then return end
     count = 0
+    print('Creating matches for contest #` + strconv.Itoa(i) + `')
     for i = 1, #all do
-        -- for j = i + 1, #all do
-        --    create_match(all[i], all[j])
-        -- end
-        print(all[i])
+        print(string.format('Contest %s (%d)', get_handle(all[i]), all[i]))
+        if i > 1 then create_match(all[i], all[i - 1]) end
     end
 end
 `
