@@ -292,7 +292,7 @@ func contestSubmitHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Send for compilation
-	if err := models.RedisSendForCompilation(&s); err != nil {
+	if err := s.SendToQueue(); err != nil {
 		panic(err)
 	}
 
@@ -511,7 +511,7 @@ func contestMatchManualHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Send for match
-	if err := models.RedisSendForMatch(&m); err != nil {
+	if err := m.SendToQueue(); err != nil {
 		panic(err)
 	}
 

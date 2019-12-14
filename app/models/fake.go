@@ -105,6 +105,7 @@ end
 				if err := s.Create(); err != nil {
 					panic(err)
 				}
+				s.SendToQueue()
 				if sidFirst == -1 {
 					sidFirst = s.Id
 				}
@@ -136,6 +137,7 @@ end
 			if err := m.Create(); err != nil {
 				panic(err)
 			}
+			m.SendToQueue()
 		}
 	}
 }

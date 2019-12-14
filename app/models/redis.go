@@ -27,7 +27,7 @@ func InitializeRedis(client *redis.Client) {
 	go redisPollStatus()
 }
 
-func RedisSendForCompilation(s *Submission) error {
+func (s *Submission) SendToQueue() error {
 	if rcli == nil {
 		return nil
 	}
@@ -42,7 +42,7 @@ func RedisSendForCompilation(s *Submission) error {
 	return err
 }
 
-func RedisSendForMatch(m *Match) error {
+func (m *Match) SendToQueue() error {
 	if rcli == nil {
 		return nil
 	}
