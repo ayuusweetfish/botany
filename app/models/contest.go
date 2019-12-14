@@ -103,7 +103,7 @@ func (c *Contest) Representation(u User) map[string]interface{} {
 	}
 }
 
-func (c *Contest) ShortRepresentation() map[string]interface{} {
+func (c *Contest) ShortRepresentation(u User) map[string]interface{} {
 	return map[string]interface{}{
 		"id":          c.Id,
 		"title":       c.Title,
@@ -112,6 +112,7 @@ func (c *Contest) ShortRepresentation() map[string]interface{} {
 		"end_time":    c.EndTime,
 		"desc":        c.Desc,
 		"is_reg_open": c.IsRegOpen,
+		"my_role":     c.ParticipationOf(u),
 	}
 }
 

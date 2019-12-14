@@ -179,41 +179,55 @@ func (u *User) AllContests() ([]map[string]interface{}, error) {
 			return nil, err
 		}
 		c.Read()
-		allContests = append(allContests, c.ShortRepresentation())
+		allContests = append(allContests, c.ShortRepresentation(*u))
 	}
 	return allContests, rows.Err()
 }
 
-func (u *User) AllMatches() ([]map[string]interface{}, error) {
+func (u *User) AllMatches(page int, count int) ([]map[string]interface{}, int, error) {
+	offset := page * count
 	rows, err := db.Query("SELECT id from submission where uid = $1", u.Id)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	defer rows.Close()
 	var allMatches []map[string]interface{}
+	total := 0
 	for rows.Next() {
 		var s int32
 		err := rows.Scan(&s)
 		if err != nil {
-			return nil, err
+			return nil, 0, err
 		}
 		rows2, err := db.Query("SELECT match from match_party where submission = $1", s)
 		if err != nil {
-			return nil, err
+			return nil, 0, err
 		}
 		defer rows2.Close()
 		for rows2.Next() {
 			m := Match{}
 			err := rows2.Scan(&m.Id)
 			if err != nil {
-				return nil, err
+				return nil, 0, err
 			}
 			_ = m.Read()
 			_ = m.LoadRel()
 			allMatches = append(allMatches, m.ShortRepresentation())
 		}
+		rows3 := db.QueryRow("SELECT COUNT(*) from match_party where submission = $1", s)
+		var curtotal int
+		err = rows3.Scan(&curtotal)
+		total += curtotal
 	}
-	return allMatches, rows.Err()
+	total = len(allMatches)
+	if total <= offset {
+		return nil, total, rows.Err()
+	}
+	end := offset + count
+	if total <= offset+count {
+		end = total
+	}
+	return allMatches[offset:end], total, rows.Err()
 }
 
 func UserSearchByHandle(handle string) ([]User, error) {

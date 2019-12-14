@@ -36,7 +36,7 @@ func contestListHandler(w http.ResponseWriter, r *http.Request) {
 		} else {
 			w.Write([]byte(","))
 		}
-		enc.Encode(c.ShortRepresentation())
+		enc.Encode(c.ShortRepresentation(u))
 	}
 	w.Write([]byte("]\n"))
 }
@@ -435,9 +435,18 @@ func contestMatchesHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	limit, _ := strconv.Atoi(r.URL.Query()["count"][0])
-	page, _ := strconv.Atoi(r.URL.Query()["page"][0])
-	if page <= 0 || limit <= 0 {
+	limitquery := r.URL.Query().Get("count")
+	pagequery := r.URL.Query().Get("page")
+	var limit, page int
+	if limitquery == "" || pagequery == "" {
+		limit = 5
+		page = 0
+	} else {
+		limit, _ = strconv.Atoi(r.URL.Query()["count"][0])
+		page, _ = strconv.Atoi(r.URL.Query()["page"][0])
+	}
+
+	if page < 0 || limit <= 0 {
 		w.WriteHeader(404)
 		return
 	}
@@ -451,15 +460,15 @@ func contestMatchesHandler(w http.ResponseWriter, r *http.Request) {
 	var msr []map[string]interface{}
 	var begin int
 	var end int
-	if (page-1)*limit > total {
+	if page*limit > total {
 		begin = total
 	} else {
-		begin = (page - 1) * limit
+		begin = page * limit
 	}
-	if page*limit > total {
+	if (page+1)*limit > total {
 		end = total
 	} else {
-		end = page * limit
+		end = page*limit + limit
 	}
 	for _, m := range ms[begin:end] {
 		msr = append(msr, m.ShortRepresentation())

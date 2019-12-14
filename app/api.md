@@ -117,7 +117,13 @@
 
 ### 个人主页 GET /user/{handle}/profile
 
+请求
+
+- **page** (optional number) 请求的页数
+- **count** (optional number) 每页的个数
+
 响应
+
 - **user** (User) 帐号信息
 - **contests** ([ContestShort]) 参与的比赛列表（不需要分页）
 - **matches** ([MatchShort]) 最近对局列表（需要分页）

@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"github.com/gorilla/mux"
 	"net/http"
+	"strconv"
 )
 
 // Returns a User struct
@@ -201,7 +202,6 @@ func captchaGetHandler(w http.ResponseWriter, r *http.Request) {
 
 func profileHandler(w http.ResponseWriter, r *http.Request) {
 	u := models.User{Handle: mux.Vars(r)["handle"]}
-
 	if err := u.ReadByHandle(); err != nil {
 		if err == sql.ErrNoRows {
 			// No such user
@@ -212,14 +212,31 @@ func profileHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	limitquery := r.URL.Query().Get("count")
+	pagequery := r.URL.Query().Get("page")
+	var limit, page int
+	if limitquery == "" || pagequery == "" {
+		limit = 5
+		page = 0
+	} else {
+		limit, _ = strconv.Atoi(r.URL.Query()["count"][0])
+		page, _ = strconv.Atoi(r.URL.Query()["page"][0])
+	}
+
+	if page <= 0 || limit <= 0 {
+		w.WriteHeader(404)
+		return
+	}
+
 	enc := json.NewEncoder(w)
 	enc.SetEscapeHTML(false)
 	contests, _ := u.AllContests()
-	matches, _ := u.AllMatches()
+	matches, total, _ := u.AllMatches(page, limit)
 	enc.Encode(map[string]interface{}{
-		"user":     u.Representation(),
-		"contests": contests,
-		"matches":  matches,
+		"user":          u.Representation(),
+		"contests":      contests,
+		"matches":       matches,
+		"total_matches": total,
 	})
 }
 

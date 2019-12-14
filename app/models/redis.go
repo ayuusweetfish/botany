@@ -63,7 +63,7 @@ func (m *Match) SendToQueue() error {
 
 func redisPollStatus() {
 	for {
-		println("Polling")
+		// println("Polling")
 		r, err := rcli.BLPop(1*time.Second, "compile_result", "match_result").Result()
 		if err != nil && err.Error() != "redis: nil" {
 			fmt.Println(err.Error())

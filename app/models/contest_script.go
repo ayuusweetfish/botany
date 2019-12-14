@@ -121,7 +121,7 @@ func (c *Contest) ExecuteScriptOnTimer() error {
 
 func timerForAllContests() {
 	for {
-		println("Script timer")
+		// println("Script timer")
 		time.Sleep(2 * time.Second)
 		cs, err := ContestReadAll()
 		if err != nil {
