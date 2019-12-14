@@ -136,6 +136,19 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 		ok = false
 	}
 
+	if !ok {
+		u = models.User{}
+		u.Email = s
+		if err := u.ReadByEmail(); err != nil {
+			if err != sql.ErrNoRows {
+				panic(err)
+			}
+		}
+		if u.VerifyPassword(p) {
+			ok = true
+		}
+	}
+
 	if ok {
 		middlewareAuthGrant(w, r, u.Id)
 		w.WriteHeader(200)
