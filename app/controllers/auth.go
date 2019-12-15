@@ -230,8 +230,12 @@ func profileHandler(w http.ResponseWriter, r *http.Request) {
 
 	enc := json.NewEncoder(w)
 	enc.SetEscapeHTML(false)
-	contests, _ := u.AllContests()
-	matches, total, _ := u.AllMatches(page, limit)
+	var contests = []map[string]interface{}{}
+	var matches = []map[string]interface{}{}
+	contests_t, _ := u.AllContests()
+	matches_t, total, _ := u.AllMatches(page, limit)
+	matches = append(matches, matches_t...)
+	contests = append(contests, contests_t...)
 	enc.Encode(map[string]interface{}{
 		"user":          u.Representation(),
 		"contests":      contests,

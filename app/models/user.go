@@ -166,15 +166,34 @@ func (u *User) EmailCheck() bool {
 }
 
 func (u *User) AllContests() ([]map[string]interface{}, error) {
-	rows, err := db.Query("SELECT contest from contest_participation where uid = $1 AND type = $2", u.Id, ParticipationTypeContestant)
+	rows, err := db.Query("SELECT contest from contest_participation where uid = $1", u.Id)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var allContests []map[string]interface{}
+	allContests := []map[string]interface{}{}
 	for rows.Next() {
 		c := Contest{}
 		err := rows.Scan(&c.Id)
+		if err != nil {
+			return nil, err
+		}
+		c.Read()
+		if c.IsVisibleTo(*u) {
+			allContests = append(allContests, c.ShortRepresentation(*u))
+		}
+	}
+
+	// todo optimize
+	rows2, err := db.Query("SELECT id from contest where owner = $1", u.Id)
+	if err != nil {
+		return nil, err
+	}
+
+	defer rows2.Close()
+	for rows2.Next() {
+		c := Contest{}
+		err := rows2.Scan(&c.Id)
 		if err != nil {
 			return nil, err
 		}
