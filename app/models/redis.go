@@ -14,12 +14,12 @@ var rcli *redis.Client = nil
 func InitializeRedis(client *redis.Client) {
 	rcli = client
 
-	_, err := rcli.XGroupCreateMkStream("compile", "compile_group", "0").Result()
+	_, err := rcli.XGroupCreateMkStream("compile", "judge_group", "0").Result()
 	if err != nil && !strings.Contains(err.Error(), "BUSYGROUP") {
 		panic(err)
 	}
 
-	_, err = rcli.XGroupCreateMkStream("match", "match_group", "0").Result()
+	_, err = rcli.XGroupCreateMkStream("match", "judge_group", "0").Result()
 	if err != nil && !strings.Contains(err.Error(), "BUSYGROUP") {
 		panic(err)
 	}
