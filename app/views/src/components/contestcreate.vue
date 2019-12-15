@@ -49,10 +49,10 @@
           <el-radio :label="false" v-model="form.isRegOpen">否</el-radio>
         </div>
       </el-form-item>
-      <el-form-item label="选择管理员" prop="moderators">
+      <el-form-item label="选择管理员账号" prop="moderators">
         <el-select
           v-model="form.moderators"
-          placeholder="搜索用户"
+          placeholder="输入账户名搜索用户"
           multiple
           filterable
           remote
@@ -62,7 +62,20 @@
           style="width: 100%"
           size="small"
         >
-          <el-option v-for="item in selOptions" :key="item.handle" :value="item.id" :label="item.handle" style="width: 320px">
+          <el-option :disabled="true">
+            <el-row>
+                <el-col :span="10" style="overflow: hidden">
+                  <div style="font-weight: 600">昵称</div>
+                </el-col>
+                <el-col :span="10" style="overflow: hidden">
+                  <div>账号</div>
+                </el-col>
+                <el-col :span="4" style="overflow: hidden">
+                  <div>ID</div>
+                </el-col>
+              </el-row>
+          </el-option>
+          <el-option v-for="item in selOptions" :key="item.handle" :value="item.id" :label="item.handle" style="min-width: 320px">
             <el-tooltip placement="top" effect="light" :open-delay="1500">
               <div slot="content" style="font-size: 16px;">
                 <div>UID：{{item.id}}</div>
@@ -165,8 +178,8 @@ export default {
           const loading = this.$loading({lock: true, text: '处理中'})
           let params = {
             title: this.form.title,
-            start_time: this.form.dateTimes[0].getTime(),
-            end_time: this.form.dateTimes[1].getTime(),
+            start_time: Math.round(this.form.dateTimes[0].getTime() / 1000),
+            end_time: Math.round(this.form.dateTimes[1].getTime() / 1000),
             desc: this.form.desc,
             details: this.form.details,
             is_reg_open: this.form.isRegOpen

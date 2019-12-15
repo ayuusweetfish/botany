@@ -16,9 +16,9 @@
         <div style="display: inline; color:gray">|</div>
       </el-col> -->
       <el-col :span="10" v-if="$route.meta.navbarType === 'contest'" align='center'>
-        <router-link class="navbar-item" :to="{path:'/contest_main', query: {id: $route.query.id}}">比赛首页</router-link>
-        <router-link class="navbar-item" :to="{path:'/contest_detail', query: {id: $route.query.id}}">参赛指南</router-link>
-        <router-link v-if="checkRouteValid('imIn')" class="navbar-item" :to="{path: '/submission', query: {id: $route.query.id}}">我的代码</router-link>
+        <router-link class="navbar-item" :to="{path:'/contest_main', query: {cid: $route.query.cid}}">比赛首页</router-link>
+        <router-link class="navbar-item" :to="{path:'/contest_detail', query: {cid: $route.query.cid}}">参赛指南</router-link>
+        <router-link v-if="checkRouteValid('imIn')" class="navbar-item" :to="{path: '/submission', query: {cid: $route.query.cid}}">我的代码</router-link>
         <!-- <el-button type="text" class="navbar-item" @click="gocontestranking">查看排行</el-button>
         <div style="display: inline; color:gray">|</div>
         <el-button type="text" class="navbar-item" @click="gocontestvss">查看对局</el-button>
@@ -49,11 +49,15 @@
         </div>
       </el-col>
     </el-row>
-    <el-row>
+    <el-row style="margin-bottom: 10px">
       <el-col :span="24">
         <div v-if="$route.meta.navbarType !== 'none'" align="left">
-          <i class="el-icon-caret-right"></i>
-          breadcrumb
+          <i class = "el-icon-caret-right" v-if="$store.state.routeList.length !== 0" style="display: inline-block"></i>
+          <el-breadcrumb separator="/" style = "display: inline-block; margin-left: 2px">
+            <el-breadcrumb-item v-for="(item) in $store.state.routeList" :key="item.path">
+              <router-link :to="{path: item.path, query: item.query}">{{item.title}}</router-link>
+            </el-breadcrumb-item>
+          </el-breadcrumb>
         </div>
       </el-col>
     </el-row>
@@ -165,7 +169,7 @@ export default {
   max-width: 1080px;
   margin: auto;
   align-items: flex-end;
-  margin-bottom: 20px;
+  margin-bottom: 10px;
   min-width: 720px;
   min-height: 84px;
 }

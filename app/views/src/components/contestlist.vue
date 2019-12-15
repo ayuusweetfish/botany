@@ -67,7 +67,7 @@ export default {
       this.$router.push({
         path: '/contest_main',
         query: {
-          id: obj.id
+          cid: obj.id
         }
       })
     }

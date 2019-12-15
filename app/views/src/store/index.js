@@ -17,6 +17,7 @@ export default new Vuex.Store({
   mutations: {
     setRouteList (state, val) {
       state.routeList = val
+      console.log(val)
     },
     login (state, val) {
       state.id = val.id

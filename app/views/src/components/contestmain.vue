@@ -79,7 +79,7 @@
 export default {
   name: 'contestmain',
   created () {
-    this.cid = this.$route.query.id
+    this.cid = this.$route.query.cid
     this.bannerUrl = 'https://www.csgowallpapers.com/assets/images/original/mossawi_518842827528_20150625022423_816788567695.png'
     this.getContestInfo()
   },
@@ -116,7 +116,7 @@ export default {
       this.$router.push({
         path: '/contest_edit',
         query: {
-          id: this.cid
+          cid: this.cid
         }
       })
     },

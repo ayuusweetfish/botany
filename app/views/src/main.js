@@ -47,6 +47,34 @@ axios.interceptors.response.use(
 
 Vue.prototype.$qs = qs
 
+router.beforeEach((to, from, next) => {
+  let routeList = []
+  to.meta.prePage.forEach(item => {
+    console.log(item)
+    console.log(item['path'])
+    let r = router.resolve(item.path).route
+    console.log(r)
+    let page = {
+      title: r.meta.title,
+      path: item.path,
+      query: {}
+    }
+    console.log(page)
+    item.query.forEach(key => {
+      page.query[key] = to.query[key]
+      console.log(page.query)
+    })
+    routeList.push(page)
+  })
+  routeList.push({
+    title: to.meta.title,
+    path: to.path,
+    query: to.query
+  })
+  store.commit('setRouteList', routeList)
+  next()
+})
+
 /* eslint-disable no-new */
 new Vue({
   el: '#app',
