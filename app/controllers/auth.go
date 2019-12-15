@@ -217,7 +217,7 @@ func profileHandler(w http.ResponseWriter, r *http.Request) {
 	var limit, page int
 	if limitquery == "" || pagequery == "" {
 		limit = 5
-		page = 0
+		page = 1
 	} else {
 		limit, _ = strconv.Atoi(r.URL.Query()["count"][0])
 		page, _ = strconv.Atoi(r.URL.Query()["page"][0])
