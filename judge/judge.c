@@ -1,3 +1,5 @@
+#include "judge.h"
+
 #include <hiredis/hiredis.h>
 #include <assert.h>
 #include <stdbool.h>
@@ -18,6 +20,8 @@
 #define WLOG(__fmt)         fprintf(stderr, "[%s] " __fmt "\n", wid)
 #define WLOGF(__fmt, ...)   fprintf(stderr, "[%s] " __fmt "\n", wid, __VA_ARGS__)
 
+const char *judge_wd;
+
 static redisContext *rctx;
 static char wid[32];
 
@@ -33,10 +37,11 @@ int main(int argc, char *argv[])
 
     // Parse command line
     int c;
-    while ((c = getopt(argc, argv, "ha:p:i:")) != -1) {
+    while ((c = getopt(argc, argv, "ha:p:i:d:")) != -1) {
         switch (c) {
         case 'h':
-            printf("Usage: %s [-h] [-a redis_addr] [-p redis_port] [-i worker_id]\n", argv[0]);
+            printf("Usage: %s [-h] [-a redis_addr] [-p redis_port] "
+                "[-i worker_id] [-d working_directory]\n", argv[0]);
             exit(0);
         case 'a':
             redis_addr = optarg;
@@ -46,6 +51,9 @@ int main(int argc, char *argv[])
             break;
         case 'i':
             worker_id = (int)strtol(optarg, NULL, 0);
+            break;
+        case 'd':
+            judge_wd = optarg;
             break;
         }
     }
@@ -167,7 +175,7 @@ void process_compile(redisReply *kv)
     reply = redisCommand(rctx, "RPUSH " COMPILE_RESULT_LIST " %s 1 Compiling", sid);
 
     // Compilation work
-    usleep(1000000);
+    compile(sid, contents);
 
     // Done!
     WLOGF("Done:      %s", sid);
