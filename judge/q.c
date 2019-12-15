@@ -1,6 +1,7 @@
 #include <hiredis/hiredis.h>
 #include <assert.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
@@ -12,13 +13,42 @@
 #define WLOG(__fmt)         fprintf(stderr, "[%s] " __fmt "\n", wid)
 #define WLOGF(__fmt, ...)   fprintf(stderr, "[%s] " __fmt "\n", wid, __VA_ARGS__)
 
-int main()
+int main(int argc, char *argv[])
 {
-    int pid = (int)getpid();
-    char wid[32];
-    snprintf(wid, sizeof wid, CLI_NAME_FMT, pid);
+    // Arguments
+    const char *redis_addr = NULL;
+    int redis_port = 0;
+    int worker_id = 0;
 
-    redisContext *rctx = redisConnect("127.0.0.1", 6379);
+    // Parse command line
+    int c;
+    while ((c = getopt(argc, argv, "ha:p:i:")) != -1) {
+        switch (c) {
+        case 'h':
+            printf("Usage: %s [-h] [-a redis_addr] [-p redis_port] [-i worker_id]\n", argv[0]);
+            exit(0);
+        case 'a':
+            redis_addr = optarg;
+            break;
+        case 'p':
+            redis_port = (int)strtol(optarg, NULL, 0);
+            break;
+        case 'i':
+            worker_id = (int)strtol(optarg, NULL, 0);
+            break;
+        }
+    }
+    if (redis_addr == NULL) redis_addr = "127.0.0.1";
+    if (redis_port == 0) redis_port = 6379;
+    if (worker_id == 0) worker_id = (int)getpid();
+
+    // Get to work
+    char wid[32];
+    snprintf(wid, sizeof wid, CLI_NAME_FMT, worker_id);
+
+    WLOGF("Connecting to Redis at %s:%d", redis_addr, redis_port);
+
+    redisContext *rctx = redisConnect(redis_addr, redis_port);
     if (rctx == NULL) {
         WLOG("Cannot create redis context");
         return 1;
