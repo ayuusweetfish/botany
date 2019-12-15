@@ -20,7 +20,7 @@
 #define WLOG(__fmt)         fprintf(stderr, "[%s] " __fmt "\n", wid)
 #define WLOGF(__fmt, ...)   fprintf(stderr, "[%s] " __fmt "\n", wid, __VA_ARGS__)
 
-const char *judge_wd;
+const char *judge_chroot;
 
 static redisContext *rctx;
 static char wid[32];
@@ -41,7 +41,7 @@ int main(int argc, char *argv[])
         switch (c) {
         case 'h':
             printf("Usage: %s [-h] [-a redis_addr] [-p redis_port] "
-                "[-i worker_id] [-d working_directory]\n", argv[0]);
+                "[-i worker_id] [-d chroot_path]\n", argv[0]);
             exit(0);
         case 'a':
             redis_addr = optarg;
@@ -53,13 +53,14 @@ int main(int argc, char *argv[])
             worker_id = (int)strtol(optarg, NULL, 0);
             break;
         case 'd':
-            judge_wd = optarg;
+            judge_chroot = optarg;
             break;
         }
     }
     if (redis_addr == NULL) redis_addr = "127.0.0.1";
     if (redis_port == 0) redis_port = 6379;
     if (worker_id == 0) worker_id = (int)getpid();
+    if (judge_chroot == NULL) judge_chroot = "/";
 
     // Get to work
     snprintf(wid, sizeof wid, CLI_NAME_FMT, worker_id);
