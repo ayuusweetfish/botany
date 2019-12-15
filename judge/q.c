@@ -1,5 +1,6 @@
 #include <hiredis/hiredis.h>
 #include <assert.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -72,10 +73,14 @@ retry:
     WLOG("Starting");
 
     redisReply *reply;
+    bool pending = true;
 
     while (1) {
+        const char *start_id = (pending ? "0" : ">");
         reply = redisCommand(rctx, "XREADGROUP GROUP " GROUP_NAME
-            " %s COUNT 1 BLOCK 1000 STREAMS " COMPILE_STREAM " " MATCH_STREAM " > >", wid);
+            " %s COUNT 1 BLOCK 1000 STREAMS "
+            COMPILE_STREAM " " MATCH_STREAM " %s %s",
+            wid, start_id, start_id);
 
         if (reply == NULL) {
             WLOG("Connection broken, retrying");
@@ -96,6 +101,7 @@ retry:
         size_t streamCount = reply->elements;
         redisReply **streams = reply->element;
 
+        bool processed = false; // For pending check
         for (size_t i = 0; i < streamCount; i++) {
             reply = streams[i];
 
@@ -106,8 +112,10 @@ retry:
             reply = reply->element[1];
 
             assert(reply->type == REDIS_REPLY_ARRAY);
+            if (pending && reply->elements == 0) continue;
             assert(reply->elements == 1);
             reply = reply->element[0];
+            processed = true;
 
             assert(reply->type == REDIS_REPLY_ARRAY);
             assert(reply->elements == 2);
@@ -126,6 +134,11 @@ retry:
 
             reply = redisCommand(rctx,
                 "XACK %s " GROUP_NAME " %s", stream_name, redis_id);
+        }
+
+        if (pending && !processed) {
+            WLOG("Pending tasks cleared");
+            pending = false;
         }
     }
 
