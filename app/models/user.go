@@ -179,7 +179,9 @@ func (u *User) AllContests() ([]map[string]interface{}, error) {
 			return nil, err
 		}
 		c.Read()
-		allContests = append(allContests, c.ShortRepresentation(*u))
+		if c.IsVisibleTo(*u) {
+			allContests = append(allContests, c.ShortRepresentation(*u))
+		}
 	}
 	return allContests, rows.Err()
 }
