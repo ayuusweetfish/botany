@@ -48,7 +48,7 @@ func (m *Match) SendToQueue() error {
 	}
 	values := map[string]interface{}{
 		"mid":         m.Id,
-		"party_count": len(m.Rel.Parties),
+		"num_parties": len(m.Rel.Parties),
 	}
 	for i, p := range m.Rel.Parties {
 		values["party_"+strconv.Itoa(i)] = p.Id

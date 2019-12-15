@@ -12,7 +12,7 @@ XGROUP CREATE match judge_group 0 MKSTREAM
 ```
 XADD compile * sid <sid> contents <code>
 -- or --
-XADD match * mid <mid> party_count <count> party_1 <sid> party_2 <sid> ...
+XADD match * mid <mid> num_parties <count> party_1 <sid> party_2 <sid> ...
 ```
 
 **Judge** Claim
@@ -30,7 +30,7 @@ XREADGROUP GROUP judge_group judge_<cwid> COUNT 1 BLOCK 1000 STREAMS compile mat
    2) 1) 1) "1576381668902-0"
          2) 1) "mid"
             2) "1"
-            3) "party_count"
+            3) "num_parties"
             4) "2"
             5) "party_1"
             6) "10"

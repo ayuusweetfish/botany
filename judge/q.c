@@ -183,7 +183,38 @@ void process_compile(redisReply *kv)
 
 void process_match(redisReply *kv)
 {
-    WLOG("Running:   -");
+    redisReply *reply;
+
+    const char *mid = NULL;
+    int num_parties = 0;
+    for (int i = 0; i + 1 < kv->elements; i += 2) {
+        assert(kv->element[i]->type == REDIS_REPLY_STRING);
+        assert(kv->element[i + 1]->type == REDIS_REPLY_STRING);
+        if (strcmp(kv->element[i]->str, "mid") == 0) {
+            mid = kv->element[i + 1]->str;
+        } else if (strcmp(kv->element[i]->str, "num_parties") == 0) {
+            num_parties = (int)strtol(kv->element[i + 1]->str, NULL, 10);
+        }
+    }
+
+    assert(mid != NULL && num_parties != 0);
+
+    int parties[num_parties];
+    for (int i = 0; i + 1 < kv->elements; i += 2) {
+        if (memcmp(kv->element[i]->str, "party_", 6) == 0) {
+            int index = (int)strtol(kv->element[i]->str + 6, NULL, 10);
+            if (index >= 0 && index < num_parties)
+                parties[index] = (int)strtol(kv->element[i + 1]->str, NULL, 10);
+        }
+    }
+
+    // Update status
+    WLOGF("Running:   %s", mid);
+    for (int i = 0; i < num_parties; i++)
+        WLOGF("  Party #%d: %d", i, parties[i]);
+    reply = redisCommand(rctx, "RPUSH " MATCH_RESULT_LIST " %s 1 Running", mid);
+
     usleep(1000000);
     WLOG("Done:      -");
+    reply = redisCommand(rctx, "RPUSH " MATCH_RESULT_LIST " %s 9 Done", mid);
 }
