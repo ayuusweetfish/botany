@@ -150,21 +150,22 @@ export default {
             loading.close()
             console.log(this.nextRoute)
             this.$router.push(this.nextRoute)
-          }).catch(err => {
-            loading.close()
-            console.log(err)
-            this.$message.error('登录失败')
-            if (err.response.data.error === 'wrong captcha') {
-              this.loginErrCpch = '验证码错误'
-              this.loginInfo.captcha = ''
-              this.getCaptcha()
-            } else if (err.response.data.error === 'wrong username or password') {
-              this.loginErrUsrnm = '用户名或密码错误'
-              this.loginErrPswd = '用户名或密码错误'
-              this.loginInfo.password = ''
-              this.getCaptcha()
-            }
           })
+          // .catch(err => {
+          //   loading.close()
+          //   console.log(err)
+          //   this.$message.error('登录失败')
+          //   if (err.response.data.error === 'wrong captcha') {
+          //     this.loginErrCpch = '验证码错误'
+          //     this.loginInfo.captcha = ''
+          //     this.getCaptcha()
+          //   } else if (err.response.data.error === 'wrong username or password') {
+          //     this.loginErrUsrnm = '用户名或密码错误'
+          //     this.loginErrPswd = '用户名或密码错误'
+          //     this.loginInfo.password = ''
+          //     this.getCaptcha()
+          //   }
+          // })
         }
       })
     },

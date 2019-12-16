@@ -36,6 +36,9 @@ export default new Vuex.Store({
     enterSubSite (state, val) {
       state.contestInfo = val
     },
+    clearSubSite (state) {
+      state.contestInfo = {}
+    },
     setAfterLogin (state, val) {
       state.afterLogin = val
     }

@@ -62,7 +62,7 @@
           style="width: 100%"
           size="small"
         >
-          <el-option :disabled="true">
+          <el-option :disabled="true" value="null">
             <el-row>
                 <el-col :span="10" style="overflow: hidden">
                   <div style="font-weight: 600">昵称</div>
@@ -87,11 +87,11 @@
                   <div style="font-weight: 600">{{item.nickname}}</div>
                 </el-col>
                 <el-col :span="10" style="overflow: hidden">
-                  <div><i class="el-icon-user"></i>{{item.handle}}</div>
+                  <div>{{item.handle}}</div>
                   <el-divider direction="vertical"></el-divider>
                 </el-col>
                 <el-col :span="4" style="overflow: hidden">
-                  <div><i class="el-icon-setting"></i>{{item.id}}</div>
+                  <div>{{item.id}}</div>
                 </el-col>
               </el-row>
             </el-tooltip>
@@ -130,7 +130,7 @@ export default {
         title: [
           {validator: this.$functions.globalValidator, trigger: 'blur'},
           {required: true, message: '请输入比赛名称', trigger: 'blur'},
-          {min: 3, max: 30, message: '名称应在3-30个字符之间', trigger: 'blur'}
+          {min: 3, max: 25, message: '名称应在3-25个字符之间', trigger: 'blur'}
         ],
         bannerURL: [
           {required: true, message: '请输入banner链接', trigger: 'blur'},

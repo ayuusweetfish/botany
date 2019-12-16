@@ -156,7 +156,7 @@ export default {
         handle: [
           {validator: this.$functions.globalValidator, trigger: 'blur'},
           {required: true, message: '请输入用户名', trigger: 'blur'},
-          {min: 3, max: 30, message: '用户名应在3-30个字符之间', trigger: 'blur'}
+          {min: 3, max: 16, message: '用户名应在3-16个字符之间', trigger: 'blur'}
         ],
         password: [
           {validator: this.$functions.globalValidator, trigger: 'blur'},
@@ -176,7 +176,7 @@ export default {
         nickname: [
           {validator: this.$functions.globalValidator, trigger: 'blur'},
           {required: true, message: '请输入昵称', trigger: 'blur'},
-          {min: 3, max: 30, message: '昵称应在3-30个字符之间', trigger: 'blur'}
+          {min: 3, max: 16, message: '昵称应在3-16个字符之间', trigger: 'blur'}
         ],
         captcha: [
           {validator: this.$functions.globalValidator, trigger: 'blur'},

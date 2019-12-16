@@ -13,6 +13,9 @@ import match from '@/components/match'
 import profile from '@/components/profile'
 import contestcreate from '@/components/contestcreate'
 import contestedit from '@/components/contestedit'
+import notfound from '@/components/404'
+import submissionlist from '@/components/submissionlist'
+import submissioninfo from '@/components/submissioninfo'
 
 Vue.use(Router)
 
@@ -89,8 +92,8 @@ export default new Router({
       }
     },
     {
-      path: '/matchlist',
-      name: 'matchlist',
+      path: '/match_list',
+      name: 'match_list',
       component: matchlist,
       meta: {
         title: '对局列表',
@@ -105,7 +108,10 @@ export default new Router({
       meta: {
         title: '对局信息',
         navbarType: 'contest',
-        prePage: [{path: '/contest_main', query: ['cid']}]
+        prePage: [
+          {path: '/contest_main', query: ['cid']},
+          {path: '/match_list', query: ['cid']}
+        ]
       }
     },
     {
@@ -136,6 +142,39 @@ export default new Router({
         title: '修改比赛',
         navbarType: 'contest',
         prePage: [{path: '/contest_main', query: ['cid']}]
+      }
+    },
+    {
+      path: '/notfound',
+      name: 'notfound',
+      component: notfound,
+      meta: {
+        title: '出错了',
+        navbarType: 'main',
+        prePage: []
+      }
+    },
+    {
+      path: '/submission_list',
+      name: 'submission_list',
+      component: submissionlist,
+      meta: {
+        title: '提交列表',
+        navbarType: 'contest',
+        prePage: [{path: '/contest_main', query: ['cid']}]
+      }
+    },
+    {
+      path: '/submission_info',
+      name: 'submission_info',
+      component: submissioninfo,
+      meta: {
+        title: '提交详情',
+        navbarType: 'contest',
+        prePage: [
+          {path: '/contest_main', query: ['cid']},
+          {path: '/submission_list', query: ['cid']}
+        ]
       }
     }
   ]

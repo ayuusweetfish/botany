@@ -18,7 +18,7 @@
     <el-row :gutter="20">
       <el-col :span="18">
         <el-row style="margin-bottom: 10px">
-          <el-card body-style="min-height: 360px">
+          <el-card body-style="min-height: 360px" v-loading="codeLoading">
             <div align="left" style="font-size: 18px; font-weight: 600; margin-bottom: 20px">代码编辑</div>
             <div class="cm-container">
               <codemirror v-model="code" :options="cmOptions" align="left"></codemirror>
@@ -70,12 +70,13 @@ export default {
     codemirror
   },
   created () {
-    this.cid = this.$route.query.id
+    this.cid = this.$route.query.cid
     this.getHistory()
   },
   data () {
     return {
       code: '',
+      codeLoading: false,
       history: [],
       topbarText: '尚未提交代码',
       topbarInfo: {
@@ -150,11 +151,11 @@ export default {
       })
     },
     showCode (sid) {
-      const loading = this.$loading({lock: true, text: '查询中'})
+      this.codeLoading = true
       this.$axios.get(
         '/contest/' + this.cid + '/submission/' + sid
       ).then(res => {
-        loading.close()
+        this.codeLoading = false
         this.code = res.data.contents
         this.topbarText = '提交于' + this.$functions.dateTimeString(res.data.created_at) + '，编号为' + sid
         let statcolor = this.getStatColor(res.data.status)
@@ -163,7 +164,7 @@ export default {
         this.topbarColor.msg = 'gray'
         this.topbarInfo.msg = res.data.msg
       }).catch(err => {
-        loading.close()
+        this.codeLoading = false
         console.log(err)
       })
     },

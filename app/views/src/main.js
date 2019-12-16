@@ -40,6 +40,9 @@ axios.interceptors.response.use(
       })
     } else if (error.response.status === 403) {
       ElementUI.Message.error('你没有权限进行这项操作')
+      router.push('/')
+    } else if (error.response.status === 404) {
+      router.push('/notfound')
     }
     return Promise.reject(error)
   }
@@ -49,6 +52,10 @@ Vue.prototype.$qs = qs
 
 router.beforeEach((to, from, next) => {
   let routeList = []
+  console.log(to)
+  if (!to.meta.prePage) {
+    return next('/notfound')
+  }
   to.meta.prePage.forEach(item => {
     console.log(item)
     console.log(item['path'])
@@ -59,7 +66,6 @@ router.beforeEach((to, from, next) => {
       path: item.path,
       query: {}
     }
-    console.log(page)
     item.query.forEach(key => {
       page.query[key] = to.query[key]
       console.log(page.query)

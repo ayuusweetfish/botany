@@ -90,7 +90,7 @@ export default {
       bannerUrl: '',
       isRegOpen: false,
       isVisible: false,
-      desc: false,
+      desc: '',
       myRole: this.$consts.role.notIn,
       owner: '',
       events: []
