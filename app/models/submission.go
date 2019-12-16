@@ -88,10 +88,10 @@ func (s *Submission) Read() error {
 	return err
 }
 
-func SubmissionHistory(uid int32, cid int32, limit int) ([]Submission, error) {
+func SubmissionHistory(uid int32, cid int32, limit, offset int) ([]map[string]interface{}, int, error) {
 	var rows *sql.Rows
 	var err error
-	if uid == -1 {
+	if limit != -1 {
 		// XXX: DRY?
 		// All submissions
 		rows, err = db.Query("SELECT "+
@@ -100,8 +100,8 @@ func SubmissionHistory(uid int32, cid int32, limit int) ([]Submission, error) {
 			"FROM submission "+
 			"LEFT JOIN users ON submission.uid = users.id "+
 			"WHERE contest = $1 "+
-			"ORDER BY submission.created_at DESC LIMIT $2",
-			cid, limit)
+			"ORDER BY submission.created_at DESC LIMIT $2 OFFSET $3",
+			cid, limit, offset)
 	} else {
 		// Specific user
 		rows, err = db.Query("SELECT "+
@@ -110,26 +110,32 @@ func SubmissionHistory(uid int32, cid int32, limit int) ([]Submission, error) {
 			"FROM submission "+
 			"LEFT JOIN users ON submission.uid = users.id "+
 			"WHERE uid = $1 AND contest = $2 "+
-			"ORDER BY submission.created_at DESC LIMIT $3",
-			uid, cid, limit)
+			"ORDER BY submission.created_at DESC",
+			uid, cid)
 	}
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	defer rows.Close()
-	ss := []Submission{}
+	ss := []map[string]interface{}{}
 	for rows.Next() {
 		s := Submission{Contest: cid}
 		err := rows.Scan(&s.Id, &s.CreatedAt, &s.Status,
 			&s.Rel.User.Id, &s.Rel.User.Handle,
 			&s.Rel.User.Privilege, &s.Rel.User.Nickname)
 		if err != nil {
-			return nil, err
+			return nil, 0, err
 		}
 		s.User = s.Rel.User.Id
-		ss = append(ss, s)
+		ss = append(ss, s.ShortRepresentation())
 	}
-	return ss, rows.Err()
+	var total int
+	rows2 := db.QueryRow("SELECT COUNT(*) FROM submission WHERE contest = $1", cid)
+	err = rows2.Scan(&total)
+	if err != nil {
+		return nil, 0, err
+	}
+	return ss, total, rows.Err()
 }
 
 func (s *Submission) LoadRel() error {
@@ -142,8 +148,10 @@ func (s *Submission) LoadRel() error {
 }
 
 func (s *Submission) Update() error {
-	// TODO
-	return nil
+	_, err := db.Exec("UPDATE submission SET "+
+		"status = $1, message = $2 WHERE id = $3",
+		s.Status, s.Message, s.Id)
+	return err
 }
 
 // Call after LoadRel()

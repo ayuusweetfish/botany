@@ -36,7 +36,7 @@ func contestListHandler(w http.ResponseWriter, r *http.Request) {
 		} else {
 			w.Write([]byte(","))
 		}
-		enc.Encode(c.ShortRepresentation())
+		enc.Encode(c.ShortRepresentation(u))
 	}
 	w.Write([]byte("]\n"))
 }
@@ -50,6 +50,7 @@ func parseRequestContest(r *http.Request) (models.Contest, []int64, bool) {
 	details := r.PostFormValue("details")
 	isVisible := (r.PostFormValue("is_visible") == "true")
 	isRegOpen := (r.PostFormValue("is_reg_open") == "true")
+	script := r.PostFormValue("script")
 
 	if err1 != nil || err2 != nil || startTime >= endTime {
 		return models.Contest{}, nil, false
@@ -76,12 +77,13 @@ func parseRequestContest(r *http.Request) (models.Contest, []int64, bool) {
 		Details:   details,
 		IsVisible: isVisible,
 		IsRegOpen: isRegOpen,
+		Script:    script,
 	}
 	return c, mods, true
 }
 
 // curl http://localhost:3434/contest/create -i -H "Cookie: auth=..." -d
-// "title=Grand+Contest&banner=1.png&start_time=0&end_time=1576000000&desc=Really+big+contest&details=Lorem+ipsum+dolor+sit+amet&is_visible=true&is_reg_open=true&moderators=1,2,4"
+// "title=Grand+Contest&banner=1.png&start_time=0&end_time=1576000000&desc=Really+big+contest&details=Lorem+ipsum+dolor+sit+amet&is_visible=true&is_reg_open=true&script=function+on_submission()%0Aend&moderators=1,2,4"
 func contestCreateHandler(w http.ResponseWriter, r *http.Request) {
 	u := middlewareAuthRetrieve(w, r)
 	if u.Id == -1 {
@@ -285,7 +287,14 @@ func contestSubmitHandler(w http.ResponseWriter, r *http.Request) {
 	if err := s.Create(); err != nil {
 		panic(err)
 	}
-	s.LoadRel()
+	if err := s.LoadRel(); err != nil {
+		panic(err)
+	}
+
+	// Send for compilation
+	if err := s.SendToQueue(); err != nil {
+		panic(err)
+	}
 
 	// Success
 	enc := json.NewEncoder(w)
@@ -330,13 +339,13 @@ func contestSubmissionHandler(w http.ResponseWriter, r *http.Request) {
 	enc.Encode(s.Representation())
 }
 
-func contestSubmissionHistoryHandlerCommon(w http.ResponseWriter, r *http.Request, u models.User) {
+func contestSubmissionHistoryHandlerCommon(w http.ResponseWriter, r *http.Request, u models.User, subType int) {
 	c := middlewareReferredContest(w, r, u)
 	if c.Id == -1 || !c.IsVisibleTo(u) {
 		w.WriteHeader(404)
 		return
 	}
-	if u.Id != -1 && c.ParticipationOf(u) == -1 {
+	if c.ParticipationOf(u) == -1 {
 		// Querying own submission history, but did not participate
 		w.WriteHeader(403)
 		fmt.Fprintf(w, "[]")
@@ -347,37 +356,42 @@ func contestSubmissionHistoryHandlerCommon(w http.ResponseWriter, r *http.Reques
 		fmt.Fprintf(w, "[]")
 		return
 	}
-
-	ss, err := models.SubmissionHistory(u.Id, c.Id, 5)
-	if err != nil {
-		panic(err)
-	}
-
-	// XXX: Avoid duplication?
-	w.Write([]byte("["))
-	enc := json.NewEncoder(w)
-	enc.SetEscapeHTML(false)
-	for i, s := range ss {
-		if i != 0 {
-			w.Write([]byte(","))
+	if subType == 0 {
+		limit, offset := paginationHandler(w, r)
+		if limit == -1 || offset == -1 {
+			w.WriteHeader(400)
+			return
 		}
-		enc.Encode(s.ShortRepresentation())
+		ss, total, err := models.SubmissionHistory(u.Id, c.Id, limit, offset)
+		if err != nil {
+			panic(err)
+		}
+		// XXX: Avoid duplication?
+		enc := json.NewEncoder(w)
+		enc.SetEscapeHTML(false)
+		enc.Encode(map[string]interface{}{
+			"total":       total,
+			"submissions": ss,
+		})
+	} else if subType == 1 {
+		ss, _, err := models.SubmissionHistory(u.Id, c.Id, -1, 0)
+		if err != nil {
+			panic(err)
+		}
+		enc := json.NewEncoder(w)
+		enc.SetEscapeHTML(false)
+		enc.Encode(ss)
 	}
-	w.Write([]byte("]\n"))
 }
 
 func contestSubmissionHistoryHandlerUser(w http.ResponseWriter, r *http.Request) {
 	u := middlewareAuthRetrieve(w, r)
-	if u.Id == -1 {
-		w.WriteHeader(401)
-		return
-	}
-	contestSubmissionHistoryHandlerCommon(w, r, u)
+	contestSubmissionHistoryHandlerCommon(w, r, u, 1)
 }
 
 func contestSubmissionHistoryHandlerAll(w http.ResponseWriter, r *http.Request) {
 	u := middlewareAuthRetrieve(w, r)
-	contestSubmissionHistoryHandlerCommon(w, r, u)
+	contestSubmissionHistoryHandlerCommon(w, r, u, 0)
 }
 
 func contestRanklistHandler(w http.ResponseWriter, r *http.Request) {
@@ -387,22 +401,28 @@ func contestRanklistHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(404)
 		return
 	}
+	limit, offset := paginationHandler(w, r)
+	if limit == -1 || offset == -1 {
+		w.WriteHeader(400)
+		return
+	}
 
-	ps, err := c.AllParticipations()
+	ps, total, err := c.PartParticipation(limit, offset)
 	if err != nil {
 		panic(err)
 	}
 
-	w.Write([]byte("["))
+	prs := []map[string]interface{}{}
+	for _, p := range ps {
+		prs = append(prs, p.Representation())
+	}
+
 	enc := json.NewEncoder(w)
 	enc.SetEscapeHTML(false)
-	for i, p := range ps {
-		if i != 0 {
-			w.Write([]byte(","))
-		}
-		enc.Encode(p.Representation())
-	}
-	w.Write([]byte("]\n"))
+	enc.Encode(map[string]interface{}{
+		"total":        total,
+		"participants": prs,
+	})
 }
 
 func contestMatchesHandler(w http.ResponseWriter, r *http.Request) {
@@ -413,21 +433,41 @@ func contestMatchesHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	limit, offset := paginationHandler(w, r)
+	if offset == -1 || limit == -1 {
+		w.WriteHeader(400)
+		return
+	}
+
 	ms, err := models.ReadByContest(c.Id)
 	if err != nil {
 		panic(err)
 	}
 
-	w.Write([]byte("["))
+	total := len(ms)
+	msr := []map[string]interface{}{}
+	var begin int
+	var end int
+	if offset > total {
+		begin = total
+	} else {
+		begin = offset
+	}
+	if offset+limit > total {
+		end = total
+	} else {
+		end = offset + limit
+	}
+	for _, m := range ms[begin:end] {
+		msr = append(msr, m.ShortRepresentation())
+	}
+
 	enc := json.NewEncoder(w)
 	enc.SetEscapeHTML(false)
-	for i, m := range ms {
-		if i != 0 {
-			w.Write([]byte(","))
-		}
-		enc.Encode(m.ShortRepresentation())
-	}
-	w.Write([]byte("]\n"))
+	enc.Encode(map[string]interface{}{
+		"total":   total,
+		"matches": msr,
+	})
 }
 
 // curl http://localhost:3434/contest/1/match/manual -i -H "Cookie: auth=..." -d "submissions=1,2,3"
@@ -464,6 +504,11 @@ func contestMatchManualHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := m.Create(); err != nil {
+		panic(err)
+	}
+
+	// Send for match
+	if err := m.SendToQueue(); err != nil {
 		panic(err)
 	}
 

@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"github.com/gorilla/mux"
 	"net/http"
+	"strconv"
 )
 
 // Returns a User struct
@@ -70,9 +71,6 @@ func signupHandler(w http.ResponseWriter, r *http.Request) {
 	u.Handle = s
 	u.Email = email
 
-	// TODO: Validate email format.
-	// Now it is not complete because there are some situations this one cannot handle.
-	// For example the email .list@gmail.com or list..list@gmail.com is not correct according to RFC 5322.
 	if !u.EmailCheck() {
 		w.WriteHeader(400)
 		fmt.Fprintf(w, "{\"err\": [-1]}")
@@ -139,6 +137,19 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 		ok = false
 	}
 
+	if !ok {
+		u = models.User{}
+		u.Email = s
+		if err := u.ReadByEmail(); err != nil {
+			if err != sql.ErrNoRows {
+				panic(err)
+			}
+		}
+		if u.VerifyPassword(p) {
+			ok = true
+		}
+	}
+
 	if ok {
 		middlewareAuthGrant(w, r, u.Id)
 		w.WriteHeader(200)
@@ -189,9 +200,22 @@ func captchaGetHandler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+//get the limit and offset
+func paginationHandler(w http.ResponseWriter, r *http.Request) (int, int) {
+	limits := r.URL.Query()["count"]
+	pages := r.URL.Query()["page"]
+	if limits != nil && pages != nil {
+		limit, _ := strconv.Atoi(r.URL.Query()["count"][0])
+		page, _ := strconv.Atoi(r.URL.Query()["page"][0])
+		if limit >= 0 && page >= 0 {
+			return limit, page * limit
+		}
+	}
+	return -1, -1
+}
+
 func profileHandler(w http.ResponseWriter, r *http.Request) {
 	u := models.User{Handle: mux.Vars(r)["handle"]}
-
 	if err := u.ReadByHandle(); err != nil {
 		if err == sql.ErrNoRows {
 			// No such user
@@ -202,12 +226,21 @@ func profileHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	limit, offset := paginationHandler(w, r)
+	if limit == -1 && offset == -1 {
+		w.WriteHeader(400)
+		return
+	}
+
 	enc := json.NewEncoder(w)
 	enc.SetEscapeHTML(false)
+	contests, _ := u.AllContests()
+	matches, total, _ := u.MatchesPagination(limit, offset)
 	enc.Encode(map[string]interface{}{
-		"user":     u.Representation(),
-		"contests": []int{}, // TODO
-		"matches":  []int{}, // TODO
+		"user":          u.Representation(),
+		"contests":      contests,
+		"matches":       matches,
+		"total_matches": total,
 	})
 }
 

@@ -73,7 +73,6 @@
 - **password** (string) 不可逆哈希后的密码
 - **email** (string) 电子邮箱
 - **nickname** (string) 昵称
-- :construction: **bio** (string) 个性签名
 - **captcha_key** (string) 此前获得的验证码 key
 - **captcha_value** (string) 验证码填写值
 
@@ -118,10 +117,17 @@
 
 ### 个人主页 GET /user/{handle}/profile
 
+请求
+
+- **page** (optional number) 请求的页数
+- **count** (optional number) 每页的个数
+
 响应
+
 - **user** (User) 帐号信息
-- :construction: **contests** ([ContestShort]) 参与的比赛列表
-- :construction: **matches** ([MatchShort]) 最近对局列表
+- **contests** ([ContestShort]) 参与的比赛列表（不需要分页）
+- **matches** ([MatchShort]) 最近对局列表（需要分页）
+- **total_matches** (number) 对局列表总数
 
 ### 修改个人信息 POST /user/{handle}/profile/edit
 
@@ -192,7 +198,9 @@
 - **details** (string) 长篇详细说明
 - **is_visible** (boolean) 是否公开显示
 - **is_reg_open** (boolean) 是否公开接受报名
+- **script** (string) 赛制脚本
 - **owner** (UserShort) 创建者
+- **moderators** ([number]) 管理员的 ID 列表，用逗号分隔
 - **my_role** (number) 自己的参加情况
 	- **-1** 未登录或未报名
 	- **0** 拥有管理权限（管理员或创建者）
@@ -224,6 +232,11 @@
 
 - **id** (number) ID
 - **parties** ([SubmissionShort]) 参与对局的各方，每个元素为一个提交记录
+- **status** (number) 状态
+	- **0** 等待处理
+	- **1** 正在运行
+	- **9** 完成
+	- **-9** 系统错误（请联系管理员）
 - **report** (object) 对局报告，交给动画播放器
 
 ### 对局数据结构 MatchShort
@@ -242,6 +255,7 @@
 - **is_visible** (boolean) 是否公开显示
 - **is_reg_open** (boolean) 是否公开接受报名
 - **moderators** ([number]) 管理员的 ID 列表，用逗号分隔
+- :construction: **script** (string) 赛制脚本
 
 响应 200
 - **id** (number) 新比赛的 ID
@@ -315,8 +329,13 @@
 
 ### 所有提交历史 GET /contest/{cid}/submission/list
 
+请求
+- :construction: **page** (optional number) 请求的页数
+- :construction: **count** (optional number) 每页的个数
+
 响应 200
-- 若干 SubmissionShort 组成的数组，从最新到最旧排序
+- **total** (number) 提交历史总数
+- **submissions** ([SubmissionShort])若干 SubmissionShort 组成的数组，从最新到最旧排序
 
 响应 403
 - 空数组 []
@@ -351,16 +370,26 @@
 
 ### 排行榜 GET /contest/{cid}/ranklist
 
-响应
-- 一个数组，按排名从高到低排序，每个元素如下
+请求
+- :construction: **page** (optional number) 请求的页数
+- :construction: **count** (optional number) 每页的个数
+
+响应 200
+- :construction: **total** 当前玩家总数
+- :construction: **participants** 一个数组，按排名从高到低排序，如遇并列则按选手登录名字典序升序排列。每个元素如下
 	- **participant** (UserShort) 参赛者
 	- **rating** (number) 匹配积分
 	- **performance** (string) 额外战绩数据
 
 ### 对局列表 GET /contest/{cid}/matches
 
+请求
+- :construction: **page** (optional number) 请求的页数
+- :construction: **count** (optional number) 每页的个数
+
 响应
-- 若干 MatchShort 组成的数组，从最新到最旧排序
+- :construction: **total** (number) 对局总数
+- :construction: **matches** ([MatchShort]) 若干 MatchShort 组成的数组，从最新到最旧排序
 
 ### 对局详情 GET /contest/{cid}/match/{mid}
 
@@ -385,9 +414,41 @@
 - 空对象 {}
 - 非管理员不能手动发起对局
 
+### :construction: 赛制脚本日志 GET /contest/{cid}/match/script_log
+
+响应 200
+- 大量纯文本
+
+响应 403
+- 空响应 Content-Length: 0
+- 非管理员不能查看日志
+
+### :construction: 手动执行赛制脚本 POST /contest/{cid}/match/manual_script
+
+请求
+- **arg** (string) 需要传递的参数
+
+响应 200
+- 空对象 {}
+
+响应 403
+- 空对象 {}
+- 非管理员不能手动执行脚本
+
 
 ## 调试
 
 ### 复位数据库并填充测试数据 POST /fake
 
 响应 200
+
+测试用数据包括：
+- 用户
+	- 站长权限：登录名 su
+	- 主办权限：登录名 o1 … o5
+	- 普通权限：登录名 p1 … p20
+	- 密码均为 qwq
+- 5 场比赛，其中 1 不公开显示，5 不开放公开报名
+	- 其中第 i 场比赛的拥有者是 o\<i\>，初始没有其他管理员
+	- 每一场比赛都含有一些伪随机的参赛者、提交和对局
+	- 尚未开始的比赛确实是不应该已有对局的，但是对逻辑没有实质影响

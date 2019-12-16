@@ -3,6 +3,8 @@
   "db_name": "dbqwq",
   "db_user": "postgres",
   "db_password": "",
+  "redis_port": 6379,
+  "redis_password": "",
   "cookie_key_pairs": [
     "vertraulich",
     "0123456789abcdef"

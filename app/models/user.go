@@ -165,6 +165,77 @@ func (u *User) EmailCheck() bool {
 	return re.MatchString(u.Email)
 }
 
+func (u *User) AllContests() ([]map[string]interface{}, error) {
+	rows, err := db.Query("SELECT contest from contest_participation where uid = $1", u.Id)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	allContests := []map[string]interface{}{}
+	for rows.Next() {
+		c := Contest{}
+		err := rows.Scan(&c.Id)
+		if err != nil {
+			return nil, err
+		}
+		c.Read()
+		if c.IsVisibleTo(*u) {
+			allContests = append(allContests, c.ShortRepresentation(*u))
+		}
+	}
+
+	// todo optimize
+	rows2, err := db.Query("SELECT id from contest where owner = $1", u.Id)
+	if err != nil {
+		return nil, err
+	}
+
+	defer rows2.Close()
+	for rows2.Next() {
+		c := Contest{}
+		err := rows2.Scan(&c.Id)
+		if err != nil {
+			return nil, err
+		}
+		c.Read()
+		if c.IsVisibleTo(*u) {
+			allContests = append(allContests, c.ShortRepresentation(*u))
+		}
+	}
+	return allContests, rows.Err()
+}
+
+func (u *User) MatchesPagination(limit int, offset int) ([]map[string]interface{}, int, error) {
+	rows, err := db.Query("SELECT DISTINCT match.id, match.contest, match.status, match.report "+
+		"FROM submission JOIN match_party "+
+		"ON submission.id = match_party.submission "+
+		"JOIN match ON match_party.match = match.id "+
+		"WHERE uid = $1 LIMIT $2 OFFSET $3",
+		u.Id, limit, offset)
+	if err != nil {
+		return nil, 0, err
+	}
+	defer rows.Close()
+	allMatches := []map[string]interface{}{}
+	for rows.Next() {
+		m := Match{}
+		err := rows.Scan(&m.Id, &m.Contest, &m.Status, &m.Report)
+		if err != nil {
+			return nil, 0, err
+		}
+		m.LoadRel()
+		allMatches = append(allMatches, m.ShortRepresentation())
+	}
+	rows2 := db.QueryRow("SELECT DISTINCT COUNT(*) FROM submission "+
+		"JOIN match_party ON "+
+		"submission.id = match_party.submission "+
+		"JOIN match ON match_party.match = match.id "+
+		"WHERE uid = $1", u.Id)
+	var total int
+	err = rows2.Scan(&total)
+	return allMatches, total, rows.Err()
+}
+
 func UserSearchByHandle(handle string) ([]User, error) {
 	rows, err := db.Query("SELECT "+
 		"id, handle, privilege, nickname "+
