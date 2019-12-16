@@ -94,6 +94,10 @@ func (m *Match) ShortRepresentation() map[string]interface{} {
 		"id":      m.Id,
 		"parties": parties,
 		"status":  m.Status,
+		"contest": map[string]interface{}{
+			"id":    m.Rel.Contest.Id,
+			"title": m.Rel.Contest.Title,
+		},
 	}
 }
 
@@ -143,7 +147,7 @@ func (m *Match) LoadRel() error {
 
 	// Find out all parties
 	rows, err := db.Query("SELECT submission FROM match_party "+
-		"WHERE match = $1 ORDER BY index ASC", m.Id)
+		"WHERE match = $1 ORDER BY submission ASC", m.Id)
 	if err != nil {
 		return err
 	}

@@ -205,50 +205,35 @@ func (u *User) AllContests() ([]map[string]interface{}, error) {
 	return allContests, rows.Err()
 }
 
-func (u *User) AllMatches(page int, count int) ([]map[string]interface{}, int, error) {
-	offset := page * count
-	rows, err := db.Query("SELECT id from submission where uid = $1", u.Id)
+func (u *User) MatchesPagination(limit int, offset int) ([]map[string]interface{}, int, error) {
+	rows, err := db.Query("SELECT DISTINCT match.id, match.contest, match.status, match.report "+
+		"FROM submission JOIN match_party "+
+		"ON submission.id = match_party.submission "+
+		"JOIN match ON match_party.match = match.id "+
+		"WHERE uid = $1 LIMIT $2 OFFSET $3",
+		u.Id, limit, offset)
 	if err != nil {
 		return nil, 0, err
 	}
 	defer rows.Close()
-	var allMatches []map[string]interface{}
-	total := 0
+	allMatches := []map[string]interface{}{}
 	for rows.Next() {
-		var s int32
-		err := rows.Scan(&s)
+		m := Match{}
+		err := rows.Scan(&m.Id, &m.Contest, &m.Status, &m.Report)
 		if err != nil {
 			return nil, 0, err
 		}
-		rows2, err := db.Query("SELECT match from match_party where submission = $1", s)
-		if err != nil {
-			return nil, 0, err
-		}
-		defer rows2.Close()
-		for rows2.Next() {
-			m := Match{}
-			err := rows2.Scan(&m.Id)
-			if err != nil {
-				return nil, 0, err
-			}
-			_ = m.Read()
-			_ = m.LoadRel()
-			allMatches = append(allMatches, m.ShortRepresentation())
-		}
-		rows3 := db.QueryRow("SELECT COUNT(*) from match_party where submission = $1", s)
-		var curtotal int
-		err = rows3.Scan(&curtotal)
-		total += curtotal
+		m.LoadRel()
+		allMatches = append(allMatches, m.ShortRepresentation())
 	}
-	total = len(allMatches)
-	if total <= offset {
-		return nil, total, rows.Err()
-	}
-	end := offset + count
-	if total <= offset+count {
-		end = total
-	}
-	return allMatches[offset:end], total, rows.Err()
+	rows2 := db.QueryRow("SELECT DISTINCT COUNT(*) FROM submission "+
+		"JOIN match_party ON "+
+		"submission.id = match_party.submission "+
+		"JOIN match ON match_party.match = match.id "+
+		"WHERE uid = $1", u.Id)
+	var total int
+	err = rows2.Scan(&total)
+	return allMatches, total, rows.Err()
 }
 
 func UserSearchByHandle(handle string) ([]User, error) {
