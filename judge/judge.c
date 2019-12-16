@@ -219,8 +219,12 @@ void process_match(redisReply *kv)
 
     // Update status
     WLOGF("Running:   %s", mid);
-    for (int i = 0; i < num_parties; i++)
+    for (int i = 0; i < num_parties; i++) {
         WLOGF("  Party #%d: %s", i, parties[i]);
+        if (!is_compiled(parties[i])) {
+            printf("    - This submission not compiled here\n");
+        }
+    }
     reply = redisCommand(rctx, "RPUSH " MATCH_RESULT_LIST " %s 1 Running", mid);
 
     // Match work
