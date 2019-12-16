@@ -13,13 +13,19 @@ LC_ALL=C make CROSS_COMPILE=llvm- SKIP_STRIP=y
 git apply mkjail.diff
 cat > mkjail.files <<EOF
 /dev/null
+/dev/random
 /dev/urandom
 /dev/zero
 EOF
 ./addtojail /usr/local/bin/busybox
 ./addtojail /usr/lib/dyld
 ./addtojail /bin/sh
+./addtojail /bin/bash
 ./addtojail /etc/resolv.conf
+./addtojail /etc/hosts
+./addtojail /opt/local/bin/curl
+./addtojail /usr/bin/sw_vers
+./addtojail /usr/bin/ruby
 sudo ./mkjail 1
 
 # Inside chroot shell
@@ -28,6 +34,10 @@ sudo ./mkjail 1
 
 cd /usr/local
 mkdir homebrew
-# Not yet working...
-wget -O - https://github.com/Homebrew/brew/tarball/master | tar xz --strip 1 -C homebrew
+curl -k -L https://github.com/Homebrew/brew/tarball/master | tar xz --strip 1 -C homebrew
+
+# TODO: Install Ruby
+curl -k https://cache.ruby-lang.org/pub/ruby/2.6/ruby-2.6.5.tar.gz
+
+export PATH=$PATH:/usr/local/homebrew/bin
 ```

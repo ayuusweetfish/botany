@@ -11,6 +11,22 @@ index 6f6142c..f93afde 100644
  CFLAGS += $(call cc-option,-falign-functions=1 -falign-jumps=1 -falign-labels=1 -falign-loops=1,)
  # Defeat .eh_frame bloat (gcc 4.6.3 x86-32 defconfig: 20% smaller busybox binary):
  CFLAGS += $(call cc-option,-fno-unwind-tables,)
+diff --git a/coreutils/date.c b/coreutils/date.c
+index 3414d38..8669b49 100644
+--- a/coreutils/date.c
++++ b/coreutils/date.c
+@@ -303,7 +303,11 @@ int date_main(int argc UNUSED_PARAM, char **argv)
+ 		ts.tv_sec = validate_tm_time(date_str, &tm_time);
+ 
+ 		/* if setting time, set it */
++#ifndef __APPLE__
+ 		if ((opt & OPT_SET) && stime(&ts.tv_sec) < 0) {
++#else
++		if ((opt & OPT_SET)) {
++#endif
+ 			bb_perror_msg("can't set date");
+ 		}
+ 	}
 diff --git a/include/platform.h b/include/platform.h
 index 50365a3..c7c69fc 100644
 --- a/include/platform.h
@@ -37,6 +53,66 @@ index 50365a3..c7c69fc 100644
  # undef HAVE_STRCHRNUL
  #endif
  
+diff --git a/networking/nslookup.c b/networking/nslookup.c
+index 24e09d4..f2c1090 100644
+--- a/networking/nslookup.c
++++ b/networking/nslookup.c
+@@ -36,6 +36,7 @@
+ 
+ #include <resolv.h>
+ #include <net/if.h>	/* for IFNAMSIZ */
++#include <arpa/nameser_compat.h>
+ //#include <arpa/inet.h>
+ //#include <netdb.h>
+ #include "libbb.h"
+diff --git a/networking/ping.c b/networking/ping.c
+index b534c74..1cca9c0 100644
+--- a/networking/ping.c
++++ b/networking/ping.c
+@@ -119,11 +119,16 @@
+ //usage:       "round-trip min/avg/max = 20.1/20.1/20.1 ms\n"
+ 
+ #include <net/if.h>
++#ifdef __APPLE__
++#include <arpa/nameser_compat.h>
++#include <netinet/in.h>
++#include <netinet/ip.h>
++#endif
+ #include <netinet/ip_icmp.h>
+ #include "libbb.h"
+ #include "common_bufsiz.h"
+ 
+-#ifdef __BIONIC__
++#if defined(__BIONIC__) || defined(__APPLE__)
+ /* should be in netinet/ip_icmp.h */
+ # define ICMP_DEST_UNREACH    3  /* Destination Unreachable  */
+ # define ICMP_SOURCE_QUENCH   4  /* Source Quench    */
+@@ -139,6 +144,25 @@
+ # define ICMP_ADDRESSREPLY   18  /* Address Mask Reply    */
+ #endif
+ 
++#ifdef __APPLE__
++/* freebsd/contrib/wpa/src/common/dhcp.h */
++/*
++ * Translate Linux to FreeBSD
++ */
++#define iphdr		ip
++#define ihl		ip_hl
++#define verson		ip_v
++#define tos		ip_tos
++#define tot_len		ip_len
++#define id		ip_id
++#define frag_off	ip_off
++#define ttl		ip_ttl
++#define protocol	ip_p
++#define check		ip_sum
++#define saddr		ip_src
++#define daddr		ip_dst
++#endif
++
+ /* Some operating systems, like GNU/Hurd, don't define SOL_RAW, but do have
+  * IPPROTO_RAW. Since the IPPROTO definitions are also valid to use for
+  * setsockopt (and take the same value as their corresponding SOL definitions,
 diff --git a/scripts/trylink b/scripts/trylink
 index bb6b2de..fec6d73 100755
 --- a/scripts/trylink
