@@ -19,6 +19,27 @@ cat > mkjail.files <<EOF
 EOF
 ./addtojail /usr/local/bin/busybox
 ./addtojail /usr/lib/dyld
+sudo ./mkjail 1 # Will fail to enter shell
+sudo mkdir jail/1/bin
+sudo mv jail/1/usr/local/bin/busybox jail/1/bin/busybox
+sudo chroot jail/1 busybox sh
+
+# Inside chroot shell
+/bin/busybox --install -s /bin
+```
+
+## With networking :construction:
+
+```sh
+git apply mkjail.diff
+cat > mkjail.files <<EOF
+/dev/null
+/dev/random
+/dev/urandom
+/dev/zero
+EOF
+./addtojail /usr/local/bin/busybox
+./addtojail /usr/lib/dyld
 ./addtojail /bin/sh
 ./addtojail /bin/bash
 ./addtojail /etc/resolv.conf

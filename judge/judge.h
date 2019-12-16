@@ -4,6 +4,6 @@
 extern const char *judge_chroot;
 
 void compile(const char *sid, const char *contents);
-void match(const char *mid, int num_parties, const char *parties);
+void match(const char *mid, int num_parties, const char *parties[]);
 
 #endif

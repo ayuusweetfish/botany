@@ -223,7 +223,9 @@ void process_match(redisReply *kv)
         WLOGF("  Party #%d: %s", i, parties[i]);
     reply = redisCommand(rctx, "RPUSH " MATCH_RESULT_LIST " %s 1 Running", mid);
 
-    usleep(1000000);
-    WLOG("Done:      -");
+    // Match work
+    match(mid, num_parties, (const char **)parties);
+
+    WLOGF("Done:      %s", mid);
     reply = redisCommand(rctx, "RPUSH " MATCH_RESULT_LIST " %s 9 Done", mid);
 }

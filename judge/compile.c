@@ -1,9 +1,11 @@
 #include "judge.h"
+#include "child.h"
 
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
 #include <sys/wait.h>
 #include <unistd.h>
 
@@ -11,25 +13,27 @@ void compile(const char *sid, const char *contents)
 {
     pid_t ch = fork();
     if (ch == 0) {
-        usleep(1000000);
-        if (chdir(judge_chroot) != 0) {
-            printf("chdir() failed: %s\n", strerror(errno));
+        child_enter_box();
+
+        // Create submission folder
+        char path[64];
+        snprintf(path, sizeof path, "submissions/%s", sid);
+        if (mkdir(path, 0755) != 0 && errno != EEXIST) {
+            printf("mkdir(%s) failed: %s\n", path, strerror(errno));
             exit(1);
         }
-        if (chroot(judge_chroot) != 0) {
-            printf("chroot() failed: %s\n", strerror(errno));
-            exit(1);
-        }
-        uid_t uid = getuid();
-        gid_t gid = getgid();
-        if (setreuid(uid, uid) != 0 || setregid(gid, gid) != 0) {
-            printf("setreuid/setregid() failed: %s\n", strerror(errno));
-            exit(1);
-        }
-        execl("/bin/echo", "/bin/echo", "Hello", NULL);
-        exit(0);
+
+        // Write code, literally write code
+        snprintf(path, sizeof path, "submissions/%s/lang", sid);
+        write_file(path, "cpp");
+        snprintf(path, sizeof path, "submissions/%s/code", sid);
+        write_file(path, contents);
+
+        execl("./compile.sh", "./compile.sh", sid, NULL);
+        exit(42);   // Unreachable
     } else {
         int wstatus;
         waitpid(ch, &wstatus, 0);
+        // TODO: Check for failure
     }
 }
