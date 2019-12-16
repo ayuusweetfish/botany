@@ -47,19 +47,7 @@ bool is_compiled(const char *sid)
 
         char path[64];
         snprintf(path, sizeof path, "submissions/%s/bin", sid);
-
-        struct stat st;
-        if (stat(path, &st) != 0) {
-            if (errno == ENOENT || errno == ENOTDIR) {
-                exit(0);
-            } else if (errno == EACCES) {
-                printf("... Is this a joke?\n");
-            } else {
-                printf("stat(%s) failed: %s\n", path, strerror(errno));
-            }
-            exit(2);
-        }
-        exit(1);
+        exit(access(path, X_OK) == 0);
     } else {
         int wstatus;
         waitpid(ch, &wstatus, 0);
