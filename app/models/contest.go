@@ -198,6 +198,7 @@ func (c *Contest) LoadRel() error {
 func (c *Contest) AllParticipations() ([]ContestParticipation, error) {
 	rows, err := db.Query("SELECT "+
 		"contest_participation.type, "+
+		"COALESCE(contest_participation.delegate, -1), "+
 		"contest_participation.rating, "+
 		"contest_participation.performance, "+
 		"users.id, users.handle, users.privilege, users.nickname "+
@@ -213,7 +214,7 @@ func (c *Contest) AllParticipations() ([]ContestParticipation, error) {
 	ps := []ContestParticipation{}
 	for rows.Next() {
 		p := ContestParticipation{Contest: c.Id}
-		err := rows.Scan(&p.Type, &p.Rating, &p.Performance,
+		err := rows.Scan(&p.Type, &p.Delegate, &p.Rating, &p.Performance,
 			&p.Rel.User.Id, &p.Rel.User.Handle,
 			&p.Rel.User.Privilege, &p.Rel.User.Nickname)
 		if err != nil {

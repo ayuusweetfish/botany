@@ -103,7 +103,9 @@ func (c *Contest) ExecuteScriptOnTimer() error {
 	}
 	t := &lua.LTable{}
 	for _, p := range ps {
-		t.Append(lua.LNumber(p.Rel.User.Id))
+		if p.Delegate != -1 {
+			t.Append(lua.LNumber(p.Rel.User.Id))
+		}
 	}
 
 	// Call Lua function
