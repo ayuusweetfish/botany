@@ -29,8 +29,16 @@ func FakeDatabase() {
 			panic(err)
 		}
 	}
-
 	InitializeSchemata(db)
+
+	// Clear Redis
+	if rcli != nil {
+		_, err := rcli.FlushDB().Result()
+		if err != nil {
+			panic(err)
+		}
+		InitializeRedis(rcli)
+	}
 
 	// Users
 	// - Superuser
@@ -51,11 +59,11 @@ func FakeDatabase() {
 		s := "This is the description for contest number " + numbers[i] + "!\n"
 		s += "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Curabitur pretium tincidunt lacus. Nulla gravida orci a odio. Nullam varius, turpis et commodo pharetra, est eros bibendum elit, nec luctus magna felis sollicitudin mauris. Integer in mauris eu nibh euismod gravida. Duis ac tellus et risus vulputate vehicula. Donec lobortis risus a elit. Etiam tempor. Ut ullamcorper, ligula eu tempor congue, eros est euismod turpis, id tincidunt sapien risus a quam. Maecenas fermentum consequat mi. Donec fermentum. Pellentesque malesuada nulla a mi. Duis sapien sem, aliquet nec, commodo eget, consequat quis, neque. Aliquam faucibus, elit ut dictum aliquet, felis nisl adipiscing sapien, sed malesuada diam lacus eget erat. Cras mollis scelerisque nunc. Nullam arcu. Aliquam consequat. Curabitur augue lorem, dapibus quis, laoreet et, pretium ac, nisi. Aenean magna nisl, mollis quis, molestie eu, feugiat in, orci. In hac habitasse platea dictumst."
 		script := `
-local count = 0
+local count = 9
 local su_id = get_id('su')
 function on_timer(all)
     count = count + 1
-    -- if count < 5 then return end
+    if count < 10 then return end
     count = 0
     print('Superuser has ID ' .. tostring(su_id))
     print('Creating matches for contest #` + strconv.Itoa(i) + `')
@@ -81,8 +89,6 @@ end
 			panic(err)
 		}
 
-		sidFirst, sidLast := int32(-1), int32(-1)
-
 		// Participants
 		for j := 1 + i/2; j <= 20; j += i {
 			fmt.Printf("User %d joins contest %d\n", j, i)
@@ -105,7 +111,7 @@ end
 				if err := s.Create(); err != nil {
 					panic(err)
 				}
-				if k % 2 == 1 {
+				if k%2 == 1 {
 					// Mark as accepted
 					s.Status = SubmissionStatusAccepted
 					s.Message = "Automagically compiled"
@@ -122,38 +128,7 @@ end
 				} else {
 					s.SendToQueue()
 				}
-				if sidFirst == -1 {
-					sidFirst = s.Id
-				}
-				sidLast = s.Id
 			}
-		}
-
-		// Matches
-		count := sidLast - sidFirst + 1
-		seed := int32(129)
-		for j := 1; j <= 30; j++ {
-			m := Match{
-				Contest: int32(i),
-				Report:  "{\"winner\": \"In queue\"}",
-			}
-			u := seed % count
-			seed = ((seed * 1103515245) + 12345) & 0x7fffffff
-			v := seed % (count - 1)
-			seed = ((seed * 1103515245) + 12345) & 0x7fffffff
-			if u == v {
-				v = count - 1
-			}
-			m.Rel.Parties = []Submission{
-				Submission{Id: sidFirst + u},
-				Submission{Id: sidFirst + v},
-			}
-			fmt.Printf("Match takes place between submissions %d and %d\n",
-				sidFirst+u, sidFirst+v)
-			if err := m.Create(); err != nil {
-				panic(err)
-			}
-			m.SendToQueue()
 		}
 	}
 }
