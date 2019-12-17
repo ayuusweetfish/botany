@@ -2,6 +2,7 @@ package models
 
 import (
 	"log"
+	"math/rand"
 	"strconv"
 	"time"
 )
@@ -114,7 +115,20 @@ end
 				}
 				if k%2 == 1 {
 					// Mark as accepted
-					s.Status = SubmissionStatusAccepted
+					r := rand.Intn(5)
+					if r == 0 {
+						s.Status = SubmissionStatusPending
+					} else if r == 1 {
+						s.Status = SubmissionStatusCompiling
+					} else if r == 2 {
+						s.Status = SubmissionStatusAccepted
+					} else if r == 3 {
+						s.Status = SubmissionStatusCompilationFailed
+					} else if r == 4 {
+						s.Status = SubmissionStatusSystemError
+					} else {
+						s.Status = SubmissionStatusAccepted
+					}
 					s.Message = "Automagically compiled"
 					if err := s.Update(); err != nil {
 						panic(err)
