@@ -41,7 +41,7 @@ func (c *Contest) ResetLuaState() {
 }
 
 func (c *Contest) LuaState() *lua.LState {
-	if lCodes[c.Id] != c.Script {
+	if lCodes[c.Id] != c.Script || lStates[c.Id] == nil {
 		lCodes[c.Id] = c.Script
 		c.ResetLuaState()
 	}
