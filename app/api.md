@@ -370,7 +370,7 @@
 - 空对象 {}
 - 未报名比赛或比赛未开始 —— 前端检查严格时不应出现此项
 
-### :construction: 选择出战提交 POST /contest/{cid}/delegate
+### 选择出战提交 POST /contest/{cid}/delegate
 
 请求
 - **submission** (number) 提交 ID
@@ -379,6 +379,10 @@
 
 响应 200
 - 空对象 {}
+
+响应 400
+- 空对象 {}
+- 格式不正确
 
 响应 403
 - 空对象 {}

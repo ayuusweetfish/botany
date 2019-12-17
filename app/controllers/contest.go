@@ -247,6 +247,9 @@ func contestJoinHandler(w http.ResponseWriter, r *http.Request) {
 	if err := p.Create(); err != nil {
 		panic(err)
 	}
+	if err := p.Update(); err != nil {
+		panic(err)
+	}
 
 	// Success
 	fmt.Fprintf(w, "{}")
@@ -393,6 +396,71 @@ func contestSubmissionHistoryHandlerUser(w http.ResponseWriter, r *http.Request)
 func contestSubmissionHistoryHandlerAll(w http.ResponseWriter, r *http.Request) {
 	u := middlewareAuthRetrieve(w, r)
 	contestSubmissionHistoryHandlerCommon(w, r, u, 0)
+}
+
+func contestDelegateHandler(w http.ResponseWriter, r *http.Request) {
+	u := middlewareAuthRetrieve(w, r)
+	if u.Id == -1 {
+		w.WriteHeader(401)
+		return
+	}
+
+	c := middlewareReferredContest(w, r, u)
+	if c.Id == -1 || !c.IsVisibleTo(u) {
+		w.WriteHeader(404)
+		return
+	}
+	if !c.HasStarted() {
+		w.WriteHeader(403)
+		fmt.Fprintf(w, "{}")
+		return
+	}
+
+	sid, err := strconv.Atoi(r.PostFormValue("submission"))
+	if err != nil {
+		// Malformed request
+		w.WriteHeader(400)
+		fmt.Fprintf(w, "{}")
+		return
+	}
+
+	if sid != -1 {
+		s := models.Submission{Id: int32(sid)}
+		if err := s.Read(); err != nil {
+			if err == sql.ErrNoRows {
+				// Treat as permission error
+				w.WriteHeader(403)
+				fmt.Fprintf(w, "{}")
+				return
+			} else {
+				panic(err)
+			}
+		}
+		if s.User != u.Id || s.Contest != c.Id || s.Status != models.SubmissionStatusAccepted {
+			w.WriteHeader(403)
+			fmt.Fprintf(w, "{}")
+			return
+		}
+	}
+
+	p := models.ContestParticipation{User: u.Id, Contest: c.Id}
+	if err := p.Read(); err != nil {
+		if err == sql.ErrNoRows {
+			// Did not participate
+			w.WriteHeader(403)
+			fmt.Fprintf(w, "{}")
+			return
+		} else {
+			panic(err)
+		}
+	}
+
+	p.Delegate = int32(sid)
+	if err := p.Update(); err != nil {
+		panic(err)
+	}
+
+	fmt.Fprintf(w, "{}")
 }
 
 func contestRanklistHandler(w http.ResponseWriter, r *http.Request) {
@@ -560,6 +628,7 @@ func init() {
 	registerRouterFunc("/contest/{cid:[0-9]+}/submission/{sid:[0-9]+}", contestSubmissionHandler, "GET")
 	registerRouterFunc("/contest/{cid:[0-9]+}/my", contestSubmissionHistoryHandlerUser, "GET")
 	registerRouterFunc("/contest/{cid:[0-9]+}/submission/list", contestSubmissionHistoryHandlerAll, "GET")
+	registerRouterFunc("/contest/{cid:[0-9]+}/delegate", contestDelegateHandler, "POST")
 	registerRouterFunc("/contest/{cid:[0-9]+}/ranklist", contestRanklistHandler, "GET")
 	registerRouterFunc("/contest/{cid:[0-9]+}/matches", contestMatchesHandler, "GET")
 	registerRouterFunc("/contest/{cid:[0-9]+}/match/manual", contestMatchManualHandler, "POST")
