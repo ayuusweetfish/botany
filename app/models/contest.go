@@ -39,6 +39,7 @@ type ContestParticipation struct {
 	User        int32
 	Contest     int32
 	Type        int8
+	Delegate    int32
 	Rating      int64
 	Performance string
 
@@ -67,11 +68,13 @@ func init() {
 		"uid INTEGER NOT NULL",
 		"contest INTEGER NOT NULL",
 		"type SMALLINT NOT NULL",
+		"delegate INTEGER", // Nullable
 		"rating BIGINT NOT NULL DEFAULT 0",
 		"performance TEXT NOT NULL DEFAULT ''",
 		"ADD PRIMARY KEY (uid, contest)",
 		"ADD CONSTRAINT fk_users FOREIGN KEY (uid) REFERENCES users (id)",
 		"ADD CONSTRAINT fk_contest FOREIGN KEY (contest) REFERENCES contest (id)",
+		"ADD CONSTRAINT fk_delegate FOREIGN KEY (delegate) REFERENCES submission (id)",
 	)
 }
 
@@ -358,24 +361,27 @@ func (p *ContestParticipation) Create() error {
 		p.Rating,
 		p.Performance,
 	)
+	p.Delegate = -1
 	return err
 }
 
 func (p *ContestParticipation) Read() error {
-	err := db.QueryRow("SELECT type, rating, performance "+
+	err := db.QueryRow("SELECT type, COALESCE(delegate, -1), rating, performance "+
 		"FROM contest_participation WHERE uid = $1 AND contest = $2",
 		p.User,
 		p.Contest,
-	).Scan(&p.Type, &p.Rating, &p.Performance)
+	).Scan(&p.Type, &p.Delegate, &p.Rating, &p.Performance)
 	return err
 }
 
 func (p *ContestParticipation) Update() error {
 	_, err := db.Exec("UPDATE contest_participation SET "+
-		"type = $1, rating = $2, performance = $3 "+
-		"WHERE uid = $4 AND contest = $5",
+		"type = $1, rating = $2, delegate = (CASE WHEN $3 = -1 THEN NULL ELSE $3 END), "+
+		"performance = $4 "+
+		"WHERE uid = $5 AND contest = $6",
 		p.Type,
 		p.Rating,
+		p.Delegate,
 		p.Performance,
 		p.User,
 		p.Contest,
