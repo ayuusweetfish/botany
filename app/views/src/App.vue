@@ -20,26 +20,25 @@
           :hide-on-click="true"
           trigger="click"
         >
-          <span class="navbar-item" style="cursor: pointer;">比赛详情<i class="el-icon-arrow-down"></i></span>
+          <span class="navbar-item" style="cursor: pointer;">比赛操作<i class="el-icon-arrow-down"></i></span>
           <el-dropdown-menu slot="dropdown">
             <router-link class="navbar-block" :to="{path:'/contest_detail', query: {cid: $route.query.cid}}">
               <el-dropdown-item style="width: 110px; font-size: 16px"><i class="el-icon-magic-stick"></i>参赛指南</el-dropdown-item>
             </router-link>
-            <router-link v-if="checkRouteValid('imIn')" class="navbar-block" :to="{path: '/submission', query: {cid: $route.query.cid}}">
+            <router-link v-if="checkRouteValid('imIn')&&checkTimeValid(3)" class="navbar-block" :to="{path: '/submission', query: {cid: $route.query.cid}}">
               <el-dropdown-item style="width: 110px; font-size: 16px"><i class="el-icon-cpu"></i>我的代码</el-dropdown-item>
             </router-link>
-            <router-link v-if="checkRouteValid('moderator')" class="navbar-block" :to="{path: '/submission_list', query: {cid: $route.query.cid}}">
+            <router-link v-if="checkRouteValid('moderator')&&checkTimeValid(3)" class="navbar-block" :to="{path: '/submission_list', query: {cid: $route.query.cid}}">
               <el-dropdown-item style="width: 110px; font-size: 16px"><i class="el-icon-document-copy"></i>提交列表</el-dropdown-item>
             </router-link>
-            <router-link class="navbar-block" :to="{path:'/match_list', query: {cid: $route.query.cid}}">
+            <router-link v-if="checkTimeValid(3)" class="navbar-block" :to="{path:'/match_list', query: {cid: $route.query.cid}}">
               <el-dropdown-item style="width: 110px; font-size: 16px"><i class="el-icon-video-play"></i>对局列表</el-dropdown-item>
             </router-link>
-            <router-link class="navbar-block" :to="{path:'/ranklist', query: {cid: $route.query.cid}}">
+            <router-link v-if="checkTimeValid(3)" class="navbar-block" :to="{path:'/ranklist', query: {cid: $route.query.cid}}">
               <el-dropdown-item style="width: 110px; font-size: 16px"><i class="el-icon-trophy"></i>选手排行</el-dropdown-item>
             </router-link>
           </el-dropdown-menu>
         </el-dropdown>
-        
         <!-- <el-button type="text" class="navbar-item" @click="gocontestranking">查看排行</el-button>
         <div style="display: inline; color:gray">|</div>
         <el-button type="text" class="navbar-item" @click="gocontestvss">查看对局</el-button>
@@ -123,26 +122,24 @@ export default {
     changeTitle (title) {
       console.log(title)
     },
-    setPasswordDialog(val) {
+    setPasswordDialog (val) {
       this.showPwdDlg = val
     },
     goLogin () {
-      console.log(this.$route)
       this.$store.commit('setAfterLogin', {path: this.$route.path, query: this.$route.query})
       this.$router.push({
         path: '/login',
         query: {
-          redirect: !this.$route.path === '/notfound'
+          redirect: (this.$route.path !== '/notfound')
         }
       })
     },
     goSignup () {
-      console.log(this.$route)
       this.$store.commit('setAfterLogin', {path: this.$route.path, query: this.$route.query})
       this.$router.push({
         path: '/signup',
         query: {
-          redirect: !this.$route.path === '/notfound'
+          redirect: (this.$route.path !== '/notfound')
         }
       })
     },
@@ -181,7 +178,6 @@ export default {
       })
     },
     checkRouteValid (role) {
-      console.log(role)
       if (this.$store.state.contestInfo &&
       this.$store.state.contestInfo.my_role !== null &&
       this.$store.state.contestInfo.my_role !== undefined &&
@@ -190,6 +186,20 @@ export default {
       } else {
         return false
       }
+    },
+    checkTimeValid (val) {
+      if (!this.$store.state.contestInfo) {
+        return false
+      }
+      let start = this.$store.state.contestInfo.start_time
+      let end = this.$store.state.contestInfo.end_time
+      let stage = this.$functions.checkTime(start, end)
+      if (stage === this.$consts.contestStat.going) {
+        return true
+      } else if (stage === val) {
+        return true
+      }
+      return false
     }
   }
 }
@@ -249,5 +259,25 @@ export default {
   font-size: 18px;
   font-weight: 600;
   height: 30px;
+}
+.cm-container .CodeMirror {
+  height: auto;
+  max-height: 480px;
+  font-family: monospace;
+  position: relative;
+  background: white;
+  direction: ltr;
+  overflow: hidden;
+}
+.cm-container .CodeMirror-wrap {
+  height: auto;
+  font-family: monospace;
+  position: relative;
+  background: white;
+  direction: ltr;
+}
+.cm-container .CodeMirror-scroll {
+  min-height: 300px;
+  max-height: 480px;
 }
 </style>

@@ -8,15 +8,13 @@
         <el-table-column label="排名" type="index" :index="val=>{return val + 1}" width="80"></el-table-column>
         <el-table-column label="选手" prop="participant.nickname" min-width="160" align="center">
         </el-table-column>
-        <el-table-column label="账号 | ID" min-width="160" align="center">
+        <el-table-column label="账号" min-width="160" align="center">
           <template slot-scope="scope">
             <router-link
               style="display: inline; text-decoration: none; color: #409EFF"
               :to="{path: '/profile', query: {handle: scope.row.participant.handle}}"
             >{{scope.row.participant.handle}}
             </router-link>
-            <el-divider direction="vertical" style="align-self: center"></el-divider>
-            <div style="display: inline">{{scope.row.participant.id}}</div>
           </template>
         </el-table-column>
         <el-table-column label="评分" prop="rating" width="80" align="center">
@@ -70,6 +68,7 @@ export default {
       ).then(res => {
         this.total = res.data.total
         this.players = res.data.participants
+        console.log(this.players)
         this.tableLoading = false
       }).catch(err => {
         console.log(err)

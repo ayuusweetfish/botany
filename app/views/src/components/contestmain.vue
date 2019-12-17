@@ -21,6 +21,14 @@
               v-if="myRole===$consts.role.moderator"
               type="primary" size="large"
               style="display: inline-flex;"
+              @click="goScript"
+            >
+              脚本操作
+            </el-button>
+            <el-button
+              v-if="myRole===$consts.role.moderator"
+              type="primary" size="large"
+              style="display: inline-flex;"
               @click="goEdit"
             >
               编辑比赛
@@ -120,6 +128,14 @@ export default {
         }
       })
     },
+    goScript () {
+      this.$router.push({
+        path: '/contest_script',
+        query: {
+          cid: this.cid
+        }
+      })
+    },
     publishContest () {
       const loading = this.$loading({lock: true, text: '处理中'})
       let param = this.$qs.stringify({set: true})
@@ -176,7 +192,7 @@ export default {
         this.owner = res.data.owner
         this.title = res.data.title
         this.$store.commit('enterSubSite', res.data)
-        console.log(res.data)
+        console.log(this.myRole)
         loading.close()
       }).catch(err => {
         console.log(err)

@@ -16,6 +16,7 @@ import contestedit from '@/components/contestedit'
 import notfound from '@/components/404'
 import submissionlist from '@/components/submissionlist'
 import submissioninfo from '@/components/submissioninfo'
+import contestscript from '@/components/scriptview'
 
 Vue.use(Router)
 
@@ -28,7 +29,8 @@ export default new Router({
       meta: {
         title: '登录',
         navbarType: 'none',
-        prePage: []
+        prePage: [],
+        stalling: false
       }
     },
     {
@@ -38,7 +40,8 @@ export default new Router({
       meta: {
         title: '注册',
         navbarType: 'none',
-        prePage: []
+        prePage: [],
+        stalling: false
       }
     },
     {
@@ -48,7 +51,8 @@ export default new Router({
       meta: {
         title: '主页',
         navbarType: 'main',
-        prePage: []
+        prePage: [],
+        stalling: false
       }
     },
     {
@@ -58,7 +62,8 @@ export default new Router({
       meta: {
         title: '比赛主页',
         navbarType: 'contest',
-        prePage: []
+        prePage: [],
+        stalling: false
       }
     },
     {
@@ -68,7 +73,8 @@ export default new Router({
       meta: {
         title: '参赛指南',
         navbarType: 'contest',
-        prePage: [{path: '/contest_main', query: ['cid']}]
+        prePage: [{path: '/contest_main', query: ['cid']}],
+        stalling: false
       }
     },
     {
@@ -78,7 +84,8 @@ export default new Router({
       meta: {
         title: '提交代码',
         navbarType: 'contest',
-        prePage: [{path: '/contest_main', query: ['cid']}]
+        prePage: [{path: '/contest_main', query: ['cid']}],
+        stalling: false
       }
     },
     {
@@ -88,7 +95,8 @@ export default new Router({
       meta: {
         title: '选手排行',
         navbarType: 'contest',
-        prePage: [{path: '/contest_main', query: ['cid']}]
+        prePage: [{path: '/contest_main', query: ['cid']}],
+        stalling: false
       }
     },
     {
@@ -98,7 +106,8 @@ export default new Router({
       meta: {
         title: '对局列表',
         navbarType: 'contest',
-        prePage: [{path: '/contest_main', query: ['cid']}]
+        prePage: [{path: '/contest_main', query: ['cid']}],
+        stalling: false
       }
     },
     {
@@ -111,7 +120,8 @@ export default new Router({
         prePage: [
           {path: '/contest_main', query: ['cid']},
           {path: '/match_list', query: ['cid']}
-        ]
+        ],
+        stalling: false
       }
     },
     {
@@ -121,7 +131,8 @@ export default new Router({
       meta: {
         title: '选手信息',
         navbarType: 'main',
-        prePage: [{path: '/', query: []}]
+        prePage: [{path: '/', query: []}],
+        stalling: false
       }
     },
     {
@@ -131,7 +142,8 @@ export default new Router({
       meta: {
         title: '创建比赛',
         navbarType: 'main',
-        prePage: [{path: '/', query: []}]
+        prePage: [{path: '/', query: []}],
+        stalling: true
       }
     },
     {
@@ -141,7 +153,8 @@ export default new Router({
       meta: {
         title: '修改比赛',
         navbarType: 'contest',
-        prePage: [{path: '/contest_main', query: ['cid']}]
+        prePage: [{path: '/contest_main', query: ['cid']}],
+        stalling: true
       }
     },
     {
@@ -151,7 +164,8 @@ export default new Router({
       meta: {
         title: '出错了',
         navbarType: 'main',
-        prePage: []
+        prePage: [],
+        stalling: false
       }
     },
     {
@@ -161,7 +175,8 @@ export default new Router({
       meta: {
         title: '提交列表',
         navbarType: 'contest',
-        prePage: [{path: '/contest_main', query: ['cid']}]
+        prePage: [{path: '/contest_main', query: ['cid']}],
+        stalling: false
       }
     },
     {
@@ -174,7 +189,19 @@ export default new Router({
         prePage: [
           {path: '/contest_main', query: ['cid']},
           {path: '/submission_list', query: ['cid']}
-        ]
+        ],
+        stalling: false
+      }
+    },
+    {
+      path: '/contest_script',
+      name: 'contest_script',
+      component: contestscript,
+      meta: {
+        title: '比赛脚本',
+        navbarType: 'contest',
+        prePage: [{path: '/contest_main', query: ['cid']}],
+        stalling: false
       }
     }
   ]

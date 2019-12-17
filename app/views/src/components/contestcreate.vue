@@ -43,6 +43,11 @@
           size="small"
         ></el-input>
       </el-form-item>
+      <el-form-item label="赛制脚本" prop="script">
+        <div class="cm-container">
+          <codemirror v-model="form.script" :options="cmOptions" align="left"></codemirror>
+        </div>
+      </el-form-item>
       <el-form-item label="是否开放报名" prop="isRegOpen">
         <div align="left">
           <el-radio :label="true" v-model="form.isRegOpen">是</el-radio>
@@ -50,53 +55,42 @@
         </div>
       </el-form-item>
       <el-form-item label="选择管理员账号" prop="moderators">
-        <el-select
-          v-model="form.moderators"
-          placeholder="输入账户名搜索用户"
-          multiple
-          filterable
-          remote
-          reserve-keyword
-          :remote-method="searchForUser"
-          :loading="selLoading"
-          style="width: 100%"
-          size="small"
-        >
-          <el-option :disabled="true" value="null">
-            <el-row>
-                <el-col :span="10" style="overflow: hidden">
-                  <div style="font-weight: 600">昵称</div>
-                </el-col>
-                <el-col :span="10" style="overflow: hidden">
-                  <div>账号</div>
-                </el-col>
-                <el-col :span="4" style="overflow: hidden">
-                  <div>ID</div>
-                </el-col>
-              </el-row>
-          </el-option>
-          <el-option v-for="item in selOptions" :key="item.handle" :value="item.id" :label="item.handle" style="min-width: 320px">
-            <el-tooltip placement="top" effect="light" :open-delay="1500">
-              <div slot="content" style="font-size: 16px;">
-                <div>UID：{{item.id}}</div>
-                <div>账号：{{item.handle}}</div>
-                <div>昵称：{{item.nickname}}</div>
-              </div>
-              <el-row>
-                <el-col :span="10" style="overflow: hidden">
-                  <div style="font-weight: 600">{{item.nickname}}</div>
-                </el-col>
-                <el-col :span="10" style="overflow: hidden">
-                  <div>{{item.handle}}</div>
-                  <el-divider direction="vertical"></el-divider>
-                </el-col>
-                <el-col :span="4" style="overflow: hidden">
-                  <div>{{item.id}}</div>
-                </el-col>
-              </el-row>
-            </el-tooltip>
-          </el-option>
-        </el-select>
+        <div align="left">
+          <el-tag
+            v-for="(item, key) in form.moderators"
+            :key="key" closable @close="handleTagClose(item)"
+            align="center"
+          >{{item.handle}}</el-tag>
+          <el-popover
+            placement="bottom"
+            trigger="click"
+            width="400"
+            v-model="selOpen"
+          > <div>
+              <el-input v-model="selInput" @input="handleInput" placeholder="输入账号进行查询" size="small"></el-input>
+              <el-table :data="selOptions" v-loading="selLoading">
+                <el-table-column label="账号" min-width="150px">
+                  <template slot-scope="scope">
+                    <div style="font-weight: 600">{{scope.row.handle}}</div>
+                  </template>
+                </el-table-column>
+                <el-table-column label="昵称" prop="nickname" min-width="150px"></el-table-column>
+                <el-table-column label="选项">
+                  <template slot-scope="scope">
+                    <el-button
+                      size="small"
+                      type="text"
+                      @click="addModerator(scope.row)"
+                      :disabled="checkDisabled(scope.row)"
+                    >添加</el-button>
+                  </template>
+                </el-table-column>
+              </el-table>
+              <el-button type="text" @click="selOpen=false">关闭</el-button>
+            </div>
+            <el-button plain size="small" slot="reference" icon="el-icon-plus">添加</el-button>
+          </el-popover>
+        </div>
       </el-form-item>
     </el-form>
     <el-row>
@@ -111,9 +105,26 @@
 </template>
 
 <script>
+import { codemirror } from 'vue-codemirror-lite'
+
 export default {
   name: 'contest_create',
+  components: {
+    codemirror
+  },
+  created () {
+    this.$store.commit('setStallFlag', true)
+  },
   data () {
+    let dateValidator = (rule, value, callback) => {
+      let t1 = Math.round(value[1].getTime() / 1000)
+      let t2 = Math.round(value[0].getTime() / 1000)
+      if (t1 > t2) {
+        callback()
+      } else {
+        callback(new Error('日期范围错误'))
+      }
+    }
     return {
       form: {
         title: '',
@@ -121,11 +132,21 @@ export default {
         dateTimes: [],
         desc: '',
         details: '',
+        script: '',
         isRegOpen: false,
-        moderators: [this.$store.state.id]
+        moderators: []
       },
+      cmOptions: {
+        lineNumbers: true,
+        lineWrapping: true,
+        indentUnit: 2,
+        tabSize: 2,
+        autoCloseBrackets: true
+      },
+      selInput: '',
       selOptions: [],
-      selLoading: true,
+      selLoading: false,
+      selOpen: false,
       rules: {
         title: [
           {validator: this.$functions.globalValidator, trigger: 'blur'},
@@ -137,7 +158,8 @@ export default {
           {min: 3, message: '格式错误', trigger: 'blur'}
         ],
         dateTimes: [
-          {required: true, message: '请选择起止时间'}
+          {required: true, message: '请选择起止时间'},
+          {validator: dateValidator, trigger: 'blur'}
         ],
         desc: [
           {required: true, message: '请输入简介', trigger: 'blur'},
@@ -154,6 +176,26 @@ export default {
     }
   },
   methods: {
+    handleTagClose (val) {
+      this.form.moderators.splice(this.form.moderators.indexOf(val), 1)
+    },
+    handleInput (val) {
+      this.selOptions = []
+      this.selLoading = true
+      this.searchForUser(val)
+    },
+    addModerator (item) {
+      this.form.moderators.push(item)
+    },
+    checkDisabled (item) {
+      let flag = false
+      this.form.moderators.forEach(member => {
+        if (member.handle === item.handle) {
+          flag = true
+        }
+      })
+      return flag
+    },
     searchForUser (val) {
       if (val !== '') {
         this.selLoading = true
@@ -182,10 +224,15 @@ export default {
             end_time: Math.round(this.form.dateTimes[1].getTime() / 1000),
             desc: this.form.desc,
             details: this.form.details,
-            is_reg_open: this.form.isRegOpen
+            is_reg_open: this.form.isRegOpen,
+            script: this.form.script
           }
           if (this.form.moderators.length > 0) {
-            params.moderators = this.form.moderators.join(',')
+            let idList = []
+            this.form.moderators.forEach(member => {
+              idList.push(member.id)
+            })
+            params.moderators = idList.join(',')
           }
           params = this.$qs.stringify(params)
           this.$axios.post(
@@ -194,6 +241,7 @@ export default {
           ).then(res => {
             loading.close()
             this.$message.success('提交成功')
+            this.$store.commit('setStallFlag', false)
             this.$router.push('/')
           }).catch(err => {
             loading.close()
@@ -211,5 +259,10 @@ export default {
 </script>
 
 <style scoped>
-
+.cm-container {
+  border: 1px solid #dcdfe6;
+  max-height: 480px;
+  font-size: 14px;
+  line-height: 18px;
+}
 </style>

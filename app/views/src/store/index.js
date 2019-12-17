@@ -12,7 +12,8 @@ export default new Vuex.Store({
     nickname: '',
     routeList: [],
     contestInfo: {},
-    afterLogin: null
+    afterLogin: null,
+    stallFlag: false
   },
   mutations: {
     setRouteList (state, val) {
@@ -41,6 +42,9 @@ export default new Vuex.Store({
     },
     setAfterLogin (state, val) {
       state.afterLogin = val
+    },
+    setStallFlag (state, val) {
+      state.stallFlag = val
     }
   },
   plugins: [createPersistedState()]

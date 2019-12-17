@@ -40,7 +40,7 @@ export default {
   },
   data () {
     let validator2 = (rule, value, callback) => {
-      if (value != this.password.old) {
+      if (value !== this.password.old) {
         callback(new Error('输入不一致'))
       } else {
         callback()
@@ -50,7 +50,7 @@ export default {
       passwords: {
         old: '',
         new: '',
-        new2 : ''
+        new2: ''
       },
       errors: {
         old: '',
@@ -61,12 +61,12 @@ export default {
         old: [
           { required: true, message: '请输入密码', trigger: 'blur' },
           { validator: this.$functions.globalValidator, trigger: 'blur' },
-          { min: 3, max: 30, message: '密码长度不符合要求', trigger: 'blur'}
+          { min: 3, max: 30, message: '密码长度不符合要求', trigger: 'blur' }
         ],
         new: [
           { required: true, message: '请输入新密码', trigger: 'blur' },
           { validator: this.$functions.globalValidator, trigger: 'blur' },
-          { min: 3, max: 30, message: '密码长度不符合要求', trigger: 'blur'}
+          { min: 3, max: 30, message: '密码长度不符合要求', trigger: 'blur' }
         ],
         new2: [
           { required: true, message: '请确认新密码', trigger: 'blur' },
@@ -95,8 +95,8 @@ export default {
         if (err.response.status === 400) {
           this.errors.old = '密码错误'
           this.$message.error('密码错误')
-        } else if (err.response.status == 403) {
-          this.$message.error('权限错误') 
+        } else if (err.response.status === 403) {
+          this.$message.error('权限错误')
         } else {
           this.$message.error('修改失败')
         }
@@ -104,15 +104,15 @@ export default {
     },
     cancelChange () {
       this.show = false
-    },
+    }
   },
   computed: {
     show: {
-      set(val) {
+      set (val) {
         this.$refs['passwords'].resetFields()
         this.$emit('setVisible', val)
       },
-      get() {
+      get () {
         return this.visible
       }
     }

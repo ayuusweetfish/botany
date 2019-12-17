@@ -163,7 +163,6 @@
                     查看赛事主页
                   </router-link>
                 </div>
-                
               </div>
             </el-collapse-item>
           </el-collapse>
@@ -193,7 +192,6 @@
             </el-table-column>
             <el-table-column label="参赛者" width="100" align="center">
               <template slot-scope="scope">
-                
                 <el-popover
                   placement="bottom"
                   trigger="click"

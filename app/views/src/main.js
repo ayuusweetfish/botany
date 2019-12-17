@@ -39,10 +39,9 @@ axios.interceptors.response.use(
         }).catch()
       })
     } else if (error.response.status === 403) {
-      ElementUI.Message.error('你没有权限进行这项操作')
-      router.push('/')
+      ElementUI.Message.error('没有操作权限')
     } else if (error.response.status === 404) {
-      router.push('/notfound')
+      ElementUI.Message.error('404 Not Found')
     }
     return Promise.reject(error)
   }
@@ -52,15 +51,17 @@ Vue.prototype.$qs = qs
 
 router.beforeEach((to, from, next) => {
   let routeList = []
-  console.log(to)
   if (!to.meta.prePage) {
     return next('/notfound')
   }
+  if (from.meta.stalling && store.state.stallFlag) {
+    const check = window.confirm('表单尚未提交，确定离开?')
+    if (!check) {
+      return next(false)
+    }
+  }
   to.meta.prePage.forEach(item => {
-    console.log(item)
-    console.log(item['path'])
     let r = router.resolve(item.path).route
-    console.log(r)
     let page = {
       title: r.meta.title,
       path: item.path,
@@ -68,7 +69,6 @@ router.beforeEach((to, from, next) => {
     }
     item.query.forEach(key => {
       page.query[key] = to.query[key]
-      console.log(page.query)
     })
     routeList.push(page)
   })
@@ -80,6 +80,12 @@ router.beforeEach((to, from, next) => {
   store.commit('setRouteList', routeList)
   next()
 })
+
+window.onbeforeunload = function () {
+  if (router.currentRoute.meta.stalling && store.state.stallFlag) {
+    return ''
+  }
+}
 
 /* eslint-disable no-new */
 new Vue({

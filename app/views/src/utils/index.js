@@ -2,7 +2,7 @@ export default {
   install (Vue, options) {
     Vue.prototype.$functions = {
       dateStrings (timestamp) {
-        let date = new Date(timestamp)
+        let date = new Date(timestamp * 1000)
         let Y = date.getFullYear()
         let M = date.getMonth() + 1 < 10 ? '0' + (date.getMonth() + 1) : date.getMonth() + 1
         let D = date.getDate() < 10 ? '0' + date.getDate() : date.getDate()
@@ -19,7 +19,7 @@ export default {
         }
       },
       dateTimeString (timestamp) {
-        let date = new Date(timestamp)
+        let date = new Date(timestamp * 1000)
         let Y = date.getFullYear()
         let M = date.getMonth() + 1 < 10 ? '0' + (date.getMonth() + 1) : date.getMonth() + 1
         let D = date.getDate() < 10 ? '0' + date.getDate() : date.getDate()
@@ -29,7 +29,7 @@ export default {
         return Y + '-' + M + '-' + D + ' ' + h + ':' + m + ':' + s
       },
       dateString (timestamp) {
-        let date = new Date(timestamp)
+        let date = new Date(timestamp * 1000)
         let Y = date.getFullYear()
         let M = date.getMonth() + 1 < 10 ? '0' + (date.getMonth() + 1) : date.getMonth() + 1
         let D = date.getDate() < 10 ? '0' + date.getDate() : date.getDate()
@@ -41,6 +41,15 @@ export default {
         } else {
           callback()
         }
+      },
+      checkTime (timeStart, timeEnd) {
+        let now = new Date().getTime() / 1000
+        if (timeStart >= now) {
+          return 1
+        } else if (now >= timeEnd) {
+          return 3
+        }
+        return 2
       }
     }
     Vue.prototype.$consts = {
@@ -60,6 +69,11 @@ export default {
         'accepted': 9,
         'complErr': -1,
         'systmErr': -9
+      },
+      contestStat: {
+        'notStart': 1,
+        'going': 2,
+        'end': 3
       }
     }
   }

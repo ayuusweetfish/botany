@@ -12,7 +12,7 @@
             <div v-if="status === $consts.codeStat.pending" class="item-text" style="color: gray">等待中</div>
             <div v-else-if="status === $consts.codeStat.compiling" class="item-text" style="color: orange">进行中</div>
             <div v-else-if="status === $consts.codeStat.accepted" class="item-text" style="color: green">已结束</div>
-            <div v-else class="item-text" style="color: red">Fatal Error</div>
+            <div v-else class="item-text" style="color: red">系统错误</div>
           </el-col>
         </el-row>
       </el-card>
@@ -77,11 +77,11 @@ export default {
       mid: '',
       cid: '',
       status: 0,
-      myRole: -1,
+      myRole: -1
     }
   },
   methods: {
-    getInfo() {
+    getInfo () {
       this.parties = []
       const loading = this.$loading({lock: true, text: '加载中'})
       this.$axios.get(

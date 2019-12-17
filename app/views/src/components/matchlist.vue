@@ -4,39 +4,6 @@
       <div align="left">
         <div style="display: inline">共进行了{{total}}场对局</div>
       </div>
-      <!-- <el-table :data="contests" @row-click="goDetail">
-        <el-table-column label="对局编号" min-width="80" align="center">
-          <template slot-scope="scope">
-            <div>{{scope.row.id}}</div>
-          </template>
-        </el-table-column>
-        <el-table-column label="对阵" min-width="160" align="center">
-          <template slot-scope="scope">
-            <el-row>
-              <el-col :span="4" align="right">
-                <el-avatar size="small" style="margin-right: 5px"></el-avatar>
-              </el-col>
-              <el-col :span="7" align="left">
-                <div>{{scope.row.name1}}</div>
-              </el-col>
-              <el-col :span="2" align="center">
-                <div>VS</div>
-              </el-col>
-              <el-col :span="4" align="right">
-                <el-avatar size="small" style="margin-right: 5px"></el-avatar>
-              </el-col>
-              <el-col :span="7" align="left">
-                <div>{{scope.row.name2}}</div>
-              </el-col>
-            </el-row>
-          </template>
-        </el-table-column>
-        <el-table-column label="胜者" min-width="100" align="center">
-          <template slot-scope="scope">
-            <div>{{scope.row.winner}}</div>
-          </template>
-        </el-table-column>
-      </el-table> -->
       <el-table :data="matches" v-loading="tableLoading">
         <el-table-column label="对局编号" width="120" align="center">
           <template slot-scope="scope">
@@ -45,14 +12,6 @@
         </el-table-column>
           <el-table-column label="参赛者" align="center">
           <template slot-scope="scope">
-            <!-- <el-row>
-              <el-col :span="12" align="right">
-                <el-avatar size="small" style="margin-right: 10px"></el-avatar>
-              </el-col>
-              <el-col :span="12" align="left">
-                <div>{{scope.row.oppo}}</div>
-              </el-col>
-            </el-row> -->
             <div>
               <el-popover v-for="(item, index) in scope.row.parties" :key="index" style="margin: 5px" placement="bottom">
                 <el-tag slot="reference" type="primary" style="cursor: pointer; min-width: 120px; text-align: center">{{item.participant.nickname}}</el-tag>
@@ -125,7 +84,7 @@ export default {
       matches: [],
       total: 0,
       page: 1,
-      count: 10,
+      count: 20,
       tableLoading: false
     }
   },
@@ -156,7 +115,7 @@ export default {
       })
     },
     goDetail (x, y, z) {
-      
+
     }
   }
 }

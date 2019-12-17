@@ -3,14 +3,14 @@
     <el-row style="margin-bottom: 10px">
       <el-card>
         <div align="left">
-          <div>{{topbarText}}</div>
+          <div>提交时间：{{topbarTime}}</div>
+          <div>提交编号：{{topbarID}}</div>
+          <div>代码语言：{{lang}}</div>
           <div v-if="topbarInfo.status">
-            <div style="display: inline">代码状态：</div>
-            <div :style="'display: inline; color: ' + topbarColor.status">{{topbarInfo.status}}</div>
+            <div style="display: inline">代码状态：</div><div :style="'display: inline; color: ' + topbarColor.status">{{topbarInfo.status}}</div>
           </div>
           <div v-if="topbarInfo.msg">
-            <div style="display: inline">编译信息：</div>
-            <div :style="'display: inline; color: ' + topbarColor.msg">{{topbarInfo.msg}}</div>
+            <div style="display: inline">编译信息：</div><div :style="'display: inline; color: ' + topbarColor.msg">{{topbarInfo.msg}}</div>
           </div>
         </div>
       </el-card>
@@ -42,8 +42,10 @@ export default {
   data () {
     return {
       code: '',
+      lang: '',
       codeLoading: false,
-      topbarText: '',
+      topbarTime: '',
+      topbarID: '',
       topbarInfo: {
         status: '',
         msg: ''
@@ -59,7 +61,8 @@ export default {
         lineWrapping: true,
         indentUnit: 2,
         tabSize: 2,
-        autoCloseBrackets: true
+        autoCloseBrackets: true,
+        readOnly: true
       }
     }
   },
@@ -71,7 +74,9 @@ export default {
       ).then(res => {
         this.codeLoading = false
         this.code = res.data.contents
-        this.topbarText = '提交于' + this.$functions.dateTimeString(res.data.created_at) + '，编号为' + this.sid
+        this.lang = res.data.lang
+        this.topbarTime = this.$functions.dateTimeString(res.data.created_at)
+        this.topbarID = this.sid
         let statcolor = this.getStatColor(res.data.status)
         this.topbarInfo.status = statcolor.stat
         this.topbarColor.status = statcolor.color
@@ -124,4 +129,3 @@ export default {
   max-height: 600px;
 }
 </style>
-
