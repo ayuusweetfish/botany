@@ -79,15 +79,16 @@ func init() {
 }
 
 func (c *Contest) Representation(u User) map[string]interface{} {
-	mods := []int32{}
+	mods := []map[string]interface{}{}
 	rows, err := db.Query("SELECT uid FROM contest_participation where contest = $1 AND type = $2", c.Id, ParticipationTypeModerator)
 	if err != nil && err != sql.ErrNoRows {
 		panic(err)
 	}
 	for rows.Next() {
-		var mod int32
-		_ = rows.Scan(&mod)
-		mods = append(mods, mod)
+		u := User{}
+		_ = rows.Scan(&u.Id)
+		u.ReadById()
+		mods = append(mods, u.ShortRepresentation())
 	}
 	return map[string]interface{}{
 		"id":          c.Id,
