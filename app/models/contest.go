@@ -376,7 +376,7 @@ func (p *ContestParticipation) Read() error {
 
 func (p *ContestParticipation) Update() error {
 	_, err := db.Exec("UPDATE contest_participation SET "+
-		"type = $1, rating = $2, delegate = (CASE WHEN $3 = -1 THEN NULL ELSE $3 END), "+
+		"type = $1, rating = $2, delegate = NULLIF($3, -1), "+
 		"performance = $4 "+
 		"WHERE uid = $5 AND contest = $6",
 		p.Type,
