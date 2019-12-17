@@ -31,13 +31,18 @@ func (s *Submission) SendToQueue() error {
 	if rcli == nil {
 		return nil
 	}
-	_, err := rcli.XAdd(&redis.XAddArgs{
+	sid := strconv.FormatInt(int64(s.Id), 10)
+	_, err := rcli.HMSet("submission", map[string]interface{}{
+		sid:           s.Contents,
+		sid + ":lang": "lua",
+	}).Result()
+	if err != nil {
+		return err
+	}
+	_, err = rcli.XAdd(&redis.XAddArgs{
 		Stream: "compile",
 		ID:     "*",
-		Values: map[string]interface{}{
-			"sid":      s.Id,
-			"contents": s.Contents,
-		},
+		Values: map[string]interface{}{"sid": s.Id},
 	}).Result()
 	return err
 }

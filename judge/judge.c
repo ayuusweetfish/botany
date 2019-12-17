@@ -16,6 +16,7 @@
 
 #define COMPILE_STREAM  "compile"
 #define MATCH_STREAM    "match"
+#define SUBMISSION_HASH "submission"
 
 #define WLOG(__fmt)         fprintf(stderr, "[%s] " __fmt "\n", wid)
 #define WLOGF(__fmt, ...)   fprintf(stderr, "[%s] " __fmt "\n", wid, __VA_ARGS__)
@@ -158,25 +159,30 @@ void process_compile(redisReply *kv)
 {
     redisReply *reply;
 
-    const char *contents = NULL, *sid = NULL;
+    const char *sid = NULL;
     for (int i = 0; i + 1 < kv->elements; i += 2) {
         assert(kv->element[i]->type == REDIS_REPLY_STRING);
         assert(kv->element[i + 1]->type == REDIS_REPLY_STRING);
-        if (strcmp(kv->element[i]->str, "contents") == 0) {
-            contents = kv->element[i + 1]->str;
-        } else if (strcmp(kv->element[i]->str, "sid") == 0) {
+        if (strcmp(kv->element[i]->str, "sid") == 0) {
             sid = kv->element[i + 1]->str;
         }
     }
+    assert(sid != NULL);
 
-    assert(contents != NULL && sid != NULL);
+    reply = redisCommand(rctx, "HGET " SUBMISSION_HASH " %s", sid);
+    assert(reply->type == REDIS_REPLY_STRING);
+    const char *contents = strdup(reply->str);
+
+    reply = redisCommand(rctx, "HGET " SUBMISSION_HASH " %s:lang", sid);
+    assert(reply->type == REDIS_REPLY_STRING);
+    const char *lang = strdup(reply->str);
 
     // Update status
     WLOGF("Compiling: %s", sid);
     reply = redisCommand(rctx, "RPUSH " COMPILE_RESULT_LIST " %s 1 Compiling", sid);
 
     // Compilation work
-    compile(sid, contents);
+    compile(sid, lang, contents);
 
     // Done!
     WLOGF("Done:      %s", sid);

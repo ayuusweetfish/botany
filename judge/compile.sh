@@ -2,13 +2,14 @@
 
 echo "Compiling $1"
 SID=$1
-CODE=submissions/$SID/code
+LANG=$2
+CODE=submissions/$SID/code.$LANG
 BIN=submissions/$SID/bin
 
 sleep 1
 
 echo "#!/bin/sh" > $BIN
-echo "echo ====== Submission $SID ======" >> $BIN
+echo "echo \"====== Submission $SID ($LANG) ======\"" >> $BIN
 echo "cat <<EOF" >> $BIN
 cat $CODE >> $BIN
 echo "" >> $BIN

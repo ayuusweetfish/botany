@@ -10,7 +10,7 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
-void compile(const char *sid, const char *contents)
+void compile(const char *sid, const char *lang, const char *contents)
 {
     pid_t ch = fork();
     if (ch == 0) {
@@ -25,12 +25,10 @@ void compile(const char *sid, const char *contents)
         }
 
         // Write code, literally write code
-        snprintf(path, sizeof path, "submissions/%s/lang", sid);
-        write_file(path, "cpp");
-        snprintf(path, sizeof path, "submissions/%s/code", sid);
+        snprintf(path, sizeof path, "submissions/%s/code.%s", sid, lang);
         write_file(path, contents);
 
-        execl("./compile.sh", "./compile.sh", sid, NULL);
+        execl("./compile.sh", "./compile.sh", sid, lang, NULL);
         exit(42);   // Unreachable
     } else {
         int wstatus;

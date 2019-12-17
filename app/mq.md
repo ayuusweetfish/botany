@@ -10,7 +10,8 @@ XGROUP CREATE match judge_group 0 MKSTREAM
 
 **Backend** Send
 ```
-XADD compile * sid <sid> contents <code>
+XADD compile * sid <sid>
+HSET (HMSET) submission <sid>:lang <lang> <sid> <code>
 -- or --
 XADD match * mid <mid> num_parties <count> party_1 <sid> party_2 <sid> ...
 ```
@@ -23,8 +24,6 @@ XREADGROUP GROUP judge_group judge_<cwid> COUNT 1 BLOCK 1000 STREAMS compile mat
    2) 1) 1) "1576381626499-0"
          2) 1) "sid"
             2) "1"
-            3) "contents"
-            4) "hello_world"
 -- or --
 1) 1) "match"
    2) 1) 1) "1576381668902-0"
