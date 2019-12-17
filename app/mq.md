@@ -11,7 +11,6 @@ XGROUP CREATE match judge_group 0 MKSTREAM
 **Backend** Send
 ```
 XADD compile * sid <sid>
-HSET (HMSET) submission <sid>:lang <lang> <sid> <code>
 -- or --
 XADD match * mid <mid> num_parties <count> party_1 <sid> party_2 <sid> ...
 ```
