@@ -1,7 +1,7 @@
 package models
 
 import (
-	"fmt"
+	"log"
 	"strconv"
 	"strings"
 	"time"
@@ -10,21 +10,26 @@ import (
 )
 
 var rcli *redis.Client = nil
+var redisPolling = false
 
 func InitializeRedis(client *redis.Client) {
 	rcli = client
 
-	_, err := rcli.XGroupCreateMkStream("compile", "compile_group", "0").Result()
+	_, err := rcli.XGroupCreateMkStream("compile", "judge_group", "0").Result()
 	if err != nil && !strings.Contains(err.Error(), "BUSYGROUP") {
 		panic(err)
 	}
 
-	_, err = rcli.XGroupCreateMkStream("match", "match_group", "0").Result()
+	_, err = rcli.XGroupCreateMkStream("match", "judge_group", "0").Result()
 	if err != nil && !strings.Contains(err.Error(), "BUSYGROUP") {
 		panic(err)
 	}
 
-	go redisPollStatus()
+	// Prevent multiple polling goroutines
+	if !redisPolling {
+		redisPolling = true
+		go redisPollStatus()
+	}
 }
 
 func (s *Submission) SendToQueue() error {
@@ -34,10 +39,7 @@ func (s *Submission) SendToQueue() error {
 	_, err := rcli.XAdd(&redis.XAddArgs{
 		Stream: "compile",
 		ID:     "*",
-		Values: map[string]interface{}{
-			"sid":      s.Id,
-			"contents": s.Contents,
-		},
+		Values: map[string]interface{}{"sid": s.Id},
 	}).Result()
 	return err
 }
@@ -48,7 +50,7 @@ func (m *Match) SendToQueue() error {
 	}
 	values := map[string]interface{}{
 		"mid":         m.Id,
-		"party_count": len(m.Rel.Parties),
+		"num_parties": len(m.Rel.Parties),
 	}
 	for i, p := range m.Rel.Parties {
 		values["party_"+strconv.Itoa(i)] = p.Id
@@ -66,7 +68,7 @@ func redisPollStatus() {
 		// println("Polling")
 		r, err := rcli.BLPop(1*time.Second, "compile_result", "match_result").Result()
 		if err != nil && err.Error() != "redis: nil" {
-			fmt.Println(err.Error())
+			log.Println(err.Error())
 			continue
 		}
 		// Assumes all data are well-formatted
@@ -83,7 +85,10 @@ func redisPollStatus() {
 					err = redisUpdateMatchStatus(int32(id), int8(status), r3)
 				}
 				if err != nil {
-					fmt.Println(err.Error())
+					for i := 0; i < len(r); i++ {
+						println(r[i])
+					}
+					log.Println(err.Error())
 					continue
 				}
 			}

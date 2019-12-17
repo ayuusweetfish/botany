@@ -39,6 +39,7 @@ type ContestParticipation struct {
 	User        int32
 	Contest     int32
 	Type        int8
+	Delegate    int32
 	Rating      int64
 	Performance string
 
@@ -61,30 +62,34 @@ func init() {
 		"is_visible BOOLEAN NOT NULL DEFAULT FALSE",
 		"is_reg_open BOOLEAN NOT NULL DEFAULT FALSE",
 		"script TEXT NOT NULL DEFAULT ''",
+		"script_log TEXT NOT NULL DEFAULT ''",
 		"ADD CONSTRAINT fk_users FOREIGN KEY (owner) REFERENCES users (id)",
 	)
 	registerSchema("contest_participation",
 		"uid INTEGER NOT NULL",
 		"contest INTEGER NOT NULL",
 		"type SMALLINT NOT NULL",
+		"delegate INTEGER", // Nullable
 		"rating BIGINT NOT NULL DEFAULT 0",
 		"performance TEXT NOT NULL DEFAULT ''",
 		"ADD PRIMARY KEY (uid, contest)",
 		"ADD CONSTRAINT fk_users FOREIGN KEY (uid) REFERENCES users (id)",
 		"ADD CONSTRAINT fk_contest FOREIGN KEY (contest) REFERENCES contest (id)",
+		"ADD CONSTRAINT fk_delegate FOREIGN KEY (delegate) REFERENCES submission (id)",
 	)
 }
 
 func (c *Contest) Representation(u User) map[string]interface{} {
-	mods := []int32{}
+	mods := []map[string]interface{}{}
 	rows, err := db.Query("SELECT uid FROM contest_participation where contest = $1 AND type = $2", c.Id, ParticipationTypeModerator)
 	if err != nil && err != sql.ErrNoRows {
 		panic(err)
 	}
 	for rows.Next() {
-		var mod int32
-		_ = rows.Scan(&mod)
-		mods = append(mods, mod)
+		u := User{}
+		_ = rows.Scan(&u.Id)
+		u.ReadById()
+		mods = append(mods, u.ShortRepresentation())
 	}
 	return map[string]interface{}{
 		"id":          c.Id,
@@ -154,10 +159,21 @@ func (c *Contest) Read() error {
 	return err
 }
 
+func (c *Contest) ReadScriptLog() (error, string) {
+	var s string
+	err := db.QueryRow("SELECT script_log FROM contest WHERE id = $1", c.Id).Scan(&s)
+	return err, s
+}
+
+func (c *Contest) AppendScriptLog(s string) error {
+	_, err := db.Exec("UPDATE contest SET script_log = script_log || $1 WHERE id = $2", s, c.Id)
+	return err
+}
+
 func ContestReadAll() ([]Contest, error) {
 	rows, err := db.Query("SELECT " +
 		"id, title, banner, owner, start_time, end_time, descr, is_visible, is_reg_open, script " +
-		"FROM contest",
+		"FROM contest ORDER BY id ASC",
 	)
 	if err != nil {
 		return nil, err
@@ -191,15 +207,20 @@ func (c *Contest) LoadRel() error {
 	return c.Rel.Owner.ReadById()
 }
 
-func (c *Contest) AllParticipations() ([]ContestParticipation, error) {
+func (c *Contest) AllParticipationsRequiresDelegate(d bool) ([]ContestParticipation, error) {
+	delegateCond := ""
+	if d {
+		delegateCond = " AND delegate != -1"
+	}
 	rows, err := db.Query("SELECT "+
 		"contest_participation.type, "+
+		"COALESCE(contest_participation.delegate, -1) AS delegate, "+
 		"contest_participation.rating, "+
 		"contest_participation.performance, "+
 		"users.id, users.handle, users.privilege, users.nickname "+
 		"FROM contest_participation "+
 		"LEFT JOIN users ON contest_participation.uid = users.id "+
-		"WHERE contest = $1 AND type = $2"+
+		"WHERE contest = $1 AND type = $2"+delegateCond+
 		"ORDER BY contest_participation.rating DESC",
 		c.Id, ParticipationTypeContestant)
 	if err != nil {
@@ -209,7 +230,7 @@ func (c *Contest) AllParticipations() ([]ContestParticipation, error) {
 	ps := []ContestParticipation{}
 	for rows.Next() {
 		p := ContestParticipation{Contest: c.Id}
-		err := rows.Scan(&p.Type, &p.Rating, &p.Performance,
+		err := rows.Scan(&p.Type, &p.Delegate, &p.Rating, &p.Performance,
 			&p.Rel.User.Id, &p.Rel.User.Handle,
 			&p.Rel.User.Privilege, &p.Rel.User.Nickname)
 		if err != nil {
@@ -218,6 +239,14 @@ func (c *Contest) AllParticipations() ([]ContestParticipation, error) {
 		ps = append(ps, p)
 	}
 	return ps, rows.Err()
+}
+
+func (c *Contest) AllParticipations() ([]ContestParticipation, error) {
+	return c.AllParticipationsRequiresDelegate(false)
+}
+
+func (c *Contest) AllParticipationsWithDelegate() ([]ContestParticipation, error) {
+	return c.AllParticipationsRequiresDelegate(true)
 }
 
 func (c *Contest) PartParticipation(limit, offset int) ([]ContestParticipation, int, error) {
@@ -229,7 +258,7 @@ func (c *Contest) PartParticipation(limit, offset int) ([]ContestParticipation, 
 		"FROM contest_participation "+
 		"LEFT JOIN users ON contest_participation.uid = users.id "+
 		"WHERE contest = $1 AND type = $2"+
-		"ORDER BY contest_participation.rating DESC LIMIT $3 OFFSET $4",
+		"ORDER BY contest_participation.rating DESC, users.id ASC LIMIT $3 OFFSET $4",
 		c.Id, ParticipationTypeContestant, limit, offset)
 	if err != nil {
 		return nil, 0, err
@@ -358,24 +387,27 @@ func (p *ContestParticipation) Create() error {
 		p.Rating,
 		p.Performance,
 	)
+	p.Delegate = -1
 	return err
 }
 
 func (p *ContestParticipation) Read() error {
-	err := db.QueryRow("SELECT type, rating, performance "+
+	err := db.QueryRow("SELECT type, COALESCE(delegate, -1), rating, performance "+
 		"FROM contest_participation WHERE uid = $1 AND contest = $2",
 		p.User,
 		p.Contest,
-	).Scan(&p.Type, &p.Rating, &p.Performance)
+	).Scan(&p.Type, &p.Delegate, &p.Rating, &p.Performance)
 	return err
 }
 
 func (p *ContestParticipation) Update() error {
 	_, err := db.Exec("UPDATE contest_participation SET "+
-		"type = $1, rating = $2, performance = $3 "+
-		"WHERE uid = $4 AND contest = $5",
+		"type = $1, rating = $2, delegate = NULLIF($3, -1), "+
+		"performance = $4 "+
+		"WHERE uid = $5 AND contest = $6",
 		p.Type,
 		p.Rating,
+		p.Delegate,
 		p.Performance,
 		p.User,
 		p.Contest,

@@ -43,6 +43,7 @@ mkdir -p $GOPATH/src/golang.org/x
 cd $GOPATH/src/golang.org/x/
 git clone https://github.com/golang/crypto
 git clone https://github.com/golang/image
+git clone https://github.com/golang/sys
 ```
 
 ## 规范与约定

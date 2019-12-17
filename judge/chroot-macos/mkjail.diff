@@ -1,0 +1,13 @@
+diff --git a/mkjail b/mkjail
+index 8b7da56..6849640 100755
+--- a/mkjail
++++ b/mkjail
+@@ -22,7 +22,7 @@ cd "$RealExecDir"
+     exit 1
+ }
+ JAILNAME="$1"
+-JAILDIR="/jail/$JAILNAME"
++JAILDIR="./jail/$JAILNAME"
+ 
+ FILES="$(cat mkjail.files)"
+ 

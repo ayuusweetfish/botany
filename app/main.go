@@ -16,6 +16,8 @@ import (
 )
 
 func main() {
+	log.SetFlags(log.Lshortfile)
+
 	config := globals.Config()
 	port := config.AppPort
 
