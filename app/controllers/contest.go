@@ -471,6 +471,38 @@ func contestDelegateHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "{}")
 }
 
+func myDelegateHandler(w http.ResponseWriter, r *http.Request) {
+	u := middlewareAuthRetrieve(w, r)
+	if u.Id == -1 {
+		w.WriteHeader(401)
+		return
+	}
+
+	c := middlewareReferredContest(w, r, u)
+	if c.Id == -1 || !c.IsVisibleTo(u) {
+		w.WriteHeader(404)
+		return
+	}
+	if !c.HasStarted() {
+		w.WriteHeader(403)
+		fmt.Fprintf(w, "{}")
+		return
+	}
+
+	p := models.ContestParticipation{User: u.Id, Contest: c.Id}
+	err := p.Read()
+	if err == sql.ErrNoRows {
+		w.WriteHeader(403)
+		fmt.Fprintf(w, "{}")
+		return
+	}
+	enc := json.NewEncoder(w)
+	enc.SetEscapeHTML(false)
+	enc.Encode(map[string]interface{}{
+		"submission": p.Delegate,
+	})
+}
+
 func contestRanklistHandler(w http.ResponseWriter, r *http.Request) {
 	u := middlewareAuthRetrieve(w, r)
 	c := middlewareReferredContest(w, r, u)
@@ -639,6 +671,7 @@ func init() {
 	registerRouterFunc("/contest/{cid:[0-9]+}/my", contestSubmissionHistoryHandlerUser, "GET")
 	registerRouterFunc("/contest/{cid:[0-9]+}/submission/list", contestSubmissionHistoryHandlerAll, "GET")
 	registerRouterFunc("/contest/{cid:[0-9]+}/delegate", contestDelegateHandler, "POST")
+	registerRouterFunc("/contest/{cid:[0-9]+}/my_delegate", myDelegateHandler, "GET")
 	registerRouterFunc("/contest/{cid:[0-9]+}/ranklist", contestRanklistHandler, "GET")
 	registerRouterFunc("/contest/{cid:[0-9]+}/matches", contestMatchesHandler, "GET")
 	registerRouterFunc("/contest/{cid:[0-9]+}/match/manual", contestMatchManualHandler, "POST")

@@ -389,6 +389,16 @@
 - 空对象 {}
 - 未报名比赛或比赛未开始，或不是自己的编译通过的提交 —— 前端检查严格时不应出现此项
 
+### 查询出战提交 GET /contest/{cid}/my_delegate
+
+响应 200
+- **submission** (number) 当前使用的submission的ID
+    - 如果等于-1表示当前没有正在使用的提交
+    
+响应 403 
+- 空内容
+- 比赛未开始或未报名比赛
+
 ### 排行榜 GET /contest/{cid}/ranklist
 
 请求
