@@ -1,7 +1,7 @@
 package models
 
 import (
-	"fmt"
+	"log"
 	"strconv"
 	"time"
 )
@@ -18,7 +18,7 @@ func fakeCreateUser(handle string, privilege int8, bio string) {
 	if err := u.Create(); err != nil {
 		panic(err)
 	}
-	println("User " + handle + " created")
+	log.Println("User " + handle + " created")
 }
 
 func FakeDatabase() {
@@ -91,7 +91,7 @@ end
 
 		// Participants
 		for j := 1 + i/2; j <= 20; j += i {
-			fmt.Printf("User %d joins contest %d\n", j, i)
+			log.Printf("User %d joins contest %d\n", j, i)
 			p := ContestParticipation{
 				User:    int32(6 + j),
 				Contest: int32(i),
@@ -106,6 +106,7 @@ end
 				s := Submission{
 					User:     int32(6 + j),
 					Contest:  int32(i),
+					Language: "lua",
 					Contents: "print(" + strconv.Itoa(i+j+k) + ")",
 				}
 				if err := s.Create(); err != nil {

@@ -207,16 +207,20 @@ func (c *Contest) LoadRel() error {
 	return c.Rel.Owner.ReadById()
 }
 
-func (c *Contest) AllParticipations() ([]ContestParticipation, error) {
+func (c *Contest) AllParticipationsRequiresDelegate(d bool) ([]ContestParticipation, error) {
+	delegateCond := ""
+	if d {
+		delegateCond = " AND delegate != -1"
+	}
 	rows, err := db.Query("SELECT "+
 		"contest_participation.type, "+
-		"COALESCE(contest_participation.delegate, -1), "+
+		"COALESCE(contest_participation.delegate, -1) AS delegate, "+
 		"contest_participation.rating, "+
 		"contest_participation.performance, "+
 		"users.id, users.handle, users.privilege, users.nickname "+
 		"FROM contest_participation "+
 		"LEFT JOIN users ON contest_participation.uid = users.id "+
-		"WHERE contest = $1 AND type = $2"+
+		"WHERE contest = $1 AND type = $2"+delegateCond+
 		"ORDER BY contest_participation.rating DESC",
 		c.Id, ParticipationTypeContestant)
 	if err != nil {
@@ -235,6 +239,14 @@ func (c *Contest) AllParticipations() ([]ContestParticipation, error) {
 		ps = append(ps, p)
 	}
 	return ps, rows.Err()
+}
+
+func (c *Contest) AllParticipations() ([]ContestParticipation, error) {
+	return c.AllParticipationsRequiresDelegate(false)
+}
+
+func (c *Contest) AllParticipationsWithDelegate() ([]ContestParticipation, error) {
+	return c.AllParticipationsRequiresDelegate(true)
 }
 
 func (c *Contest) PartParticipation(limit, offset int) ([]ContestParticipation, int, error) {

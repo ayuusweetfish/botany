@@ -1,7 +1,7 @@
 package models
 
 import (
-	"fmt"
+	"log"
 	"strconv"
 	"strings"
 	"time"
@@ -36,15 +36,7 @@ func (s *Submission) SendToQueue() error {
 	if rcli == nil {
 		return nil
 	}
-	sid := strconv.FormatInt(int64(s.Id), 10)
-	_, err := rcli.HMSet("submission", map[string]interface{}{
-		sid:           s.Contents,
-		sid + ":lang": "lua",
-	}).Result()
-	if err != nil {
-		return err
-	}
-	_, err = rcli.XAdd(&redis.XAddArgs{
+	_, err := rcli.XAdd(&redis.XAddArgs{
 		Stream: "compile",
 		ID:     "*",
 		Values: map[string]interface{}{"sid": s.Id},
@@ -76,7 +68,7 @@ func redisPollStatus() {
 		// println("Polling")
 		r, err := rcli.BLPop(1*time.Second, "compile_result", "match_result").Result()
 		if err != nil && err.Error() != "redis: nil" {
-			fmt.Println(err.Error())
+			log.Println(err.Error())
 			continue
 		}
 		// Assumes all data are well-formatted
@@ -93,7 +85,10 @@ func redisPollStatus() {
 					err = redisUpdateMatchStatus(int32(id), int8(status), r3)
 				}
 				if err != nil {
-					fmt.Println(err.Error())
+					for i := 0; i < len(r); i++ {
+						println(r[i])
+					}
+					log.Println(err.Error())
 					continue
 				}
 			}

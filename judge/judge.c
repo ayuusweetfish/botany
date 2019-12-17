@@ -1,11 +1,16 @@
 #include "judge.h"
 
 #include <hiredis/hiredis.h>
+#include <blake2.h>
+
 #include <assert.h>
+#include <ctype.h>
+#include <inttypes.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <unistd.h>
 
 #define GROUP_NAME      "judge_group"
@@ -155,6 +160,71 @@ retry:
     return 0;
 }
 
+void retrieve_submission(const char *sid, char **lang, char **contents)
+{
+    // Generate signature
+    const char *hex = "0123456789abcdef";
+    const char *sig_key = "aha";
+    size_t sig_key_len = strlen(sig_key);
+
+    char ts[32], sig[65];
+    uint8_t digest[32];
+    char cmd[256];
+
+retry:
+    snprintf(ts, sizeof ts, "%" PRId64, (int64_t)time(NULL));
+    blake2b(digest, ts, sig_key, 32, strlen(ts), sig_key_len);
+    for (int i = 0; i < 32; i++) {
+        sig[i * 2 + 0] = hex[digest[i] >> 4];
+        sig[i * 2 + 1] = hex[digest[i] & 15];
+    }
+    sig[64] = '\0';
+
+    // Run HTTP request through the cURL binary
+    snprintf(cmd, sizeof cmd,
+        "curl \"http://localhost:3434/api/judge/%s?ts=%s&sig=%s\" 2>/dev/null", sid, ts, sig);
+
+    FILE *fp = popen(cmd, "r");
+    if (fp == NULL) {
+        WLOG("Cannot retrieve submission, retrying");
+        usleep(1000000);
+        goto retry;
+    }
+
+    // Reuse `cmd`
+    if (fgets(cmd, sizeof cmd, fp) == NULL) {
+        WLOG("Incorrect response format, retrying");
+        usleep(1000000);
+        pclose(fp);
+        goto retry;
+    }
+    // Extract content (code) length and language
+    size_t i, j;
+    size_t code_len = 0;
+    for (i = 0; cmd[i] >= '0' && cmd[i] <= '9'; i++)
+        code_len = code_len * 10 + cmd[i] - '0';
+    while (isspace(cmd[i])) i++;    // Skip all whitespace
+    j = strlen(cmd) - 1;
+    while (j > i && isspace(cmd[j])) j--;
+    cmd[j + 1] = '\0';
+    *lang = strdup(cmd + i);
+
+    char *buf = (char *)malloc(code_len + 1);
+    i = 0;
+    while (i < code_len) {
+        if ((j = fread(buf + i, 1, code_len - i, fp)) == 0) {
+            WLOG("Incorrect response format, retrying");
+            usleep(1000000);
+            pclose(fp);
+            goto retry;
+        }
+        i += j;
+    }
+    *contents = buf;
+
+    pclose(fp);
+}
+
 void process_compile(redisReply *kv)
 {
     redisReply *reply;
@@ -169,13 +239,8 @@ void process_compile(redisReply *kv)
     }
     assert(sid != NULL);
 
-    reply = redisCommand(rctx, "HGET " SUBMISSION_HASH " %s", sid);
-    assert(reply->type == REDIS_REPLY_STRING);
-    const char *contents = strdup(reply->str);
-
-    reply = redisCommand(rctx, "HGET " SUBMISSION_HASH " %s:lang", sid);
-    assert(reply->type == REDIS_REPLY_STRING);
-    const char *lang = strdup(reply->str);
+    char *lang, *contents;
+    retrieve_submission(sid, &lang, &contents);
 
     // Update status
     WLOGF("Compiling: %s", sid);
@@ -183,17 +248,24 @@ void process_compile(redisReply *kv)
 
     // Compilation work
     compile(sid, lang, contents);
+    free(lang);
+    free(contents);
 
     // Done!
     WLOGF("Done:      %s", sid);
+    int code;
+    const char *msg;
     static int cnt = 0;
     if (++cnt % 3 != 0) {
         // Success
-        reply = redisCommand(rctx, "RPUSH " COMPILE_RESULT_LIST " %s 9 Done!", sid);
+        code = 9;
+        msg = "Done!";
     } else {
         // Failure
-        reply = redisCommand(rctx, "RPUSH " COMPILE_RESULT_LIST " %s -1 Compilation error", sid);
+        code = -1;
+        msg = "Compilation error";
     }
+    reply = redisCommand(rctx, "RPUSH " COMPILE_RESULT_LIST " %s %d %s", sid, code, msg);
 }
 
 void process_match(redisReply *kv)
@@ -227,11 +299,23 @@ void process_match(redisReply *kv)
     WLOGF("Running:   %s", mid);
     for (int i = 0; i < num_parties; i++) {
         WLOGF("  Party #%d: %s", i, parties[i]);
+    }
+
+    reply = redisCommand(rctx, "RPUSH " MATCH_RESULT_LIST " %s 1 Compiling", mid);
+    for (int i = 0; i < num_parties; i++) {
         if (!is_compiled(parties[i])) {
-            printf("    - This submission not compiled here\n");
+            const char *sid = parties[i];
+            char *lang, *contents;
+            retrieve_submission(sid, &lang, &contents);
+
+            // TODO: Assert that compilation succeeds
+            compile(sid, lang, contents);
+            free(lang);
+            free(contents);
         }
     }
-    reply = redisCommand(rctx, "RPUSH " MATCH_RESULT_LIST " %s 1 Running", mid);
+
+    reply = redisCommand(rctx, "RPUSH " MATCH_RESULT_LIST " %s 2 Running", mid);
 
     // Match work
     match(mid, num_parties, (const char **)parties);
