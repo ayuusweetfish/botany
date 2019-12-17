@@ -100,7 +100,7 @@ func SubmissionHistory(uid int32, cid int32, limit, offset int) ([]map[string]in
 		// XXX: DRY?
 		// All submissions
 		rows, err = db.Query("SELECT "+
-			"submission.id, submission.created_at, submission.status, sybmission.language, "+
+			"submission.id, submission.created_at, submission.status, submission.language, "+
 			"users.id, users.handle, users.privilege, users.nickname "+
 			"FROM submission "+
 			"LEFT JOIN users ON submission.uid = users.id "+
@@ -110,7 +110,7 @@ func SubmissionHistory(uid int32, cid int32, limit, offset int) ([]map[string]in
 	} else {
 		// Specific user
 		rows, err = db.Query("SELECT "+
-			"submission.id, submission.created_at, submission.status, sybmission.language, "+
+			"submission.id, submission.created_at, submission.status, submission.language, "+
 			"users.id, users.handle, users.privilege, users.nickname "+
 			"FROM submission "+
 			"LEFT JOIN users ON submission.uid = users.id "+

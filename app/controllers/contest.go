@@ -346,12 +346,6 @@ func contestSubmissionHistoryHandlerCommon(w http.ResponseWriter, r *http.Reques
 		w.WriteHeader(404)
 		return
 	}
-	if c.ParticipationOf(u) == -1 {
-		// Querying own submission history, but did not participate
-		w.WriteHeader(403)
-		fmt.Fprintf(w, "[]")
-		return
-	}
 	if !c.HasStarted() {
 		w.WriteHeader(403)
 		fmt.Fprintf(w, "[]")
@@ -375,6 +369,12 @@ func contestSubmissionHistoryHandlerCommon(w http.ResponseWriter, r *http.Reques
 			"submissions": ss,
 		})
 	} else if subType == 1 {
+		if c.ParticipationOf(u) == -1 {
+			// Querying own submission history, but did not participate
+			w.WriteHeader(403)
+			fmt.Fprintf(w, "[]")
+			return
+		}
 		ss, _, err := models.SubmissionHistory(u.Id, c.Id, -1, 0)
 		if err != nil {
 			panic(err)
