@@ -427,14 +427,14 @@
 - 一个 MatchShort
 
 响应 400
-- 空对象 {}
+- 空内容
 - 格式不正确
 
 响应 403
-- 空对象 {}
+- 空内容
 - 非管理员不能手动发起对局
 
-### :construction: 赛制脚本日志 GET /contest/{cid}/match/script_log
+### 赛制脚本日志 GET /contest/{cid}/match/script_log
 
 响应 200
 - 大量纯文本

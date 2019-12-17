@@ -60,7 +60,7 @@ function on_timer(all)
     print('Superuser has ID ' .. tostring(su_id))
     print('Creating matches for contest #` + strconv.Itoa(i) + `')
     for i = 1, #all do
-        print(string.format('Contest %s (%d)', get_handle(all[i]), all[i]))
+        print(string.format('Contestant %s (%d)', get_handle(all[i]), all[i]))
         if i > 1 then create_match(all[i], all[i - 1]) end
     end
 end

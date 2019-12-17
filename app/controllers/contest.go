@@ -136,21 +136,29 @@ func middlewareReferredContest(w http.ResponseWriter, r *http.Request, u models.
 	}
 }
 
-func contestEditHandler(w http.ResponseWriter, r *http.Request) {
+func middlewareContestModeratorVerify(w http.ResponseWriter, r *http.Request) (models.User, models.Contest) {
 	u := middlewareAuthRetrieve(w, r)
 	if u.Id == -1 {
 		w.WriteHeader(401)
-		return
+		return models.User{}, models.Contest{Id: -1}
 	}
-
 	c := middlewareReferredContest(w, r, u)
 	if c.Id == -1 {
 		w.WriteHeader(404)
-		return
+		return models.User{}, models.Contest{Id: -1}
 	}
-	if u.Id != c.Owner {
+	if c.ParticipationOf(u) != models.ParticipationTypeModerator {
+		// No privilege
 		w.WriteHeader(403)
-		fmt.Fprintf(w, "{}")
+		return models.User{}, models.Contest{Id: -1}
+	}
+
+	return u, c
+}
+
+func contestEditHandler(w http.ResponseWriter, r *http.Request) {
+	u, c := middlewareContestModeratorVerify(w, r)
+	if c.Id == -1 {
 		return
 	}
 
@@ -541,20 +549,8 @@ func contestMatchesHandler(w http.ResponseWriter, r *http.Request) {
 
 // curl http://localhost:3434/contest/1/match/manual -i -H "Cookie: auth=..." -d "submissions=1,2,3"
 func contestMatchManualHandler(w http.ResponseWriter, r *http.Request) {
-	u := middlewareAuthRetrieve(w, r)
-	if u.Id == -1 {
-		w.WriteHeader(401)
-		return
-	}
-	c := middlewareReferredContest(w, r, u)
+	_, c := middlewareContestModeratorVerify(w, r)
 	if c.Id == -1 {
-		w.WriteHeader(404)
-		return
-	}
-	if c.ParticipationOf(u) != models.ParticipationTypeModerator {
-		// No privilege
-		w.WriteHeader(403)
-		fmt.Fprintf(w, "{}")
 		return
 	}
 
@@ -617,6 +613,20 @@ func contestMatchDetailsHandler(w http.ResponseWriter, r *http.Request) {
 	enc.Encode(m.Representation())
 }
 
+func contestScriptLogHandler(w http.ResponseWriter, r *http.Request) {
+	_, c := middlewareContestModeratorVerify(w, r)
+	if c.Id == -1 {
+		return
+	}
+
+	err, s := c.ReadScriptLog()
+	if err != nil {
+		panic(err)
+	}
+
+	w.Write([]byte(s))
+}
+
 func init() {
 	registerRouterFunc("/contest/list", contestListHandler, "GET")
 	registerRouterFunc("/contest/create", contestCreateHandler, "POST")
@@ -633,4 +643,5 @@ func init() {
 	registerRouterFunc("/contest/{cid:[0-9]+}/matches", contestMatchesHandler, "GET")
 	registerRouterFunc("/contest/{cid:[0-9]+}/match/manual", contestMatchManualHandler, "POST")
 	registerRouterFunc("/contest/{cid:[0-9]+}/match/{mid:[0-9]+}", contestMatchDetailsHandler, "GET")
+	registerRouterFunc("/contest/{cid:[0-9]+}/script_log", contestScriptLogHandler, "GET")
 }

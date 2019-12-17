@@ -62,6 +62,7 @@ func init() {
 		"is_visible BOOLEAN NOT NULL DEFAULT FALSE",
 		"is_reg_open BOOLEAN NOT NULL DEFAULT FALSE",
 		"script TEXT NOT NULL DEFAULT ''",
+		"script_log TEXT NOT NULL DEFAULT ''",
 		"ADD CONSTRAINT fk_users FOREIGN KEY (owner) REFERENCES users (id)",
 	)
 	registerSchema("contest_participation",
@@ -155,6 +156,17 @@ func (c *Contest) Read() error {
 		&c.IsRegOpen,
 		&c.Script,
 	)
+	return err
+}
+
+func (c *Contest) ReadScriptLog() (error, string) {
+	var s string
+	err := db.QueryRow("SELECT script_log FROM contest WHERE id = $1", c.Id).Scan(&s)
+	return err, s
+}
+
+func (c *Contest) AppendScriptLog(s string) error {
+	_, err := db.Exec("UPDATE contest SET script_log = script_log || $1 WHERE id = $2", s, c.Id)
 	return err
 }
 
