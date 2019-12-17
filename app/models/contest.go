@@ -173,7 +173,7 @@ func (c *Contest) AppendScriptLog(s string) error {
 func ContestReadAll() ([]Contest, error) {
 	rows, err := db.Query("SELECT " +
 		"id, title, banner, owner, start_time, end_time, descr, is_visible, is_reg_open, script " +
-		"FROM contest",
+		"FROM contest ORDER BY id ASC",
 	)
 	if err != nil {
 		return nil, err
@@ -258,7 +258,7 @@ func (c *Contest) PartParticipation(limit, offset int) ([]ContestParticipation, 
 		"FROM contest_participation "+
 		"LEFT JOIN users ON contest_participation.uid = users.id "+
 		"WHERE contest = $1 AND type = $2"+
-		"ORDER BY contest_participation.rating DESC LIMIT $3 OFFSET $4",
+		"ORDER BY contest_participation.rating DESC, users.id ASC LIMIT $3 OFFSET $4",
 		c.Id, ParticipationTypeContestant, limit, offset)
 	if err != nil {
 		return nil, 0, err

@@ -120,7 +120,7 @@ func (m *Match) Read() error {
 }
 
 func ReadByContest(cid int32) ([]Match, error) {
-	rows, err := db.Query("SELECT id FROM match WHERE contest = $1", cid)
+	rows, err := db.Query("SELECT id FROM match WHERE contest = $1 ORDER BY id DESC", cid)
 	if err != nil {
 		return nil, err
 	}
