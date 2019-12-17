@@ -282,6 +282,7 @@ func contestSubmitHandler(w http.ResponseWriter, r *http.Request) {
 	s := models.Submission{
 		User:     u.Id,
 		Contest:  c.Id,
+		Language: r.PostFormValue("lang"),
 		Contents: r.PostFormValue("code"),
 	}
 	if err := s.Create(); err != nil {

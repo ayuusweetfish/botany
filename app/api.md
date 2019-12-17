@@ -222,6 +222,7 @@
 	- **-1** 编译错误
 	- **-9** 系统错误（请联系管理员）
 - **msg** (string) 编译信息
+- **lang** (string) 程序语言
 - **contents** (string) 代码
 
 ### 提交记录数据结构 SubmissionShort
@@ -353,6 +354,7 @@
 ### 提交代码 POST /contest/{cid}/submit
 
 请求
+- **lang** (string) 程序语言
 - **code** (string) 代码
 
 响应 200

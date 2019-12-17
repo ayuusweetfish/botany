@@ -21,6 +21,7 @@ type Submission struct {
 	CreatedAt int64
 	Status    int8
 	Message   string
+	Language  string
 	Contents  string
 
 	Rel struct {
@@ -37,6 +38,7 @@ func init() {
 		"created_at BIGINT NOT NULL",
 		"status SMALLINT NOT NULL DEFAULT "+strconv.Itoa(SubmissionStatusPending),
 		"message TEXT NOT NULL DEFAULT ''",
+		"language TEXT NOT NULL",
 		"contents TEXT NOT NULL",
 		"ADD CONSTRAINT fk_users FOREIGN KEY (uid) REFERENCES users (id)",
 		"ADD CONSTRAINT fk_contest FOREIGN KEY (contest) REFERENCES contest (id)",
@@ -50,6 +52,7 @@ func (s *Submission) Representation() map[string]interface{} {
 		"created_at":  s.CreatedAt,
 		"status":      s.Status,
 		"msg":         s.Message,
+		"lang":        s.Language,
 		"contents":    s.Contents,
 	}
 }
@@ -60,6 +63,7 @@ func (s *Submission) ShortRepresentation() map[string]interface{} {
 		"participant": s.Rel.User.ShortRepresentation(),
 		"created_at":  s.CreatedAt,
 		"status":      s.Status,
+		"lang":        s.Language,
 	}
 }
 
@@ -68,11 +72,12 @@ func (s *Submission) Create() error {
 	s.Status = SubmissionStatusPending
 	s.Message = ""
 	err := db.QueryRow("INSERT INTO "+
-		"submission(uid, contest, created_at, contents) "+
-		"VALUES ($1, $2, $3, $4) RETURNING id",
+		"submission(uid, contest, created_at, language, contents) "+
+		"VALUES ($1, $2, $3, $4, $5) RETURNING id",
 		s.User,
 		s.Contest,
 		s.CreatedAt,
+		s.Language,
 		s.Contents,
 	).Scan(&s.Id)
 	return err
@@ -80,11 +85,11 @@ func (s *Submission) Create() error {
 
 func (s *Submission) Read() error {
 	err := db.QueryRow("SELECT "+
-		"uid, contest, created_at, status, message, contents "+
+		"uid, contest, created_at, status, message, language, contents "+
 		"FROM submission WHERE id = $1",
 		s.Id,
 	).Scan(&s.User, &s.Contest, &s.CreatedAt,
-		&s.Status, &s.Message, &s.Contents)
+		&s.Status, &s.Message, &s.Language, &s.Contents)
 	return err
 }
 
@@ -95,7 +100,7 @@ func SubmissionHistory(uid int32, cid int32, limit, offset int) ([]map[string]in
 		// XXX: DRY?
 		// All submissions
 		rows, err = db.Query("SELECT "+
-			"submission.id, submission.created_at, submission.status, "+
+			"submission.id, submission.created_at, submission.status, sybmission.language, "+
 			"users.id, users.handle, users.privilege, users.nickname "+
 			"FROM submission "+
 			"LEFT JOIN users ON submission.uid = users.id "+
@@ -105,7 +110,7 @@ func SubmissionHistory(uid int32, cid int32, limit, offset int) ([]map[string]in
 	} else {
 		// Specific user
 		rows, err = db.Query("SELECT "+
-			"submission.id, submission.created_at, submission.status, "+
+			"submission.id, submission.created_at, submission.status, sybmission.language, "+
 			"users.id, users.handle, users.privilege, users.nickname "+
 			"FROM submission "+
 			"LEFT JOIN users ON submission.uid = users.id "+
@@ -120,7 +125,7 @@ func SubmissionHistory(uid int32, cid int32, limit, offset int) ([]map[string]in
 	ss := []map[string]interface{}{}
 	for rows.Next() {
 		s := Submission{Contest: cid}
-		err := rows.Scan(&s.Id, &s.CreatedAt, &s.Status,
+		err := rows.Scan(&s.Id, &s.CreatedAt, &s.Status, &s.Language,
 			&s.Rel.User.Id, &s.Rel.User.Handle,
 			&s.Rel.User.Privilege, &s.Rel.User.Nickname)
 		if err != nil {
