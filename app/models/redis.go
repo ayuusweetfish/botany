@@ -10,6 +10,7 @@ import (
 )
 
 var rcli *redis.Client = nil
+var redisPolling = false
 
 func InitializeRedis(client *redis.Client) {
 	rcli = client
@@ -24,7 +25,11 @@ func InitializeRedis(client *redis.Client) {
 		panic(err)
 	}
 
-	go redisPollStatus()
+	// Prevent multiple polling goroutines
+	if !redisPolling {
+		redisPolling = true
+		go redisPollStatus()
+	}
 }
 
 func (s *Submission) SendToQueue() error {

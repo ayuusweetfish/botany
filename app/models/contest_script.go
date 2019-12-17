@@ -3,6 +3,7 @@ package models
 import (
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/yuin/gopher-lua"
@@ -10,6 +11,8 @@ import (
 
 var lCodes = map[int32]string{}
 var lStates = map[int32]*lua.LState{}
+var lCIDs = map[*lua.LState]int32{}
+var lLogs = map[*lua.LState]*strings.Builder{}
 
 func (c *Contest) ResetLuaState() {
 	L := lStates[c.Id]
@@ -19,6 +22,10 @@ func (c *Contest) ResetLuaState() {
 
 	L = lua.NewState()
 	lStates[c.Id] = L
+	lCIDs[L] = c.Id
+	flushLog(c.Id)
+
+	L.SetGlobal("print", L.NewFunction(luaBasePrintRedirect))
 
 	L.SetGlobal("get_handle", L.NewFunction(luaGetHandle))
 	L.SetGlobal("get_id", L.NewFunction(luaGetId))
@@ -28,6 +35,8 @@ func (c *Contest) ResetLuaState() {
 	if err != nil {
 		fmt.Println(err.Error())
 	}
+
+	flushLog(c.Id)
 }
 
 func (c *Contest) LuaState() *lua.LState {
@@ -36,6 +45,44 @@ func (c *Contest) LuaState() *lua.LState {
 		c.ResetLuaState()
 	}
 	return lStates[c.Id]
+}
+
+func writeTimestamp(builder *strings.Builder) {
+	builder.WriteRune('[')
+	builder.WriteString(time.Now().Format("2006-01-02 15:04:05 -0700 MST"))
+	builder.WriteRune(']')
+	builder.WriteRune('\t')
+}
+
+func flushLog(cid int32) {
+	builder := lLogs[lStates[cid]]
+	if builder == nil {
+		lLogs[lStates[cid]] = &strings.Builder{}
+		return
+	}
+
+	c := Contest{Id: cid}
+	if err := c.AppendScriptLog(builder.String()); err != nil {
+		fmt.Println(err.Error())
+		return
+	}
+
+	builder.Reset()
+}
+
+func luaBasePrintRedirect(L *lua.LState) int {
+	builder := lLogs[L]
+	writeTimestamp(builder)
+
+	top := L.GetTop()
+	for i := 1; i <= top; i++ {
+		builder.WriteString(L.ToStringMeta(L.Get(i)).String())
+		if i != top {
+			builder.WriteRune('\t')
+		}
+	}
+	builder.WriteRune('\n')
+	return 0
 }
 
 // Finds a user's handle according to their ID
@@ -71,19 +118,54 @@ func luaGetId(L *lua.LState) int {
 }
 
 func luaCreateMatch(L *lua.LState) int {
+	cid := lCIDs[L]
+
 	// Arguments
 	argc := L.GetTop()
 	ss := []Submission{}
+
+	builder := lLogs[L]
+	writeTimestamp(builder)
+	builder.WriteString("<Match created among")
+	defer builder.WriteString(">\n")
+
 	for i := 1; i <= argc; i++ {
-		sid := L.ToInt(i)
-		ss = append(ss, Submission{Id: int32(sid)})
+		uid := int32(L.ToInt(i))
+		u := User{Id: uid}
+		if err := u.ReadById(); err != nil {
+			fmt.Println(err.Error())
+			return 0
+		}
+		p := ContestParticipation{User: uid, Contest: cid}
+		if err := p.Read(); err != nil {
+			fmt.Println(err.Error())
+			return 0
+		}
+		sid := p.Delegate
+		if i > 1 {
+			builder.WriteRune(',')
+		}
+		builder.WriteRune(' ')
+		builder.WriteString(u.Handle)
+		ss = append(ss, Submission{Id: sid})
 	}
 
 	// Create match
-	for i, s := range ss {
-		fmt.Printf("[%d %d]\n", i, s.Id)
+	m := Match{
+		Contest: cid,
+		Report:  "{\"winner\": \"In queue\"}",
+	}
+	m.Rel.Parties = ss
+	if err := m.Create(); err != nil {
+		fmt.Println(err.Error())
+		return 0
+	}
+	if err := m.SendToQueue(); err != nil {
+		fmt.Println(err.Error())
+		return 0
 	}
 
+	builder.WriteString(fmt.Sprintf(" - #%d", m.Id))
 	return 0
 }
 
@@ -103,7 +185,9 @@ func (c *Contest) ExecuteScriptOnTimer() error {
 	}
 	t := &lua.LTable{}
 	for _, p := range ps {
-		t.Append(lua.LNumber(p.Rel.User.Id))
+		if p.Delegate != -1 {
+			t.Append(lua.LNumber(p.Rel.User.Id))
+		}
 	}
 
 	// Call Lua function
@@ -116,12 +200,12 @@ func (c *Contest) ExecuteScriptOnTimer() error {
 		return err
 	}
 
+	flushLog(c.Id)
 	return nil
 }
 
 func timerForAllContests() {
 	for {
-		// println("Script timer")
 		time.Sleep(2 * time.Second)
 		cs, err := ContestReadAll()
 		if err != nil {
