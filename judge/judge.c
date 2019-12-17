@@ -231,7 +231,28 @@ void process_match(redisReply *kv)
             printf("    - This submission not compiled here\n");
         }
     }
-    reply = redisCommand(rctx, "RPUSH " MATCH_RESULT_LIST " %s 1 Running", mid);
+
+    reply = redisCommand(rctx, "RPUSH " MATCH_RESULT_LIST " %s 1 Compiling", mid);
+    for (int i = 0; i < num_parties; i++) {
+        if (!is_compiled(parties[i])) {
+            const char *sid = parties[i];
+
+            // TODO: DRY
+            // TODO: Replace with HTTP and authentication
+            reply = redisCommand(rctx, "HGET " SUBMISSION_HASH " %s", sid);
+            assert(reply->type == REDIS_REPLY_STRING);
+            const char *contents = strdup(reply->str);
+
+            reply = redisCommand(rctx, "HGET " SUBMISSION_HASH " %s:lang", sid);
+            assert(reply->type == REDIS_REPLY_STRING);
+            const char *lang = strdup(reply->str);
+
+            // TODO: Assert that compilation succeeds
+            compile(sid, lang, contents);
+        }
+    }
+
+    reply = redisCommand(rctx, "RPUSH " MATCH_RESULT_LIST " %s 2 Running", mid);
 
     // Match work
     match(mid, num_parties, (const char **)parties);
