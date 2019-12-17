@@ -1,14 +1,15 @@
 package controllers
 
 import (
-	_ "github.com/kawa-yoiko/botany/app/models"
-
-	"golang.org/x/crypto/blake2b"
+	"github.com/kawa-yoiko/botany/app/models"
 
 	"encoding/hex"
 	"net/http"
 	"strconv"
 	"time"
+
+	"github.com/gorilla/mux"
+	"golang.org/x/crypto/blake2b"
 )
 
 const judgeTimestampThreshold = 30000
@@ -40,12 +41,22 @@ func judgeHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	h.Write([]byte(ts))
 	digest := hex.EncodeToString(h.Sum(nil))
-	println(digest) // For debug use
 
 	if digest != sig {
 		w.WriteHeader(403)
 		return
 	}
+
+	sid, _ := strconv.Atoi(mux.Vars(r)["sid"])
+	s := models.Submission{Id: int32(sid)}
+	if err := s.Read(); err != nil {
+		panic(err)
+	}
+	w.Write([]byte(strconv.Itoa(len(s.Contents))))
+	w.Write([]byte(" "))
+	w.Write([]byte(s.Language))
+	w.Write([]byte("\n"))
+	w.Write([]byte(s.Contents))
 }
 
 func init() {

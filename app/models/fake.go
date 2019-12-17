@@ -106,6 +106,7 @@ end
 				s := Submission{
 					User:     int32(6 + j),
 					Contest:  int32(i),
+					Language: "lua",
 					Contents: "print(" + strconv.Itoa(i+j+k) + ")",
 				}
 				if err := s.Create(); err != nil {
