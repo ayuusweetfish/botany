@@ -1,7 +1,7 @@
 package models
 
 import (
-	"fmt"
+	"log"
 	"strconv"
 	"strings"
 	"time"
@@ -68,7 +68,7 @@ func redisPollStatus() {
 		// println("Polling")
 		r, err := rcli.BLPop(1*time.Second, "compile_result", "match_result").Result()
 		if err != nil && err.Error() != "redis: nil" {
-			fmt.Println(err.Error())
+			log.Println(err.Error())
 			continue
 		}
 		// Assumes all data are well-formatted
@@ -85,7 +85,10 @@ func redisPollStatus() {
 					err = redisUpdateMatchStatus(int32(id), int8(status), r3)
 				}
 				if err != nil {
-					fmt.Println(err.Error())
+					for i := 0; i < len(r); i++ {
+						println(r[i])
+					}
+					log.Println(err.Error())
 					continue
 				}
 			}

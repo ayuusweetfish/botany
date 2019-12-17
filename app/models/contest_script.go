@@ -3,6 +3,7 @@ package models
 import (
 	"errors"
 	"fmt"
+	"log"
 	"strings"
 	"time"
 
@@ -33,7 +34,7 @@ func (c *Contest) ResetLuaState() {
 
 	err := L.DoString(c.Script)
 	if err != nil {
-		fmt.Println(err.Error())
+		log.Println(err.Error())
 	}
 
 	flushLog(c.Id)
@@ -63,7 +64,7 @@ func flushLog(cid int32) {
 
 	c := Contest{Id: cid}
 	if err := c.AppendScriptLog(builder.String()); err != nil {
-		fmt.Println(err.Error())
+		log.Println(err.Error())
 		return
 	}
 
@@ -133,12 +134,12 @@ func luaCreateMatch(L *lua.LState) int {
 		uid := int32(L.ToInt(i))
 		u := User{Id: uid}
 		if err := u.ReadById(); err != nil {
-			fmt.Println(err.Error())
+			log.Println(err.Error())
 			return 0
 		}
 		p := ContestParticipation{User: uid, Contest: cid}
 		if err := p.Read(); err != nil {
-			fmt.Println(err.Error())
+			log.Println(err.Error())
 			return 0
 		}
 		sid := p.Delegate
@@ -157,11 +158,11 @@ func luaCreateMatch(L *lua.LState) int {
 	}
 	m.Rel.Parties = ss
 	if err := m.Create(); err != nil {
-		fmt.Println(err.Error())
+		log.Println(err.Error())
 		return 0
 	}
 	if err := m.SendToQueue(); err != nil {
-		fmt.Println(err.Error())
+		log.Println(err.Error())
 		return 0
 	}
 
@@ -179,15 +180,13 @@ func (c *Contest) ExecuteScriptOnTimer() error {
 	}
 
 	// Retrieve all contestants and make a Lua table
-	ps, err := c.AllParticipations()
+	ps, err := c.AllParticipationsWithDelegate()
 	if err != nil {
 		return err
 	}
 	t := &lua.LTable{}
 	for _, p := range ps {
-		if p.Delegate != -1 {
-			t.Append(lua.LNumber(p.Rel.User.Id))
-		}
+		t.Append(lua.LNumber(p.Rel.User.Id))
 	}
 
 	// Call Lua function
@@ -209,13 +208,13 @@ func timerForAllContests() {
 		time.Sleep(2 * time.Second)
 		cs, err := ContestReadAll()
 		if err != nil {
-			fmt.Println(err.Error())
+			log.Println(err.Error())
 			continue
 		}
 		for _, c := range cs {
 			if c.IsRunning() {
 				if err := c.ExecuteScriptOnTimer(); err != nil {
-					fmt.Println(err.Error())
+					log.Println(err.Error())
 					continue
 				}
 			}
