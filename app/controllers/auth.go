@@ -200,6 +200,20 @@ func captchaGetHandler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+//get the limit and offset
+func paginationHandler(w http.ResponseWriter, r *http.Request) (int, int) {
+	limits := r.URL.Query()["count"]
+	pages := r.URL.Query()["page"]
+	if limits != nil && pages != nil {
+		limit, _ := strconv.Atoi(r.URL.Query()["count"][0])
+		page, _ := strconv.Atoi(r.URL.Query()["page"][0])
+		if limit >= 0 && page >= 0 {
+			return limit, page * limit
+		}
+	}
+	return -1, -1
+}
+
 func profileHandler(w http.ResponseWriter, r *http.Request) {
 	u := models.User{Handle: mux.Vars(r)["handle"]}
 	if err := u.ReadByHandle(); err != nil {
@@ -212,26 +226,16 @@ func profileHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	limitquery := r.URL.Query().Get("count")
-	pagequery := r.URL.Query().Get("page")
-	var limit, page int
-	if limitquery == "" || pagequery == "" {
-		limit = 5
-		page = 1
-	} else {
-		limit, _ = strconv.Atoi(r.URL.Query()["count"][0])
-		page, _ = strconv.Atoi(r.URL.Query()["page"][0])
-	}
-
-	if page <= 0 || limit <= 0 {
-		w.WriteHeader(404)
+	limit, offset := paginationHandler(w, r)
+	if limit == -1 && offset == -1 {
+		w.WriteHeader(400)
 		return
 	}
 
 	enc := json.NewEncoder(w)
 	enc.SetEscapeHTML(false)
 	contests, _ := u.AllContests()
-	matches, total, _ := u.AllMatches(page, limit)
+	matches, total, _ := u.MatchesPagination(limit, offset)
 	enc.Encode(map[string]interface{}{
 		"user":          u.Representation(),
 		"contests":      contests,

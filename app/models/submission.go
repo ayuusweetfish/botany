@@ -91,7 +91,7 @@ func (s *Submission) Read() error {
 func SubmissionHistory(uid int32, cid int32, limit, offset int) ([]map[string]interface{}, int, error) {
 	var rows *sql.Rows
 	var err error
-	if limit != 0 {
+	if limit != -1 {
 		// XXX: DRY?
 		// All submissions
 		rows, err = db.Query("SELECT "+
@@ -117,7 +117,7 @@ func SubmissionHistory(uid int32, cid int32, limit, offset int) ([]map[string]in
 		return nil, 0, err
 	}
 	defer rows.Close()
-	var ss []map[string]interface{}
+	ss := []map[string]interface{}{}
 	for rows.Next() {
 		s := Submission{Contest: cid}
 		err := rows.Scan(&s.Id, &s.CreatedAt, &s.Status,

@@ -127,6 +127,7 @@
 - **user** (User) 帐号信息
 - **contests** ([ContestShort]) 参与的比赛列表（不需要分页）
 - **matches** ([MatchShort]) 最近对局列表（需要分页）
+- **total_matches** (number) 对局列表总数
 
 ### 修改个人信息 POST /user/{handle}/profile/edit
 

@@ -357,13 +357,12 @@ func contestSubmissionHistoryHandlerCommon(w http.ResponseWriter, r *http.Reques
 		return
 	}
 	if subType == 0 {
-		limit, _ := strconv.Atoi(r.URL.Query()["count"][0])
-		page, _ := strconv.Atoi(r.URL.Query()["page"][0])
-		if page <= 0 || limit <= 0 {
-			w.WriteHeader(404)
+		limit, offset := paginationHandler(w, r)
+		if limit == -1 || offset == -1 {
+			w.WriteHeader(400)
 			return
 		}
-		ss, total, err := models.SubmissionHistory(u.Id, c.Id, limit, (page-1)*limit)
+		ss, total, err := models.SubmissionHistory(u.Id, c.Id, limit, offset)
 		if err != nil {
 			panic(err)
 		}
@@ -375,7 +374,7 @@ func contestSubmissionHistoryHandlerCommon(w http.ResponseWriter, r *http.Reques
 			"submissions": ss,
 		})
 	} else if subType == 1 {
-		ss, _, err := models.SubmissionHistory(u.Id, c.Id, 0, 0)
+		ss, _, err := models.SubmissionHistory(u.Id, c.Id, -1, 0)
 		if err != nil {
 			panic(err)
 		}
@@ -402,19 +401,18 @@ func contestRanklistHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(404)
 		return
 	}
-	limit, _ := strconv.Atoi(r.URL.Query()["count"][0])
-	page, _ := strconv.Atoi(r.URL.Query()["page"][0])
-	if page <= 0 || limit <= 0 {
-		w.WriteHeader(404)
+	limit, offset := paginationHandler(w, r)
+	if limit == -1 || offset == -1 {
+		w.WriteHeader(400)
 		return
 	}
 
-	ps, total, err := c.PartParticipation(limit, (page-1)*limit)
+	ps, total, err := c.PartParticipation(limit, offset)
 	if err != nil {
 		panic(err)
 	}
 
-	var prs []map[string]interface{}
+	prs := []map[string]interface{}{}
 	for _, p := range ps {
 		prs = append(prs, p.Representation())
 	}
@@ -435,19 +433,9 @@ func contestMatchesHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	limitquery := r.URL.Query().Get("count")
-	pagequery := r.URL.Query().Get("page")
-	var limit, page int
-	if limitquery == "" || pagequery == "" {
-		limit = 5
-		page = 0
-	} else {
-		limit, _ = strconv.Atoi(r.URL.Query()["count"][0])
-		page, _ = strconv.Atoi(r.URL.Query()["page"][0])
-	}
-
-	if page < 0 || limit <= 0 {
-		w.WriteHeader(404)
+	limit, offset := paginationHandler(w, r)
+	if offset == -1 || limit == -1 {
+		w.WriteHeader(400)
 		return
 	}
 
@@ -457,18 +445,18 @@ func contestMatchesHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	total := len(ms)
-	var msr []map[string]interface{}
+	msr := []map[string]interface{}{}
 	var begin int
 	var end int
-	if page*limit > total {
+	if offset > total {
 		begin = total
 	} else {
-		begin = page * limit
+		begin = offset
 	}
-	if (page+1)*limit > total {
+	if offset+limit > total {
 		end = total
 	} else {
-		end = page*limit + limit
+		end = offset + limit
 	}
 	for _, m := range ms[begin:end] {
 		msr = append(msr, m.ShortRepresentation())
@@ -477,8 +465,8 @@ func contestMatchesHandler(w http.ResponseWriter, r *http.Request) {
 	enc := json.NewEncoder(w)
 	enc.SetEscapeHTML(false)
 	enc.Encode(map[string]interface{}{
-		"total":        total,
-		"participants": msr,
+		"total":   total,
+		"matches": msr,
 	})
 }
 
