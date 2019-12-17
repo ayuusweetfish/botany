@@ -14,12 +14,12 @@ var rcli *redis.Client = nil
 func InitializeRedis(client *redis.Client) {
 	rcli = client
 
-	_, err := rcli.XGroupCreateMkStream("compile", "compile_group", "0").Result()
+	_, err := rcli.XGroupCreateMkStream("compile", "judge_group", "0").Result()
 	if err != nil && !strings.Contains(err.Error(), "BUSYGROUP") {
 		panic(err)
 	}
 
-	_, err = rcli.XGroupCreateMkStream("match", "match_group", "0").Result()
+	_, err = rcli.XGroupCreateMkStream("match", "judge_group", "0").Result()
 	if err != nil && !strings.Contains(err.Error(), "BUSYGROUP") {
 		panic(err)
 	}
@@ -31,13 +31,18 @@ func (s *Submission) SendToQueue() error {
 	if rcli == nil {
 		return nil
 	}
-	_, err := rcli.XAdd(&redis.XAddArgs{
+	sid := strconv.FormatInt(int64(s.Id), 10)
+	_, err := rcli.HMSet("submission", map[string]interface{}{
+		sid:           s.Contents,
+		sid + ":lang": "lua",
+	}).Result()
+	if err != nil {
+		return err
+	}
+	_, err = rcli.XAdd(&redis.XAddArgs{
 		Stream: "compile",
 		ID:     "*",
-		Values: map[string]interface{}{
-			"sid":      s.Id,
-			"contents": s.Contents,
-		},
+		Values: map[string]interface{}{"sid": s.Id},
 	}).Result()
 	return err
 }
@@ -48,7 +53,7 @@ func (m *Match) SendToQueue() error {
 	}
 	values := map[string]interface{}{
 		"mid":         m.Id,
-		"party_count": len(m.Rel.Parties),
+		"num_parties": len(m.Rel.Parties),
 	}
 	for i, p := range m.Rel.Parties {
 		values["party_"+strconv.Itoa(i)] = p.Id
