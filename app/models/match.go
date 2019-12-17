@@ -133,6 +133,7 @@ func ReadByContest(cid int32) ([]Match, error) {
 			return nil, err
 		}
 		// TODO: Optimize
+		m.Read()
 		m.LoadRel()
 		ms = append(ms, m)
 	}
