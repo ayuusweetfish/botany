@@ -253,14 +253,19 @@ void process_compile(redisReply *kv)
 
     // Done!
     WLOGF("Done:      %s", sid);
+    int code;
+    const char *msg;
     static int cnt = 0;
     if (++cnt % 3 != 0) {
         // Success
-        reply = redisCommand(rctx, "RPUSH " COMPILE_RESULT_LIST " %s 9 Done!", sid);
+        code = 9;
+        msg = "Done!";
     } else {
         // Failure
-        reply = redisCommand(rctx, "RPUSH " COMPILE_RESULT_LIST " %s -1 Compilation error", sid);
+        code = -1;
+        msg = "Compilation error";
     }
+    reply = redisCommand(rctx, "RPUSH " COMPILE_RESULT_LIST " %s %d %s", sid, code, msg);
 }
 
 void process_match(redisReply *kv)
