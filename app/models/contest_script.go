@@ -131,13 +131,18 @@ func luaCreateMatch(L *lua.LState) int {
 
 	for i := 1; i <= argc; i++ {
 		uid := int32(L.ToInt(i))
+		u := User{Id: uid}
+		if err := u.ReadById(); err != nil {
+			fmt.Println(err.Error())
+			return 0
+		}
 		p := ContestParticipation{User: uid, Contest: cid}
 		if err := p.Read(); err != nil {
 			fmt.Println(err.Error())
 			return 0
 		}
 		sid := p.Delegate
-		builder.WriteString(fmt.Sprintf(" (UID %d, SID %d)", uid, sid))
+		builder.WriteString(fmt.Sprintf(" (%s #%d)", u.Handle, sid))
 		ss = append(ss, Submission{Id: sid})
 	}
 

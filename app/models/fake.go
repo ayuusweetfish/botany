@@ -105,7 +105,23 @@ end
 				if err := s.Create(); err != nil {
 					panic(err)
 				}
-				s.SendToQueue()
+				if k % 2 == 1 {
+					// Mark as accepted
+					s.Status = SubmissionStatusAccepted
+					s.Message = "Automagically compiled"
+					if err := s.Update(); err != nil {
+						panic(err)
+					}
+					if k == 3 {
+						// Set as delegate
+						p.Delegate = s.Id
+						if err := p.Update(); err != nil {
+							panic(err)
+						}
+					}
+				} else {
+					s.SendToQueue()
+				}
 				if sidFirst == -1 {
 					sidFirst = s.Id
 				}
