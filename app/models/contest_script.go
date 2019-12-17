@@ -142,15 +142,30 @@ func luaCreateMatch(L *lua.LState) int {
 			return 0
 		}
 		sid := p.Delegate
-		builder.WriteString(fmt.Sprintf(" (%s #%d)", u.Handle, sid))
+		if i > 1 {
+			builder.WriteRune(',')
+		}
+		builder.WriteRune(' ')
+		builder.WriteString(u.Handle)
 		ss = append(ss, Submission{Id: sid})
 	}
 
 	// Create match
-	for i, s := range ss {
-		fmt.Printf("[%d %d]\n", i, s.Id)
+	m := Match{
+		Contest: cid,
+		Report:  "{\"winner\": \"In queue\"}",
+	}
+	m.Rel.Parties = ss
+	if err := m.Create(); err != nil {
+		fmt.Println(err.Error())
+		return 0
+	}
+	if err := m.SendToQueue(); err != nil {
+		fmt.Println(err.Error())
+		return 0
 	}
 
+	builder.WriteString(fmt.Sprintf(" - #%d", m.Id))
 	return 0
 }
 
