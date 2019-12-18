@@ -38,6 +38,7 @@ static inline char tenacious_write(int fd, const char *buf, size_t len)
 
 int ipc_send(int pipe, size_t len, const char *payload)
 {
+    if (len == 0) len = strlen(payload);
     if (len > 0xffffff) return IPC_ERR_TOOLONG;
     char len_buf[3] = {
         len & 0xff,
@@ -65,7 +66,7 @@ char *ipc_recv(int pipe, size_t *o_len, int timeout)
     while (len == 0 || ptr < len) {
         /* Unlikely; in case poll()'s time slightly differs
            from CLOCK_MONOTONIC, or rounding errors happen */
-        if (timeout <= 0 || ++loops >= 1000000) {
+        if ((timeout <= 0 || ++loops >= 1000000) && timeout != -1) {
             fprintf(stderr, "Unidentifiable exception with errno %d\n", errno);
             if (ret) free(ret);
             *o_len = IPC_ERR_SYSCALL;
@@ -85,7 +86,7 @@ char *ipc_recv(int pipe, size_t *o_len, int timeout)
         }
         /* Calculate remaining time */
         clock_gettime(CLOCK_MONOTONIC, &t2);
-        timeout -= diff_ms(t1, t2);
+        if (timeout > 0) timeout -= diff_ms(t1, t2);
 
         /* Is the pipe still open on the other side? */
         if (pfd.revents & POLLHUP) {
@@ -122,7 +123,7 @@ char *ipc_recv(int pipe, size_t *o_len, int timeout)
                 len = ((unsigned char)buf[2] << 16) |
                     ((unsigned char)buf[1] << 8) |
                     (unsigned char)buf[0];
-                ret = (char *)malloc(len == 0 ? 1 : len);
+                ret = (char *)malloc(len + 1);
                 if (len == 0) break;    /* Nothing to read */
             } else {
                 /* Move buffer pointer */
@@ -141,27 +142,18 @@ char *ipc_recv(int pipe, size_t *o_len, int timeout)
     }
 
     *o_len = len;
+    ret[len] = '\0';
     return ret;
 }
 
-#ifdef IPC_DEMO
-int main(int argc, char *argv[])
+void ipc_send_str(const char *s)
 {
-    if (argc >= 2 && argv[1][0] == 'i') {
-        size_t len;
-        char *s = ipc_recv(STDIN_FILENO, &len, 1000);
-        if (!s) {
-            printf("Invalid! Application error %d, system errno %d\n",
-                (int)len, errno);
-        } else {
-            printf("Length = %zd\n", len);
-            for (size_t i = 0; i < len; i++) putchar(s[i]);
-            putchar('\n');
-        }
-    } else {
-        char *s = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Dolor sed viverra ipsum nunc aliquet bibendum enim. In massa tempor nec feugiat. Nunc aliquet bibendum enim facilisis gravida. Nisl nunc mi ipsum faucibus vitae aliquet nec ullamcorper. Amet luctus venenatis lectus magna fringilla. Volutpat maecenas volutpat blandit aliquam etiam erat velit scelerisque in. Egestas egestas fringilla phasellus faucibus scelerisque eleifend. Sagittis orci a scelerisque purus semper eget duis. Nulla pharetra diam sit amet nisl suscipit. Sed adipiscing diam donec adipiscing tristique risus nec feugiat in. Fusce ut placerat orci nulla. Pharetra vel turpis nunc eget lorem dolor. Tristique senectus et netus et malesuada.";
-        ipc_send(STDOUT_FILENO, strlen(s), s);
-    }
-    return 0;
+    ipc_send(STDOUT_FILENO, 0, s);
 }
-#endif
+
+char *ipc_recv_str()
+{
+    size_t len;
+    char *ret = ipc_recv(STDIN_FILENO, &len, -1);
+    return ret;
+}

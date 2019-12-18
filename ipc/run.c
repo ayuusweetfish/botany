@@ -4,6 +4,7 @@
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 typedef struct _childproc {
     pid_t pid;
@@ -38,7 +39,10 @@ childproc create_child(const char *path)
         dup2(fd_recv[1], STDOUT_FILENO);
         close(fd_send[1]);
         close(fd_recv[0]);
-        execl(path, path, NULL);
+        if (execl(path, path, NULL) != 0) {
+            fprintf(stderr, "exec(%s) failed with errno %d\n", path, errno);
+            exit(1);
+        }
     } else {
         /* Parent process */
         close(fd_send[0]);
@@ -52,39 +56,86 @@ childproc create_child(const char *path)
     return ret;
 }
 
-void run_as_child()
+/* Modifies contents in `s` */
+static inline char *str_head(char *s, size_t n)
 {
-    /* Receives a string, xor each character by 1 and return */
-    size_t len, i;
-    char *s = ipc_recv(STDIN_FILENO, &len, 1000);
-    for (i = 0; i < len; i++) s[i] ^= 1;
-    ipc_send(STDOUT_FILENO, len, s);
-
-    free(s);
+    size_t m = strlen(s);
+    if (m > n) {
+        if (n >= 3) s[n - 3] = '.';
+        if (n >= 2) s[n - 2] = '.';
+        if (n >= 1) s[n - 1] = '.';
+        s[n] = '\0';
+    }
+    return s;
 }
 
-void run_as_parent(const char *path)
+/*
+    Protocol:
+    - Startup: I "<side>" side - 0: first to move, 1: next to move
+    - Move: O "<row> <col>" row, col - 0..2
+    - Response: I "<row> <col>" row, col - 0..2
+*/
+
+int main()
 {
-    /* Sends a string to the child and reads its response */
-    childproc cp = create_child(path);
-    resume_child(cp);
+    childproc par[2];
+    par[0] = create_child("./a.out");
+    par[1] = create_child("./a.out");
 
-    ipc_send(cp.fd_send, 5, "ruwww");
+    char buf[8];
 
-    size_t len, i;
-    char *s = ipc_recv(cp.fd_recv, &len, 1000);
-    for (i = 0; i < len; i++) putchar(s[i]);
+    kill(par[0].pid, SIGCONT);
+    ipc_send(par[0].fd_send, 0, "0");
+    kill(par[0].pid, SIGSTOP);
 
-    free(s);
-}
+    kill(par[1].pid, SIGCONT);
+    ipc_send(par[1].fd_send, 0, "1");
+    kill(par[1].pid, SIGSTOP);
 
-/* Example: ./a.out ./a.out */
-int main(int argc, char *argv[])
-{
-    if (argc == 1)
-        run_as_child();
-    else
-        run_as_parent(argv[1]);
+    char *resp;
+    size_t len;
+
+    int move = 0;
+    int win = -1;
+    int row = -1, col = -1;
+    int board[3][3];
+    memset(board, -1, sizeof board);
+
+    for (; win == -1; free(resp), move ^= 1) {
+        snprintf(buf, sizeof buf, "%d %d", row, col);
+        ipc_send(par[move].fd_send, 0, buf);
+
+        kill(par[move].pid, SIGCONT);
+        resp = ipc_recv(par[move].fd_recv, &len, 1000);
+        kill(par[move].pid, SIGSTOP);
+
+        if (resp == NULL) {
+            fprintf(stderr, "Side #%d errors with %d, considered resignation\n",
+                move, (int)len);
+            win = move ^ 1;
+            continue;
+        }
+
+        if (sscanf(resp, "%d%d", &row, &col) != 2 ||
+            (row < 0 || row >= 3) ||
+            (col < 0 || col >= 3))
+        {
+            fprintf(stderr, "Side #%d format incorrect (%s), considered resignation\n",
+                move, str_head(resp, 10));
+            win = move ^ 1;
+            continue;
+        }
+
+        if (board[row][col] != -1) {
+            fprintf(stderr, "Side #%d invalid move at (%d, %d), considered resignation\n",
+                move, row, col);
+            win = move ^ 1;
+            continue;
+        }
+
+        fprintf(stderr, "Side #%d moves at (%d, %d)\n", move, row, col);
+        board[row][col] = move;
+    }
 
     return 0;
 }

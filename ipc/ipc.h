@@ -20,4 +20,7 @@ int ipc_send(int pipe, size_t len, const char *payload);
  */
 char *ipc_recv(int pipe, size_t *o_len, int timeout);
 
+void ipc_send_str(const char *s);
+char *ipc_recv_str();
+
 #endif
