@@ -272,6 +272,7 @@ export default {
         this.compareTime()
       }).catch(err => {
         loading.close()
+        this.$message.error('提交失败')
         console.log(err)
       })
     },
