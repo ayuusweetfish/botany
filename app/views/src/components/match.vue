@@ -41,7 +41,7 @@
       <el-card body-style="min-height: 480px">
         <div align="left" style="font-size: 24px; font-weight: 600">比赛回放</div>
         <div>
-          <iframe :srcdoc="onstage" style="min-height: 400px; width: 100%;" scrolling="yes"></iframe>
+          <!-- <iframe :srcdoc="onstage" style="min-height: 400px; width: 100%;" scrolling="yes"></iframe> -->
         </div>
       </el-card>
     </el-row>
