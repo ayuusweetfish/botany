@@ -309,6 +309,11 @@ func contestSubmitHandler(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 
+	// Invoke contest script
+	if err := c.ExecuteScriptOnSubmission(u.Id); err != nil {
+		panic(err)
+	}
+
 	// Success
 	enc := json.NewEncoder(w)
 	enc.SetEscapeHTML(false)

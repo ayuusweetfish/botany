@@ -62,6 +62,14 @@ func FakeDatabase() {
 		script := `
 local count = 9
 local su_id = get_id('su')
+
+function on_submission(all, from)
+    print('Submission', from)
+    for i = 1, #all do
+        print(all[i], all[i] == from)
+    end
+end
+
 function on_timer(all)
     count = count + 1
     if count < 10 then return end
