@@ -82,32 +82,26 @@ int main()
     par[0] = create_child("./a.out");
     par[1] = create_child("./a.out");
 
-    char buf[8];
-
-    kill(par[0].pid, SIGCONT);
     ipc_send(par[0].fd_send, 0, "0");
-    kill(par[0].pid, SIGSTOP);
-
-    kill(par[1].pid, SIGCONT);
     ipc_send(par[1].fd_send, 0, "1");
-    kill(par[1].pid, SIGSTOP);
 
+    char buf[8];
     char *resp;
     size_t len;
 
     int move = 0;
-    int win = -1;
+    int win = -1, count = 0;
     int row = -1, col = -1;
     int board[3][3];
     memset(board, -1, sizeof board);
 
-    for (; win == -1; free(resp), move ^= 1) {
+    for (; win == -1 && count < 9; free(resp), move ^= 1) {
         snprintf(buf, sizeof buf, "%d %d", row, col);
         ipc_send(par[move].fd_send, 0, buf);
 
-        kill(par[move].pid, SIGCONT);
+        resume_child(par[move]);
         resp = ipc_recv(par[move].fd_recv, &len, 1000);
-        kill(par[move].pid, SIGSTOP);
+        pause_child(par[move]);
 
         if (resp == NULL) {
             fprintf(stderr, "Side #%d errors with %d, considered resignation\n",
@@ -135,7 +129,32 @@ int main()
 
         fprintf(stderr, "Side #%d moves at (%d, %d)\n", move, row, col);
         board[row][col] = move;
+
+        // Check winning condition
+        for (int i = 0; i < 3; i++)
+            if ((board[i][0] == move && board[i][1] == move && board[i][2] == move) ||
+                (board[0][i] == move && board[1][i] == move && board[2][i] == move))
+            {
+                win = move;
+                break;
+            }
+        if ((board[0][0] == move && board[1][1] == move && board[2][2] == move) ||
+            (board[0][2] == move && board[1][1] == move && board[2][0] == move))
+        {
+            win = move;
+        }
+        if (win != -1) {
+            fprintf(stderr, "Side #%d wins!\n", move);
+        }
     }
+
+    printf("{\n  \"winner\": %d,\n  \"board\": \"", win);
+    for (int i = 0; i < 3; i++) {
+        for (int j = 0; j < 3; j++)
+            putchar(".ox"[board[i][j] + 1]);
+        printf("\\n");
+    }
+    printf("\"\n}\n");
 
     return 0;
 }
