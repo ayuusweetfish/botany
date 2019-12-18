@@ -17,6 +17,19 @@
             </router-link>
           </template>
         </el-table-column>
+        <el-table-column label="主战提交">
+          <template slot-scope="scope">
+            <div v-if="scope.row.delegate===-1" style="color: silver">暂无</div>
+            <div v-else>
+              <router-link
+                v-if="myRole===$consts.role.moderator"
+                style="display: inline; text-decoration: none; color: #409EFF"
+                :to="{path: '/submission_info', query: {cid: cid, sid: scope.row.delegate}}"
+                >{{scope.row.delegate}}</router-link>
+              <div v-if="myRole!==$consts.role.moderator">{{scope.row.delegate}}</div>
+            </div>
+          </template>
+        </el-table-column>
         <el-table-column label="评分" prop="rating" width="80" align="center">
         </el-table-column>
         <el-table-column label="表现" prop="performance" min-width="160" align="center">
@@ -40,10 +53,12 @@ export default {
   name: 'ranklist',
   created () {
     this.cid = this.$route.query.cid
+    this.getInfo()
     this.getList()
   },
   data () {
     return {
+      myRole: -1,
       tableLoading: false,
       players: [],
       total: 0,
@@ -55,6 +70,16 @@ export default {
     handleCurrentChange (val) {
       this.page = val
       this.getList()
+    },
+    getInfo () {
+      this.$axios.get(
+        '/contest/' + this.cid + '/info'
+      ).then(res => {
+        this.myRole = res.data.my_role
+        this.$store.commit('enterSubSite', res.data)
+      }).catch(err => {
+        console.log(err)
+      })
     },
     getList () {
       this.tableLoading = true
