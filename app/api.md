@@ -448,8 +448,14 @@
 
 ### 赛制脚本日志 GET /contest/{cid}/script_log
 
+请求
+- **full** (number) 等于 0 返回末 50 行，等于 1 返回完整文件
+
 响应 200
 - 大量纯文本
+
+响应 400
+- **full** 不等于 0 或 1
 
 响应 403
 - 空响应 Content-Length: 0

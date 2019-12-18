@@ -646,14 +646,33 @@ func contestMatchDetailsHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func contestScriptLogHandler(w http.ResponseWriter, r *http.Request) {
+	if len(r.URL.Query()["full"]) < 1 {
+		w.WriteHeader(400)
+		return
+	}
+	full := r.URL.Query()["full"][0]
+	if full != "0" && full != "1" {
+		w.WriteHeader(400)
+		return
+	}
+
 	_, c := middlewareContestModeratorVerify(w, r)
 	if c.Id == -1 {
 		return
 	}
 
-	err, s := c.ReadScriptLog()
-	if err != nil {
-		panic(err)
+	var err error
+	var s string
+
+	if full == "1" {
+		// Full log
+		err, s = c.ReadScriptLog()
+		if err != nil {
+			panic(err)
+		}
+	} else {
+		// Tail log
+		s = c.TailLog()
 	}
 
 	w.Write([]byte(s))
