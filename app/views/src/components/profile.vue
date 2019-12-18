@@ -1,5 +1,6 @@
 <template>
   <div>
+    <password-dialog :visible="password" @setVisible="setPasswordVisible"></password-dialog>
     <el-row :gutter="20">
       <el-col :span="7">
         <el-card v-if="editing" shadow="hover" body-style="margin-bottom: 20px; margin-top: 20px">
@@ -102,14 +103,20 @@
             </el-row>
           </div>
           <el-button v-if="mode==='self'" type="text" @click="startEdit">修改个人信息</el-button>
+          <el-button v-if="mode==='self'" type="text" @click="setPasswordVisible(true)">修改密码</el-button>
         </el-card>
       </el-col>
       <el-col :span="17">
         <el-card  style="margin-bottom: 20px">
           <div align="left">
-            <div style="display: inline">一共参加了</div><div style="display: inline; font-weight: 600">2</div><div style="display: inline">项赛事</div>
+            <div v-if="mode==='self'">
+              <div style="display: inline">共参加了</div><div style="display: inline; font-weight: 600">{{contestTotal}}</div><div style="display: inline">项赛事</div>
+            </div>
+            <div v-else>
+              <div style="display: inline">共参加了</div><div style="display: inline; font-weight: 600">{{contestTotal}}</div><div style="display: inline">项你可见的赛事</div>
+            </div>
           </div>
-          <el-table :data="major">
+          <!-- <el-table :data="major">
             <el-table-column label="比赛" min-width="160" align="center">
               <template slot-scope="scope">
                 <div>{{scope.row.name}}</div>
@@ -130,40 +137,124 @@
                 <div>{{scope.row.rank}}</div>
               </template>
             </el-table-column>
-          </el-table>
+          </el-table> -->
+          <el-collapse v-model="activeContests" style="margin-top: 20px">
+            <el-collapse-item v-for="(item, index) in major" :key="index">
+              <template slot="title">
+                <div style="display: inline; width: 220px" align="left">{{item.title}}</div>
+                <el-divider direction="vertical"></el-divider>
+                <i class="el-icon-date" style="margin-right: 5px"></i>
+                <div style="display: inline; font-weight: 400">{{item.timeStr}}</div>
+                <div v-if="item.role===$consts.role.moderator" style="display: inline; width: 120px" align="right">
+                  <el-divider direction="vertical"></el-divider>
+                  <div style="display: inline">管理员</div>
+                </div>
+              </template>
+              <div align="left">
+                <div>
+                  <div style="font-weight: 600; display: inline; color: gray">简介:</div>
+                  <div style="display: inline">{{item.desc}}</div>
+                </div>
+                <div>
+                  <router-link
+                    :to="{path: '/contest_main', query:{cid: item.id}}"
+                    style="text-decoration: none; color: #409EFF;"
+                  >
+                    查看赛事主页
+                  </router-link>
+                </div>
+              </div>
+            </el-collapse-item>
+          </el-collapse>
         </el-card>
         <el-card>
           <div align="left">
-            <div style="display: inline">一共进行了</div><div style="display: inline; font-weight: 600">123</div><div style="display: inline">场对局</div>
+            <div v-if="mode==='self'">
+              <div style="display: inline">共进行了</div><div style="display: inline; font-weight: 600">{{matchTotal}}</div><div style="display: inline">场对局</div>
+            </div>
+            <div v-else>
+              <div style="display: inline">共有</div><div style="display: inline; font-weight: 600">{{matchTotal}}</div><div style="display: inline">场对你可见的对局</div>
+            </div>
           </div>
-          <el-table :data="minor">
-            <el-table-column label="对局编号" min-width="80" align="center">
+          <el-table :data="minor" v-loading="tableLoading">
+            <el-table-column label="对局编号" width="80" align="center">
               <template slot-scope="scope">
                 <div>{{scope.row.id}}</div>
               </template>
             </el-table-column>
-             <el-table-column label="对手" min-width="160" align="center">
+            <el-table-column label="比赛名称" align="center">
               <template slot-scope="scope">
-                <el-row>
-                  <el-col :span="12" align="right">
-                    <el-avatar size="small" style="margin-right: 10px"></el-avatar>
-                  </el-col>
-                  <el-col :span="12" align="left">
-                    <div>{{scope.row.oppo}}</div>
-                  </el-col>
-                </el-row>
+                <router-link
+                  style="text-decoration: none; color: black"
+                  :to="{path: '/contest_main', query: {cid: scope.row.contest.id}}"
+                >{{scope.row.contest.title}}</router-link>
               </template>
             </el-table-column>
-            <el-table-column label="结果" min-width="80" align="center">
+            <el-table-column label="参赛者" width="100" align="center">
               <template slot-scope="scope">
+                <el-popover
+                  placement="bottom"
+                  trigger="click"
+                >
+                  <el-table :data="scope.row.parties" style="width: 480px">
+                    <el-table-column label="代码编号" prop="id">
+                    </el-table-column>
+                    <el-table-column label="选手" prop="participant.nickname">
+                    </el-table-column>
+                    <el-table-column label="选手ID">
+                      <template slot-scope="inner">
+                        <div>
+                          <div v-if="inner.row.participant.handle === handle" style="font-weight: 600; display: inline">{{inner.row.participant.id}}</div>
+                          <div v-else style="display: inline">{{inner.row.participant.id}}</div>
+                          <div v-if="inner.row.participant.handle === $store.state.handle" style="display: inline">(我)</div>
+                        </div>
+                      </template>
+                    </el-table-column>
+                    <el-table-column label="选手账号">
+                      <template slot-scope="inner">
+                        <router-link
+                          style="text-decoration: none; color: #409EFF"
+                          :to="{path: '/profile', query: {handle: inner.row.participant.handle}}"
+                        >
+                          {{inner.row.participant.handle}}
+                        </router-link>
+                      </template>
+                    </el-table-column>
+                  </el-table>
+                  <el-button slot="reference" type="text">
+                    点击查看<i class="el-icon-arrow-down"></i>
+                  </el-button>
+                </el-popover>
+              </template>
+            </el-table-column>
+            <el-table-column label="状态" width="100" align="center">
+              <!-- <template slot-scope="scope">
                 <div style="color: green">{{scope.row.res}}</div>
+              </template> -->
+              <template slot-scope="scope">
+                <div v-if="scope.row.status===$consts.codeStat.pending" style="color: gray">等待处理</div>
+                <div v-else-if="scope.row.status===$consts.codeStat.compiling" style="color: orange">处理中</div>
+                <div v-else-if="scope.row.status===$consts.codeStat.compiling" style="color: accepted">已结束</div>
+                <div v-else style="color: red">系统错误</div>
+              </template>
+            </el-table-column>
+            <el-table-column label="详情" width="100" align="center">
+              <!-- <template slot-scope="scope">
+                <div style="color: green">{{scope.row.res}}</div>
+              </template> -->
+              <template slot-scope="scope">
+                <router-link
+                  style="color: #409EFF; text-decoration: none"
+                  :to="{path: '/match', query: {cid: scope.row.contest.id, mid: scope.row.id}}"
+                >查看详情
+                </router-link>
               </template>
             </el-table-column>
           </el-table>
           <el-pagination
-            :total="total"
-            :current-page="1"
-            :page-size="20"
+            :total="matchTotal"
+            :current-page="page"
+            :page-size="count"
             @current-change="handleCurrentChange"
             :pager-count="11"
             layout="prev, pager, next, jumper, ->, total"
@@ -176,12 +267,16 @@
 </template>
 
 <script>
+import passwordDialog from './password.vue'
 export default {
   name: 'profile',
   watch: {
     '$route.query': function () {
       window.location.reload()
     }
+  },
+  components: {
+    'password-dialog': passwordDialog
   },
   created () {
     if (this.$route.query.handle === this.$store.state.handle) {
@@ -204,6 +299,9 @@ export default {
       }
     }
     return {
+      tableLoading: false,
+      activeContests: [],
+      password: false,
       mode: 'self',
       nickname: '',
       handle: '',
@@ -224,7 +322,7 @@ export default {
         nickname: [
           {validator: this.$functions.globalValidator, trigger: 'blur'},
           {required: true, message: '请输入昵称', trigger: 'blur'},
-          {min: 3, max: 30, message: '昵称应在3-30个字符之间', trigger: 'blur'}
+          {min: 3, max: 16, message: '昵称应在3-16个字符之间', trigger: 'blur'}
         ],
         email: [
           {validator: this.$functions.globalValidator, trigger: 'blur'},
@@ -241,63 +339,78 @@ export default {
         email: '',
         bio: ''
       },
-      major: [
-        {
-          name: 'GStrategy',
-          win: '20',
-          loss: '20',
-          rate: '50%',
-          mmr: '1000',
-          rank: '23'
-        },
-        {
-          name: 'GStrategy2',
-          win: '20',
-          loss: '20',
-          rate: '50%',
-          mmr: '1000',
-          rank: '23'
-        }
-      ],
-      minor: [
-        {
-          id: '987',
-          contest: 'GStrategy',
-          oppo: 'USER1',
-          res: 'WON'
-        },
-        {
-          id: '986',
-          contest: 'GStrategy2',
-          oppo: 'USER2',
-          res: 'WON'
-        },
-        {
-          id: '985',
-          contest: 'GStrateg2',
-          oppo: 'USER1',
-          res: 'WON'
-        },
-        {
-          id: '984',
-          contest: 'GStrateg2',
-          oppo: 'USER1',
-          res: 'WON'
-        },
-        {
-          id: '982',
-          contest: 'GStrategy',
-          oppo: 'USER1',
-          res: 'WON'
-        }
-      ],
-      total: 123,
+      page: 1,
+      count: 10,
+      matchTotal: 0,
+      contestTotal: 0,
+      major: [],
+      minor: [],
       size: 120
     }
   },
   methods: {
     handleCurrentChange (val) {
-
+      this.page = val
+      console.log(this.page)
+      this.getList()
+    },
+    setPasswordVisible (val) {
+      this.password = val
+    },
+    getList () {
+      this.tableLoading = true
+      let params = {
+        'page': this.page - 1,
+        'count': this.count
+      }
+      this.$axios.get(
+        '/user/' + this.handle + '/profile',
+        {params: params}
+      ).then(res => {
+        console.log(res.data)
+        this.nickname = res.data.user.nickname
+        this.uid = res.data.user.id
+        this.email = res.data.user.email
+        this.bio = res.data.user.bio
+        this.privilege = res.data.user.privilege
+        switch (this.privilege) {
+          case this.$consts.privilege.common:
+            this.privilegeText = 'Common User'
+            this.privilegeColor = '#555555'
+            break
+          case this.$consts.privilege.organizer:
+            this.privilegeText = 'Organizer'
+            this.privilegeColor = 'green'
+            break
+          case this.$consts.privilege.superuser:
+            this.privilegeText = 'Super User'
+            this.privilegeColor = 'blue'
+            break
+          default:
+            break
+        }
+        this.minor = []
+        this.major = []
+        res.data.contests.forEach(item => {
+          let dateTimeString = this.$functions.dateTimeString(item.start_time) + ' 到 ' + this.$functions.dateTimeString(item.end_time)
+          this.major.push({
+            id: item.id,
+            title: item.title,
+            timeStr: dateTimeString,
+            desc: item.desc,
+            role: item.my_role
+          })
+        })
+        this.contestTotal = this.major.length
+        this.matchTotal = res.data.total_matches
+        this.minor = res.data.matches
+        this.tableLoading = false
+      }).catch(err => {
+        console.log(err)
+        this.minor = []
+        this.tableLoading = false
+        this.$message.error('查询失败')
+      })
     },
     startEdit () {
       this.editingInfo.nickname = this.nickname
@@ -333,10 +446,19 @@ export default {
     cancelEdit () {
       this.editing = false
     },
+    getMatchList () {
+      this.minor = []
+      this.major = []
+    },
     getInfo () {
       const loading = this.$loading({lock: true, text: '加载中'})
+      let params = {
+        'page': this.page - 1,
+        'count': this.count
+      }
       this.$axios.get(
-        '/user/' + this.handle + '/profile'
+        '/user/' + this.handle + '/profile',
+        {params: params}
       ).then(res => {
         console.log(res.data)
         this.nickname = res.data.user.nickname
@@ -360,6 +482,20 @@ export default {
           default:
             break
         }
+        this.major = []
+        res.data.contests.forEach(item => {
+          let dateTimeString = this.$functions.dateTimeString(item.start_time) + ' 到 ' + this.$functions.dateTimeString(item.end_time)
+          this.major.push({
+            id: item.id,
+            title: item.title,
+            timeStr: dateTimeString,
+            desc: item.desc,
+            role: item.my_role
+          })
+        })
+        this.contestTotal = this.major.length
+        this.matchTotal = res.data.total_matches
+        this.minor = res.data.matches
         loading.close()
       }).catch(err => {
         console.log(err)
@@ -386,5 +522,31 @@ export default {
   word-wrap: break-word;
   font-size: 20px;
   font-weight: 600;
+}
+.party-item-title{
+  color: gray;
+  font-weight: 600;
+  display: inline;
+}
+.party-item-light{
+  color: gray;
+  font-weight: 400;
+  display: inline;
+  margin-left: 8px;
+}
+.party-item-text{
+  color: black;
+  font-weight: 400;
+  display: inline;
+}
+.party-item-button{
+  text-decoration: none;
+  color: #409EFF;
+  font-weight: 400;
+  display: inline;
+}
+.info-cell{
+  border-right: 1px solid #EBEEF5;
+  border-left: 1px solid #EBEEF5;
 }
 </style>

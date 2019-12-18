@@ -1,20 +1,40 @@
 <template>
   <div>
     <el-row style="margin-top: 20px; margin-bottom: 20px">
-      <el-col :span="10">
-        <el-avatar :size="80"></el-avatar>
-        <div style="font-size: 22; font-weight: 600">USERNAME1</div>
-        <div style="font-size: 22;">USER1@mails.com</div>
-        <div style="font-size: 22; font-weight: 600; color: green">WINNER</div>
-      </el-col>
-      <el-col :span="4">
-        <div style="font-size: 36px; font-weight: 600; margin-top: 36px">VS</div>
-      </el-col>
-      <el-col :span="10">
-        <el-avatar :size="80"></el-avatar>
-        <div style="font-size: 22; font-weight: 600">USERNAME2</div>
-        <div style="font-size: 22;">USER2@mails.com</div>
-        <div style="font-size: 22; font-weight: 600">LOSER</div>
+      <el-card>
+        <el-row>
+          <el-col :span="12">
+            <div class="item-title">对局人数:</div>
+            <div class="item-text">{{parties.length}}</div>
+          </el-col>
+          <el-col :span="12">
+            <div class="item-title">对局状态:</div>
+            <div v-if="status === $consts.codeStat.pending" class="item-text" style="color: gray">等待中</div>
+            <div v-else-if="status === $consts.codeStat.compiling" class="item-text" style="color: orange">进行中</div>
+            <div v-else-if="status === $consts.codeStat.accepted" class="item-text" style="color: green">已结束</div>
+            <div v-else class="item-text" style="color: red">系统错误</div>
+          </el-col>
+        </el-row>
+      </el-card>
+    </el-row>
+    <el-row style="margin-top: 20px; margin-bottom: 20px" :gutter="10">
+      <el-col v-for="(item, index) in parties" :key="index" :span="8">
+        <el-card>
+          <el-avatar :size="80"></el-avatar>
+          <div style="font-size: 16px; font-weight: 600">{{item.participant.nickname}}</div>
+          <router-link
+            style="font-size: 16px; color: #409EFF; text-decoration: none"
+            :to="{path: '/profile', query: {handle: item.participant.handle}}"
+          >{{item.participant.handle}}</router-link>
+          <div v-if="myRole===$consts.role.moderator">
+            <div style="font-size: 14px; display: inline">提交ID: {{item.id}} |</div>
+            <router-link
+            style="font-size: 16px; color: #409EFF; text-decoration: none"
+            :to="{path: '/submission_info', query: {cid: cid, sid: item.id}}"
+          >查看</router-link>
+          </div>
+          <div v-else style="font-size: 14px">代码ID: {{item.id}}</div>
+        </el-card>
       </el-col>
     </el-row>
     <el-row>
@@ -45,6 +65,56 @@
 
 <script>
 export default {
-  name: 'match'
+  name: 'match',
+  created () {
+    this.cid = this.$route.query.cid
+    this.mid = this.$route.query.mid
+    this.getInfo()
+  },
+  data () {
+    return {
+      parties: [],
+      mid: '',
+      cid: '',
+      status: 0,
+      myRole: -1
+    }
+  },
+  methods: {
+    getInfo () {
+      this.parties = []
+      const loading = this.$loading({lock: true, text: '加载中'})
+      this.$axios.get(
+        '/contest/' + this.cid + '/match/' + this.mid
+      ).then(res => {
+        console.log(res.data)
+        this.parties = res.data.parties
+        this.status = res.data.status
+        this.$axios.get(
+          '/contest/' + this.cid + '/info'
+        ).then(info => {
+          loading.close()
+          this.myRole = info.data.my_role
+        })
+      }).catch(err => {
+        console.log(err)
+        loading.close()
+        this.$message.error('加载失败')
+      })
+    }
+  }
 }
 </script>
+
+<style scoped>
+.item-title{
+  display: inline;
+  color: gray;
+  font-weight: 600;
+}
+.item-text{
+  display: inline;
+  color: black;
+  font-weight: 400;
+}
+</style>

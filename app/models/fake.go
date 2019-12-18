@@ -2,6 +2,7 @@ package models
 
 import (
 	"log"
+	"math/rand"
 	"strconv"
 	"time"
 )
@@ -61,6 +62,14 @@ func FakeDatabase() {
 		script := `
 local count = 9
 local su_id = get_id('su')
+
+function on_submission(all, from)
+    print('Submission', from)
+    for i = 1, #all do
+        print(all[i], all[i] == from)
+    end
+end
+
 function on_timer(all)
     count = count + 1
     if count < 10 then return end
@@ -72,13 +81,17 @@ function on_timer(all)
         if i > 1 then create_match(all[i], all[i - 1]) end
     end
 end
+
+function on_manual(all, arg)
+    print('Manual', arg)
+end
 `
 		c := Contest{
 			Title:     "Grand Contest " + strconv.Itoa(i),
 			Banner:    "banner.png",
 			Owner:     int32(1 + i),
-			StartTime: t + 3600*int64(-3+i),
-			EndTime:   t + 3600*int64(-1+i),
+			StartTime: t + 3600*24*int64(-3+i),
+			EndTime:   t + 3600*24*int64(-1+i),
 			Desc:      "Really big contest, number " + numbers[i],
 			Details:   s,
 			IsVisible: i != 1,
@@ -114,7 +127,20 @@ end
 				}
 				if k%2 == 1 {
 					// Mark as accepted
-					s.Status = SubmissionStatusAccepted
+					r := rand.Intn(5)
+					if r == 0 {
+						s.Status = SubmissionStatusPending
+					} else if r == 1 {
+						s.Status = SubmissionStatusCompiling
+					} else if r == 2 {
+						s.Status = SubmissionStatusAccepted
+					} else if r == 3 {
+						s.Status = SubmissionStatusCompilationFailed
+					} else if r == 4 {
+						s.Status = SubmissionStatusSystemError
+					} else {
+						s.Status = SubmissionStatusAccepted
+					}
 					s.Message = "Automagically compiled"
 					if err := s.Update(); err != nil {
 						panic(err)

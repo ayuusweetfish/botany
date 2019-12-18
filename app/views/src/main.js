@@ -39,13 +39,53 @@ axios.interceptors.response.use(
         }).catch()
       })
     } else if (error.response.status === 403) {
-      ElementUI.Message.error('你没有权限进行这项操作')
+      ElementUI.Message.error('没有操作权限')
+    } else if (error.response.status === 404) {
+      ElementUI.Message.error('404 Not Found')
     }
     return Promise.reject(error)
   }
 )
 
 Vue.prototype.$qs = qs
+
+router.beforeEach((to, from, next) => {
+  let routeList = []
+  if (!to.meta.prePage) {
+    return next('/notfound')
+  }
+  if (from.meta.stalling && store.state.stallFlag) {
+    const check = window.confirm('表单尚未提交，确定离开?')
+    if (!check) {
+      return next(false)
+    }
+  }
+  to.meta.prePage.forEach(item => {
+    let r = router.resolve(item.path).route
+    let page = {
+      title: r.meta.title,
+      path: item.path,
+      query: {}
+    }
+    item.query.forEach(key => {
+      page.query[key] = to.query[key]
+    })
+    routeList.push(page)
+  })
+  routeList.push({
+    title: to.meta.title,
+    path: to.path,
+    query: to.query
+  })
+  store.commit('setRouteList', routeList)
+  next()
+})
+
+window.onbeforeunload = function () {
+  if (router.currentRoute.meta.stalling && store.state.stallFlag) {
+    return ''
+  }
+}
 
 /* eslint-disable no-new */
 new Vue({

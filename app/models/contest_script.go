@@ -14,6 +14,40 @@ var lCodes = map[int32]string{}
 var lStates = map[int32]*lua.LState{}
 var lCIDs = map[*lua.LState]int32{}
 var lLogs = map[*lua.LState]*strings.Builder{}
+var lLogTail = map[int32]*tailer{}
+
+const tailNumLines = 50
+
+type tailer struct {
+	Lines [tailNumLines]string
+	Count uint32
+	Ptr   uint16
+}
+
+func (t *tailer) Append(s string) {
+	t.Lines[t.Ptr] = s
+	t.Ptr++
+	t.Count++
+	if t.Ptr == tailNumLines {
+		t.Ptr = 0
+	}
+}
+
+func (t *tailer) Join() string {
+	b := strings.Builder{}
+	if t.Count < tailNumLines {
+		for i := uint32(0); i < t.Count; i++ {
+			b.WriteString(t.Lines[i])
+			b.WriteRune('\n')
+		}
+	} else {
+		for i := uint16(0); i < tailNumLines; i++ {
+			b.WriteString(t.Lines[(i+t.Ptr)%tailNumLines])
+			b.WriteRune('\n')
+		}
+	}
+	return b.String()
+}
 
 func (c *Contest) ResetLuaState() {
 	L := lStates[c.Id]
@@ -41,34 +75,62 @@ func (c *Contest) ResetLuaState() {
 }
 
 func (c *Contest) LuaState() *lua.LState {
-	if lCodes[c.Id] != c.Script {
+	if lCodes[c.Id] != c.Script || lStates[c.Id] == nil {
 		lCodes[c.Id] = c.Script
 		c.ResetLuaState()
 	}
 	return lStates[c.Id]
 }
 
-func writeTimestamp(builder *strings.Builder) {
-	builder.WriteRune('[')
-	builder.WriteString(time.Now().Format("2006-01-02 15:04:05 -0700 MST"))
-	builder.WriteRune(']')
-	builder.WriteRune('\t')
+func writeTimestamp(b *strings.Builder) {
+	b.WriteRune('[')
+	b.WriteString(time.Now().Format("2006-01-02 15:04:05 -0700 MST"))
+	b.WriteRune(']')
+	b.WriteRune('\t')
 }
 
 func flushLog(cid int32) {
+	// Retrieve strings.Builder
 	builder := lLogs[lStates[cid]]
 	if builder == nil {
 		lLogs[lStates[cid]] = &strings.Builder{}
 		return
 	}
+	s := builder.String()
 
+	// Update database
 	c := Contest{Id: cid}
-	if err := c.AppendScriptLog(builder.String()); err != nil {
+	if err := c.AppendScriptLog(s); err != nil {
 		log.Println(err.Error())
 		return
 	}
 
+	// Update in-memory cache
+	// TODO: Cache needs to be populated on startup
+	t := lLogTail[cid]
+	if t == nil {
+		t = &tailer{Count: 0, Ptr: 0}
+		lLogTail[cid] = t
+	}
+	if s != "" && s[len(s)-1] == '\n' {
+		s = s[:len(s)-1]
+	}
+	if s != "" {
+		lines := strings.Split(s, "\n")
+		for _, line := range lines {
+			t.Append(line)
+		}
+	}
+
 	builder.Reset()
+}
+
+func (c *Contest) TailLog() string {
+	t := lLogTail[c.Id]
+	if t == nil {
+		return ""
+	}
+	return t.Join()
 }
 
 func luaBasePrintRedirect(L *lua.LState) int {
@@ -170,13 +232,13 @@ func luaCreateMatch(L *lua.LState) int {
 	return 0
 }
 
-func (c *Contest) ExecuteScriptOnTimer() error {
+func (c *Contest) ExecuteScriptFunction(fnName string, args ...lua.LValue) error {
 	L := c.LuaState()
 
 	// Find `on_timer` global function
-	val := L.GetGlobal("on_timer")
-	if val.Type() != lua.LTFunction {
-		return errors.New("Lua global `on_timer` should be a function")
+	fn := L.GetGlobal(fnName)
+	if fn.Type() != lua.LTFunction {
+		return errors.New("Lua global `" + fnName + "` should be a function")
 	}
 
 	// Retrieve all contestants and make a Lua table
@@ -191,16 +253,28 @@ func (c *Contest) ExecuteScriptOnTimer() error {
 
 	// Call Lua function
 	err = L.CallByParam(lua.P{
-		Fn:      val,
+		Fn:      fn,
 		NRet:    0,
 		Protect: true,
-	}, t)
+	}, append([]lua.LValue{t}, args...)...)
 	if err != nil {
 		return err
 	}
 
 	flushLog(c.Id)
 	return nil
+}
+
+func (c *Contest) ExecuteScriptOnSubmission(from int32) error {
+	return c.ExecuteScriptFunction("on_submission", lua.LNumber(from))
+}
+
+func (c *Contest) ExecuteScriptOnTimer() error {
+	return c.ExecuteScriptFunction("on_timer")
+}
+
+func (c *Contest) ExecuteScriptOnManual(arg string) error {
+	return c.ExecuteScriptFunction("on_manual", lua.LString(arg))
 }
 
 func timerForAllContests() {

@@ -13,10 +13,21 @@
     <el-table :data="contests" @row-click="goContestMain" :cell-style="{'cursor': 'pointer'}">
       <el-table-column :label="title">
         <template slot-scope="scope">
-          <div><div class="important">名称：</div><div class="normal">{{scope.row.name}}</div></div>
+          <div>
+            <div class="important">名称：</div>
+            <div class="normal">{{scope.row.name}}</div>
+          </div>
           <div><div class="important">时间：</div><div class="normal">{{scope.row.time}}</div></div>
           <div><div class="important">说明：</div><div class="normal">{{scope.row.info}}</div></div>
-          <div v-if="scope.row.regOpen"><div class="important">开放报名中</div></div>
+          <div v-if="scope.row.myRole===$consts.role.moderator">
+            <div class="important">我管理的比赛</div>
+          </div>
+          <div v-else-if="scope.row.myRole===$consts.role.imIn">
+            <div class="important">我参加的比赛</div>
+          </div>
+          <div v-if="scope.row.regOpen">
+            <div class="important">开放报名中</div>
+          </div>
           <div v-else><div class="normal">不开放报名</div></div>
         </template>
       </el-table-column>
@@ -51,6 +62,7 @@ export default {
             name: element.title,
             time: timeStartStr + ' 到 ' + timeEndStr,
             info: element.desc,
+            myRole: element.my_role,
             regOpen: element.is_reg_open
           })
         })
@@ -67,7 +79,7 @@ export default {
       this.$router.push({
         path: '/contest_main',
         query: {
-          id: obj.id
+          cid: obj.id
         }
       })
     }

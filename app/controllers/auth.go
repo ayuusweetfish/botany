@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"github.com/gorilla/mux"
 	"net/http"
-	"strconv"
 )
 
 // Returns a User struct
@@ -200,20 +199,6 @@ func captchaGetHandler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-//get the limit and offset
-func paginationHandler(w http.ResponseWriter, r *http.Request) (int, int) {
-	limits := r.URL.Query()["count"]
-	pages := r.URL.Query()["page"]
-	if limits != nil && pages != nil {
-		limit, _ := strconv.Atoi(r.URL.Query()["count"][0])
-		page, _ := strconv.Atoi(r.URL.Query()["page"][0])
-		if limit >= 0 && page >= 0 {
-			return limit, page * limit
-		}
-	}
-	return -1, -1
-}
-
 func profileHandler(w http.ResponseWriter, r *http.Request) {
 	u := models.User{Handle: mux.Vars(r)["handle"]}
 	if err := u.ReadByHandle(); err != nil {
@@ -226,7 +211,7 @@ func profileHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	limit, offset := paginationHandler(w, r)
+	limit, offset := parsePagination(w, r)
 	if limit == -1 && offset == -1 {
 		w.WriteHeader(400)
 		return

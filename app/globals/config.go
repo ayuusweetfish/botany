@@ -13,6 +13,7 @@ type GlobalConfig struct {
 	DbPassword    string `json:"db_password"`
 	RedisPort     int    `json:"redis_port"`
 	RedisPassword string `json:"redis_password"`
+	JudgeSigKey   string `json:"judge_sig_key"`
 
 	CookieKeyPairs []string `json:"cookie_key_pairs"`
 

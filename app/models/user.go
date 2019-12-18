@@ -210,7 +210,7 @@ func (u *User) MatchesPagination(limit int, offset int) ([]map[string]interface{
 		"FROM submission JOIN match_party "+
 		"ON submission.id = match_party.submission "+
 		"JOIN match ON match_party.match = match.id "+
-		"WHERE uid = $1 LIMIT $2 OFFSET $3",
+		"WHERE uid = $1 ORDER BY match.id DESC LIMIT $2 OFFSET $3",
 		u.Id, limit, offset)
 	if err != nil {
 		return nil, 0, err

@@ -2,36 +2,24 @@
   <div>
     <el-card>
       <div align="left">
-        <div style="display: inline">本比赛共有110位选手，你排在第</div><div style="display: inline; font-weight: 600">23</div><div style="display: inline">位</div>
+        <div style="display: inline">本比赛共有{{total}}位选手</div>
       </div>
-      <el-table :data="players">
-        <el-table-column label="排名" min-width="80" align="center">
+      <el-table :data="players" v-loading="tableLoading">
+        <el-table-column label="排名" type="index" :index="val=>{return val + 1}" width="80"></el-table-column>
+        <el-table-column label="选手" prop="participant.nickname" min-width="160" align="center">
+        </el-table-column>
+        <el-table-column label="账号" min-width="160" align="center">
           <template slot-scope="scope">
-            <div>{{scope.row.ranking}}</div>
+            <router-link
+              style="display: inline; text-decoration: none; color: #409EFF"
+              :to="{path: '/profile', query: {handle: scope.row.participant.handle}}"
+            >{{scope.row.participant.handle}}
+            </router-link>
           </template>
         </el-table-column>
-        <el-table-column label="选手" min-width="160" align="center">
-          <template slot-scope="scope">
-            <el-row>
-              <el-col :span="8" align="right">
-                <el-avatar size="medium" style="margin-right: 10px"></el-avatar>
-              </el-col>
-              <el-col :span="16" align="left">
-                <div>{{scope.row.name}}</div>
-                <div>{{scope.row.email}}</div>
-              </el-col>
-            </el-row>
-          </template>
+        <el-table-column label="评分" prop="rating" width="80" align="center">
         </el-table-column>
-        <el-table-column label="战绩(胜场|负场|胜率)" min-width="160" align="center">
-          <template slot-scope="scope">
-            <div>{{scope.row.win}}|{{scope.row.loss}}|{{scope.row.rate}}</div>
-          </template>
-        </el-table-column>
-        <el-table-column label="MMR" min-width="80" align="center">
-          <template slot-scope="scope">
-            <div>{{scope.row.mmr}}</div>
-          </template>
+        <el-table-column label="表现" prop="performance" min-width="160" align="center">
         </el-table-column>
       </el-table>
       <el-pagination
@@ -50,28 +38,43 @@
 <script>
 export default {
   name: 'ranklist',
+  created () {
+    this.cid = this.$route.query.cid
+    this.getList()
+  },
   data () {
-    let ls = []
-    for (let i = 0; i < 20; ++i) {
-      ls.push({
-        ranking: (i + 1).toString(),
-        name: 'USERNAME',
-        email: 'EMAIL@ADDR.com',
-        win: '20',
-        loss: '20',
-        rate: '50%',
-        mmr: '1000'
-      })
-    }
     return {
-      players: ls,
-      total: 110,
-      page: 1
+      tableLoading: false,
+      players: [],
+      total: 0,
+      page: 1,
+      count: 20
     }
   },
   methods: {
     handleCurrentChange (val) {
-
+      this.page = val
+      this.getList()
+    },
+    getList () {
+      this.tableLoading = true
+      let params = {
+        page: this.page - 1,
+        count: this.count
+      }
+      this.$axios.get(
+        '/contest/' + this.cid + '/ranklist',
+        {params: params}
+      ).then(res => {
+        this.total = res.data.total
+        this.players = res.data.participants
+        console.log(this.players)
+        this.tableLoading = false
+      }).catch(err => {
+        console.log(err)
+        this.tableLoading = false
+        this.$message.error('查询失败')
+      })
     }
   }
 }

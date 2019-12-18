@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/gorilla/mux"
 )
@@ -308,6 +309,11 @@ func contestSubmitHandler(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 
+	// Invoke contest script
+	if err := c.ExecuteScriptOnSubmission(u.Id); err != nil {
+		panic(err)
+	}
+
 	// Success
 	enc := json.NewEncoder(w)
 	enc.SetEscapeHTML(false)
@@ -363,7 +369,7 @@ func contestSubmissionHistoryHandlerCommon(w http.ResponseWriter, r *http.Reques
 		return
 	}
 	if subType == 0 {
-		limit, offset := paginationHandler(w, r)
+		limit, offset := parsePagination(w, r)
 		if limit == -1 || offset == -1 {
 			w.WriteHeader(400)
 			return
@@ -471,6 +477,38 @@ func contestDelegateHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "{}")
 }
 
+func myDelegateHandler(w http.ResponseWriter, r *http.Request) {
+	u := middlewareAuthRetrieve(w, r)
+	if u.Id == -1 {
+		w.WriteHeader(401)
+		return
+	}
+
+	c := middlewareReferredContest(w, r, u)
+	if c.Id == -1 || !c.IsVisibleTo(u) {
+		w.WriteHeader(404)
+		return
+	}
+	if !c.HasStarted() {
+		w.WriteHeader(403)
+		fmt.Fprintf(w, "{}")
+		return
+	}
+
+	p := models.ContestParticipation{User: u.Id, Contest: c.Id}
+	err := p.Read()
+	if err == sql.ErrNoRows {
+		w.WriteHeader(403)
+		fmt.Fprintf(w, "{}")
+		return
+	}
+	enc := json.NewEncoder(w)
+	enc.SetEscapeHTML(false)
+	enc.Encode(map[string]interface{}{
+		"submission": p.Delegate,
+	})
+}
+
 func contestRanklistHandler(w http.ResponseWriter, r *http.Request) {
 	u := middlewareAuthRetrieve(w, r)
 	c := middlewareReferredContest(w, r, u)
@@ -478,7 +516,7 @@ func contestRanklistHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(404)
 		return
 	}
-	limit, offset := paginationHandler(w, r)
+	limit, offset := parsePagination(w, r)
 	if limit == -1 || offset == -1 {
 		w.WriteHeader(400)
 		return
@@ -510,7 +548,7 @@ func contestMatchesHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	limit, offset := paginationHandler(w, r)
+	limit, offset := parsePagination(w, r)
 	if offset == -1 || limit == -1 {
 		w.WriteHeader(400)
 		return
@@ -582,6 +620,20 @@ func contestMatchManualHandler(w http.ResponseWriter, r *http.Request) {
 	enc.Encode(m.ShortRepresentation())
 }
 
+func contestMatchManualScriptHandler(w http.ResponseWriter, r *http.Request) {
+	_, c := middlewareContestModeratorVerify(w, r)
+	if c.Id == -1 {
+		return
+	}
+
+	arg := r.PostFormValue("arg")
+	if err := c.ExecuteScriptOnManual(arg); err != nil {
+		panic(err)
+	}
+
+	w.WriteHeader(200)
+}
+
 func contestMatchDetailsHandler(w http.ResponseWriter, r *http.Request) {
 	u := middlewareAuthRetrieve(w, r)
 	c := middlewareReferredContest(w, r, u)
@@ -614,16 +666,40 @@ func contestMatchDetailsHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func contestScriptLogHandler(w http.ResponseWriter, r *http.Request) {
+	if len(r.URL.Query()["full"]) < 1 {
+		w.WriteHeader(400)
+		return
+	}
+	full := r.URL.Query()["full"][0]
+	if full != "0" && full != "1" {
+		w.WriteHeader(400)
+		return
+	}
+
 	_, c := middlewareContestModeratorVerify(w, r)
 	if c.Id == -1 {
 		return
 	}
 
-	err, s := c.ReadScriptLog()
-	if err != nil {
-		panic(err)
+	var err error
+	var s string
+
+	if full == "1" {
+		// Full log
+		err, s = c.ReadScriptLog()
+		if err != nil {
+			panic(err)
+		}
+		// Write file name
+		w.Header().Set("Content-Disposition",
+			"attachment; filename=\"contest_log_"+strconv.FormatInt(int64(c.Id), 10)+
+				"_"+time.Now().Format("20060102150405")+".txt\"")
+	} else {
+		// Tail log
+		s = c.TailLog()
 	}
 
+	w.WriteHeader(200)
 	w.Write([]byte(s))
 }
 
@@ -639,9 +715,11 @@ func init() {
 	registerRouterFunc("/contest/{cid:[0-9]+}/my", contestSubmissionHistoryHandlerUser, "GET")
 	registerRouterFunc("/contest/{cid:[0-9]+}/submission/list", contestSubmissionHistoryHandlerAll, "GET")
 	registerRouterFunc("/contest/{cid:[0-9]+}/delegate", contestDelegateHandler, "POST")
+	registerRouterFunc("/contest/{cid:[0-9]+}/my_delegate", myDelegateHandler, "GET")
 	registerRouterFunc("/contest/{cid:[0-9]+}/ranklist", contestRanklistHandler, "GET")
 	registerRouterFunc("/contest/{cid:[0-9]+}/matches", contestMatchesHandler, "GET")
 	registerRouterFunc("/contest/{cid:[0-9]+}/match/manual", contestMatchManualHandler, "POST")
+	registerRouterFunc("/contest/{cid:[0-9]+}/match/manual_script", contestMatchManualScriptHandler, "POST")
 	registerRouterFunc("/contest/{cid:[0-9]+}/match/{mid:[0-9]+}", contestMatchDetailsHandler, "GET")
 	registerRouterFunc("/contest/{cid:[0-9]+}/script_log", contestScriptLogHandler, "GET")
 }

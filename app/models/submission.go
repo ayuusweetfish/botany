@@ -105,7 +105,7 @@ func SubmissionHistory(uid int32, cid int32, limit, offset int) ([]map[string]in
 			"FROM submission "+
 			"LEFT JOIN users ON submission.uid = users.id "+
 			"WHERE contest = $1 "+
-			"ORDER BY submission.created_at DESC LIMIT $2 OFFSET $3",
+			"ORDER BY submission.created_at DESC, submission.id DESC LIMIT $2 OFFSET $3",
 			cid, limit, offset)
 	} else {
 		// Specific user
@@ -115,7 +115,7 @@ func SubmissionHistory(uid int32, cid int32, limit, offset int) ([]map[string]in
 			"FROM submission "+
 			"LEFT JOIN users ON submission.uid = users.id "+
 			"WHERE uid = $1 AND contest = $2 "+
-			"ORDER BY submission.created_at DESC",
+			"ORDER BY submission.created_at DESC, submission.id DESC",
 			uid, cid)
 	}
 	if err != nil {
