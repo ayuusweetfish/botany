@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/gorilla/mux"
 )
@@ -670,11 +671,16 @@ func contestScriptLogHandler(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			panic(err)
 		}
+		// Write file name
+		w.Header().Set("Content-Disposition",
+			"attachment; filename=\"contest_log_" + strconv.FormatInt(int64(c.Id), 10) +
+			"_" + time.Now().Format("20060102150405") + ".txt\"")
 	} else {
 		// Tail log
 		s = c.TailLog()
 	}
 
+	w.WriteHeader(200)
 	w.Write([]byte(s))
 }
 
