@@ -673,8 +673,8 @@ func contestScriptLogHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		// Write file name
 		w.Header().Set("Content-Disposition",
-			"attachment; filename=\"contest_log_" + strconv.FormatInt(int64(c.Id), 10) +
-			"_" + time.Now().Format("20060102150405") + ".txt\"")
+			"attachment; filename=\"contest_log_"+strconv.FormatInt(int64(c.Id), 10)+
+				"_"+time.Now().Format("20060102150405")+".txt\"")
 	} else {
 		// Tail log
 		s = c.TailLog()

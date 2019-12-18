@@ -461,7 +461,7 @@
 - 空响应 Content-Length: 0
 - 非管理员不能查看日志
 
-### :construction: 手动执行赛制脚本 POST /contest/{cid}/match/manual_script
+### 手动执行赛制脚本 POST /contest/{cid}/match/manual_script
 
 请求
 - **arg** (string) 需要传递的参数

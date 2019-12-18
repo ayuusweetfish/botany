@@ -232,13 +232,13 @@ func luaCreateMatch(L *lua.LState) int {
 	return 0
 }
 
-func (c *Contest) ExecuteScriptOnTimer() error {
+func (c *Contest) ExecuteScript(fnName string, args ...lua.LValue) error {
 	L := c.LuaState()
 
 	// Find `on_timer` global function
-	val := L.GetGlobal("on_timer")
-	if val.Type() != lua.LTFunction {
-		return errors.New("Lua global `on_timer` should be a function")
+	fn := L.GetGlobal(fnName)
+	if fn.Type() != lua.LTFunction {
+		return errors.New("Lua global `" + fnName + "` should be a function")
 	}
 
 	// Retrieve all contestants and make a Lua table
@@ -253,10 +253,10 @@ func (c *Contest) ExecuteScriptOnTimer() error {
 
 	// Call Lua function
 	err = L.CallByParam(lua.P{
-		Fn:      val,
+		Fn:      fn,
 		NRet:    0,
 		Protect: true,
-	}, t)
+	}, append([]lua.LValue{t}, args...)...)
 	if err != nil {
 		return err
 	}
@@ -275,7 +275,7 @@ func timerForAllContests() {
 		}
 		for _, c := range cs {
 			if c.IsRunning() {
-				if err := c.ExecuteScriptOnTimer(); err != nil {
+				if err := c.ExecuteScript("on_timer"); err != nil {
 					log.Println(err.Error())
 					continue
 				}

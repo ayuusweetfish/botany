@@ -73,6 +73,10 @@ function on_timer(all)
         if i > 1 then create_match(all[i], all[i - 1]) end
     end
 end
+
+function on_manual(all, arg)
+    print('Manual', arg)
+end
 `
 		c := Contest{
 			Title:     "Grand Contest " + strconv.Itoa(i),
