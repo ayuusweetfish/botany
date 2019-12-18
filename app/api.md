@@ -411,6 +411,7 @@
 	- **participant** (UserShort) 参赛者
 	- **rating** (number) 匹配积分
 	- **performance** (string) 额外战绩数据
+	- **delegate** 当前使用提交id, -1表示没有
 
 ### 对局列表 GET /contest/{cid}/matches
 

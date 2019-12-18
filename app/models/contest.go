@@ -254,11 +254,12 @@ func (c *Contest) PartParticipation(limit, offset int) ([]ContestParticipation, 
 		"contest_participation.type, "+
 		"contest_participation.rating, "+
 		"contest_participation.performance, "+
+		"COALESCE(contest_participation.delegate, -1), "+
 		"users.id, users.handle, users.privilege, users.nickname "+
 		"FROM contest_participation "+
 		"LEFT JOIN users ON contest_participation.uid = users.id "+
 		"WHERE contest = $1 AND type = $2"+
-		"ORDER BY contest_participation.rating DESC, users.id ASC LIMIT $3 OFFSET $4",
+		"ORDER BY contest_participation.rating DESC, users.handle ASC LIMIT $3 OFFSET $4",
 		c.Id, ParticipationTypeContestant, limit, offset)
 	if err != nil {
 		return nil, 0, err
@@ -267,7 +268,7 @@ func (c *Contest) PartParticipation(limit, offset int) ([]ContestParticipation, 
 	ps := []ContestParticipation{}
 	for rows.Next() {
 		p := ContestParticipation{Contest: c.Id}
-		err := rows.Scan(&p.Type, &p.Rating, &p.Performance,
+		err := rows.Scan(&p.Type, &p.Rating, &p.Performance, &p.Delegate,
 			&p.Rel.User.Id, &p.Rel.User.Handle,
 			&p.Rel.User.Privilege, &p.Rel.User.Nickname)
 		if err != nil {
@@ -374,6 +375,7 @@ func (p *ContestParticipation) Representation() map[string]interface{} {
 		"participant": p.Rel.User.ShortRepresentation(),
 		"rating":      p.Rating,
 		"performance": p.Performance,
+		"delegate":    p.Delegate,
 	}
 }
 
