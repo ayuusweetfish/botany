@@ -159,3 +159,10 @@ end
 		}
 	}
 }
+
+func FakeMatches() {
+	_, err := db.Exec("UPDATE match SET status = $1", MatchStatusDone)
+	if err != nil {
+		panic(err)
+	}
+}
