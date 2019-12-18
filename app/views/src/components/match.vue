@@ -20,7 +20,7 @@
     <el-row style="margin-top: 20px; margin-bottom: 20px" :gutter="10">
       <el-col v-for="(item, index) in parties" :key="index" :span="8">
         <el-card>
-          <el-avatar :size="80"></el-avatar>
+          <el-avatar :src="avatar" :size="80"></el-avatar>
           <div style="font-size: 16px; font-weight: 600">{{item.participant.nickname}}</div>
           <router-link
             style="font-size: 16px; color: #409EFF; text-decoration: none"
@@ -41,7 +41,8 @@
       <el-card body-style="min-height: 480px">
         <div align="left" style="font-size: 24px; font-weight: 600">比赛回放</div>
         <div>
-          <iframe :srcdoc="onstage" style="min-height: 400px; width: 100%;" scrolling="yes"></iframe>
+          <img src="../assets/report.png"/>
+          <!-- <iframe :srcdoc="onstage" style="min-height: 400px; width: 100%;" scrolling="yes"></iframe> -->
         </div>
       </el-card>
     </el-row>
@@ -75,30 +76,15 @@ export default {
     this.getInfo()
   },
   data () {
-    let fakeHtml = '<html>' +
-                    '<body>' +
-                    '<script type="text/javascript">' +
-                    'function fun(){' +
-                    'let canvas = document.getElementById("pic");' +
-                    'let ctx = canvas.getContext("2d");' +
-                    'ctx.fillStyle="#FF0000";' +
-                    'ctx.fillRect(0,0,80,100);' +
-                    'console.log(1024);' +
-                    '}' +
-                    '<\/script>' +
-                    '<div id="text">hello world</div>' +
-                    '<canvas id="pic"></canvas>' +
-                    '<span onclick="fun()">test</span>' +
-                    '</body>' +
-                  '</html>'
     return {
       parties: [],
       mid: '',
       cid: '',
       status: 0,
       myRole: -1,
-      fake: fakeHtml,
-      onstage: ''
+      fake: '',
+      onstage: '',
+      avatar: require('../assets/logo.png')
     }
   },
   methods: {
