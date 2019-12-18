@@ -31,6 +31,9 @@ const char *judge_chroot;
 static redisContext *rctx;
 static char wid[32];
 
+static const char *sig_key = NULL;
+static size_t sig_key_len;
+
 void process_compile(redisReply *kv);
 void process_match(redisReply *kv);
 
@@ -43,11 +46,11 @@ int main(int argc, char *argv[])
 
     // Parse command line
     int c;
-    while ((c = getopt(argc, argv, "ha:p:i:d:")) != -1) {
+    while ((c = getopt(argc, argv, "ha:p:i:d:k:")) != -1) {
         switch (c) {
         case 'h':
             printf("Usage: %s [-h] [-a redis_addr] [-p redis_port] "
-                "[-i worker_id] [-d chroot_path]\n", argv[0]);
+                "[-i worker_id] [-d chroot_path] [-k sig_key]\n", argv[0]);
             exit(0);
         case 'a':
             redis_addr = optarg;
@@ -61,12 +64,17 @@ int main(int argc, char *argv[])
         case 'd':
             judge_chroot = optarg;
             break;
+        case 'k':
+            sig_key = optarg;
+            break;
         }
     }
     if (redis_addr == NULL) redis_addr = "127.0.0.1";
     if (redis_port == 0) redis_port = 6379;
     if (worker_id == 0) worker_id = (int)getpid();
     if (judge_chroot == NULL) judge_chroot = "/";
+    if (sig_key == NULL) sig_key = "aha";
+    sig_key_len = strlen(sig_key);
 
     // Get to work
     snprintf(wid, sizeof wid, CLI_NAME_FMT, worker_id);
@@ -164,8 +172,6 @@ void retrieve_submission(const char *sid, char **lang, char **contents)
 {
     // Generate signature
     const char *hex = "0123456789abcdef";
-    const char *sig_key = "aha";
-    size_t sig_key_len = strlen(sig_key);
 
     char ts[32], sig[65];
     uint8_t digest[32];

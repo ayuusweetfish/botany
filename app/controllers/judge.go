@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"github.com/kawa-yoiko/botany/app/globals"
 	"github.com/kawa-yoiko/botany/app/models"
 
 	"encoding/hex"
@@ -35,7 +36,7 @@ func judgeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h, err := blake2b.New256([]byte("aha"))
+	h, err := blake2b.New256([]byte(globals.Config().JudgeSigKey))
 	if err != nil {
 		panic(err)
 	}
