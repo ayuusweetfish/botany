@@ -446,7 +446,7 @@
 - 空内容
 - 非管理员不能手动发起对局
 
-### 赛制脚本日志 GET /contest/{cid}/match/script_log
+### 赛制脚本日志 GET /contest/{cid}/script_log
 
 响应 200
 - 大量纯文本
