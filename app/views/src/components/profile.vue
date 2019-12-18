@@ -58,7 +58,7 @@
             <div style="display: inline">{{nickname}}</div>
             <div style="display: inline">@Botany</div>
           </div>
-          <el-avatar :size="size" style="margin-bottom: 20px"></el-avatar>
+          <el-avatar :src="defaultAva" :size="size" style="margin-bottom: 20px"></el-avatar>
           <div style="margin-left: 20px; margin-right: 20px">
             <el-row class="profile-item">
               <el-col :span="4">
@@ -299,6 +299,7 @@ export default {
       }
     }
     return {
+      defaultAva: require('../assets/logo.png'),
       tableLoading: false,
       activeContests: [],
       password: false,

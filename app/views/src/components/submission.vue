@@ -24,8 +24,8 @@
         </div>
       </el-card>
     </el-row>
-    <el-row :gutter="20">
-      <el-col :span="18">
+    <el-row :gutter="16">
+      <el-col :span="17">
         <el-row style="margin-bottom: 10px">
           <el-card body-style="min-height: 360px" v-loading="codeLoading">
             <div align="left" style="font-size: 18px; font-weight: 600; margin-bottom: 20px">代码编辑</div>
@@ -48,7 +48,7 @@
           </el-card>
         </el-row>
       </el-col>
-      <el-col :span="6">
+      <el-col :span="7">
         <el-card body-style="min-height: 480px">
           <div align="left" style="font-size: 18px; font-weight: 600; margin-bottom: 20px">主战代码</div>
             <div v-if="mainCode.sid!==''">
@@ -58,10 +58,10 @@
               <el-button type="text" size="small" @click="setDelegate(-1)">设为非主战</el-button>
             </div>
             <div v-else style="margin-bottom: 20px; font-size: 14px; color: gray">你还没有设置主战代码</div>
-          <div align="left" style="font-size: 18px; font-weight: 600; margin-bottom: 20px">历史代码</div>
+          <div align="left" style="font-size: 18px; font-weight: 600; margin-bottom: 20px">其他历史代码</div>
           <el-timeline align="left">
             <el-timeline-item
-              v-for="(activity, index) in history"
+              v-for="(activity, index) in historyPart"
               :key="index"
               :timestamp="activity.time"
               :color="activity.color"
@@ -80,6 +80,16 @@
               >设为主战</el-button>
             </el-timeline-item>
           </el-timeline>
+          <el-pagination
+            :total="history.length"
+            :current-page="page"
+            :page-size="3"
+            @current-change="handleCurrentChange"
+            :pager-count="4"
+            layout="prev, pager, next"
+            size="small"
+          >
+          </el-pagination>
         </el-card>
       </el-col>
     </el-row>
@@ -102,6 +112,7 @@ export default {
     return {
       code: '',
       lang: '',
+      page: 1,
       mainCode: {
         sid: '',
         time: '',
@@ -113,6 +124,7 @@ export default {
       canSubmit: true,
       submitText: '提交(作为新记录)',
       history: [],
+      historyPart: [],
       topbarTime: '',
       topbarID: '',
       topbarText: '新代码',
@@ -136,6 +148,15 @@ export default {
     }
   },
   methods: {
+    handleCurrentChange (val) {
+      this.page = val
+      this.updateHistoryPart()
+    },
+    updateHistoryPart () {
+      let start = (this.page - 1) * 3
+      let end = start + 3
+      this.historyPart = this.history.slice(start, end)
+    },
     compareTime () {
       this.$axios.get(
         '/contest/' + this.cid + '/info'
@@ -219,6 +240,8 @@ export default {
           if (this.history.length === 0 && this.mainCode.sid === '') {
             this.topbarText = '尚未提交代码'
           }
+          this.page = 1
+          this.updateHistoryPart()
           loading.close()
         }).catch(err => {
           console.log(err)
