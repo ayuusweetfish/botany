@@ -369,7 +369,7 @@ func contestSubmissionHistoryHandlerCommon(w http.ResponseWriter, r *http.Reques
 		return
 	}
 	if subType == 0 {
-		limit, offset := paginationHandler(w, r)
+		limit, offset := parsePagination(w, r)
 		if limit == -1 || offset == -1 {
 			w.WriteHeader(400)
 			return
@@ -516,7 +516,7 @@ func contestRanklistHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(404)
 		return
 	}
-	limit, offset := paginationHandler(w, r)
+	limit, offset := parsePagination(w, r)
 	if limit == -1 || offset == -1 {
 		w.WriteHeader(400)
 		return
@@ -548,7 +548,7 @@ func contestMatchesHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	limit, offset := paginationHandler(w, r)
+	limit, offset := parsePagination(w, r)
 	if offset == -1 || limit == -1 {
 		w.WriteHeader(400)
 		return

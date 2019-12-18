@@ -257,7 +257,7 @@
 - **is_visible** (boolean) 是否公开显示
 - **is_reg_open** (boolean) 是否公开接受报名
 - **moderators** ([number]) 管理员的 ID 列表，用逗号分隔
-- :construction: **script** (string) 赛制脚本
+- **script** (string) 赛制脚本
 
 响应 200
 - **id** (number) 新比赛的 ID
@@ -332,8 +332,8 @@
 ### 所有提交历史 GET /contest/{cid}/submission/list
 
 请求
-- :construction: **page** (optional number) 请求的页数
-- :construction: **count** (optional number) 每页的个数
+- **page** (optional number) 请求的页数
+- **count** (optional number) 每页的个数
 
 响应 200
 - **total** (number) 提交历史总数
@@ -392,36 +392,35 @@
 ### 查询出战提交 GET /contest/{cid}/my_delegate
 
 响应 200
-- **submission** (number) 当前使用的submission的ID
-    - 如果等于-1表示当前没有正在使用的提交
-    
+- **submission** (number) 当前出战提交（没有则为 -1）
+ 
 响应 403 
-- 空内容
+- 空响应 Content-Length: 0
 - 比赛未开始或未报名比赛
 
 ### 排行榜 GET /contest/{cid}/ranklist
 
 请求
-- :construction: **page** (optional number) 请求的页数
-- :construction: **count** (optional number) 每页的个数
+- **page** (optional number) 请求的页数
+- **count** (optional number) 每页的个数
 
 响应 200
-- :construction: **total** 当前玩家总数
-- :construction: **participants** 一个数组，按排名从高到低排序，如遇并列则按选手登录名字典序升序排列。每个元素如下
+- **total** 当前玩家总数
+- **participants** 一个数组，按排名从高到低排序，如遇并列则按选手登录名字典序升序排列。每个元素如下
 	- **participant** (UserShort) 参赛者
 	- **rating** (number) 匹配积分
 	- **performance** (string) 额外战绩数据
-	- **delegate** 当前使用提交id, -1表示没有
+	- **delegate** (number) 出战提交 ID
 
 ### 对局列表 GET /contest/{cid}/matches
 
 请求
-- :construction: **page** (optional number) 请求的页数
-- :construction: **count** (optional number) 每页的个数
+- **page** (optional number) 请求的页数
+- **count** (optional number) 每页的个数
 
 响应
-- :construction: **total** (number) 对局总数
-- :construction: **matches** ([MatchShort]) 若干 MatchShort 组成的数组，从最新到最旧排序
+- **total** (number) 对局总数
+- **matches** ([MatchShort]) 若干 MatchShort 组成的数组，从最新到最旧排序
 
 ### 对局详情 GET /contest/{cid}/match/{mid}
 
@@ -439,11 +438,11 @@
 - 一个 MatchShort
 
 响应 400
-- 空内容
+- 空响应 Content-Length: 0
 - 格式不正确
 
 响应 403
-- 空内容
+- 空响应 Content-Length: 0
 - 非管理员不能手动发起对局
 
 ### 赛制脚本日志 GET /contest/{cid}/script_log
