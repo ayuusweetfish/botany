@@ -120,22 +120,45 @@ func (m *Match) Read() error {
 }
 
 func ReadByContest(cid int32) ([]Match, error) {
-	rows, err := db.Query("SELECT id FROM match WHERE contest = $1 ORDER BY id DESC", cid)
+	rows, err := db.Query("SELECT match.id, match.status, match.report, "+
+		"contest.title, s.id, s.created_at, s.status, s.language, "+
+		"u.id, u.handle, u.nickname, u.privilege "+
+		"FROM match LEFT JOIN contest ON contest.id = match.contest "+
+		"LEFT JOIN match_party ON match_party.match = match.id "+
+		"LEFT JOIN submission s on s.id = match_party.submission "+
+		"LEFT JOIN users u on s.uid = u.id "+
+		"WHERE match.contest = $1 ORDER BY match.id DESC", cid)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 	ms := []Match{}
+	var mid int32 = -1
+	mlen := 0
 	for rows.Next() {
 		m := Match{Contest: cid}
-		err := rows.Scan(&m.Id)
+		c := Contest{Id: cid}
+		s := Submission{Contest: cid}
+		u := User{}
+		err := rows.Scan(&m.Id, &m.Status, &m.Report, &c.Title,
+			&s.Id, &s.CreatedAt, &s.Status, &s.Language,
+			&u.Id, &u.Handle, &u.Nickname, &u.Privilege)
 		if err != nil {
 			return nil, err
 		}
+		s.Rel.User = u
+		if m.Id != mid || mid == -1 {
+			mid = m.Id
+			m.Rel.Contest = c
+			m.Rel.Parties = append(m.Rel.Parties, s)
+			ms = append(ms, m)
+			mlen += 1
+		} else {
+			ms[mlen-1].Rel.Parties = append(ms[mlen-1].Rel.Parties, s)
+		}
 		// TODO: Optimize
-		m.Read()
-		m.LoadRel()
-		ms = append(ms, m)
+		// m.LoadRel()
+		// ms = append(ms, m)
 	}
 	return ms, rows.Err()
 }
