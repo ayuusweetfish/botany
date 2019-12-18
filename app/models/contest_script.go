@@ -232,7 +232,7 @@ func luaCreateMatch(L *lua.LState) int {
 	return 0
 }
 
-func (c *Contest) ExecuteScript(fnName string, args ...lua.LValue) error {
+func (c *Contest) ExecuteScriptFunction(fnName string, args ...lua.LValue) error {
 	L := c.LuaState()
 
 	// Find `on_timer` global function
@@ -265,6 +265,18 @@ func (c *Contest) ExecuteScript(fnName string, args ...lua.LValue) error {
 	return nil
 }
 
+func (c *Contest) ExecuteScriptOnSubmission(from int32) error {
+	return c.ExecuteScriptFunction("on_submission", lua.LNumber(from))
+}
+
+func (c *Contest) ExecuteScriptOnTimer() error {
+	return c.ExecuteScriptFunction("on_timer")
+}
+
+func (c *Contest) ExecuteScriptOnManual(arg string) error {
+	return c.ExecuteScriptFunction("on_manual", lua.LString(arg))
+}
+
 func timerForAllContests() {
 	for {
 		time.Sleep(2 * time.Second)
@@ -275,7 +287,7 @@ func timerForAllContests() {
 		}
 		for _, c := range cs {
 			if c.IsRunning() {
-				if err := c.ExecuteScript("on_timer"); err != nil {
+				if err := c.ExecuteScriptOnTimer(); err != nil {
 					log.Println(err.Error())
 					continue
 				}

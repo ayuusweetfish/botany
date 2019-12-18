@@ -615,6 +615,20 @@ func contestMatchManualHandler(w http.ResponseWriter, r *http.Request) {
 	enc.Encode(m.ShortRepresentation())
 }
 
+func contestMatchManualScriptHandler(w http.ResponseWriter, r *http.Request) {
+	_, c := middlewareContestModeratorVerify(w, r)
+	if c.Id == -1 {
+		return
+	}
+
+	arg := r.PostFormValue("arg")
+	if err := c.ExecuteScriptOnManual(arg); err != nil {
+		panic(err)
+	}
+
+	w.WriteHeader(200)
+}
+
 func contestMatchDetailsHandler(w http.ResponseWriter, r *http.Request) {
 	u := middlewareAuthRetrieve(w, r)
 	c := middlewareReferredContest(w, r, u)
@@ -700,6 +714,7 @@ func init() {
 	registerRouterFunc("/contest/{cid:[0-9]+}/ranklist", contestRanklistHandler, "GET")
 	registerRouterFunc("/contest/{cid:[0-9]+}/matches", contestMatchesHandler, "GET")
 	registerRouterFunc("/contest/{cid:[0-9]+}/match/manual", contestMatchManualHandler, "POST")
+	registerRouterFunc("/contest/{cid:[0-9]+}/match/manual_script", contestMatchManualScriptHandler, "POST")
 	registerRouterFunc("/contest/{cid:[0-9]+}/match/{mid:[0-9]+}", contestMatchDetailsHandler, "GET")
 	registerRouterFunc("/contest/{cid:[0-9]+}/script_log", contestScriptLogHandler, "GET")
 }
