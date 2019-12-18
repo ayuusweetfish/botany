@@ -5,6 +5,7 @@ import (
 
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -311,7 +312,9 @@ func contestSubmitHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Invoke contest script
 	if err := c.ExecuteScriptOnSubmission(u.Id); err != nil {
-		panic(err)
+		if !errors.Is(err, models.ErrLua) {
+			panic(err)
+		}
 	}
 
 	// Success
@@ -628,7 +631,9 @@ func contestMatchManualScriptHandler(w http.ResponseWriter, r *http.Request) {
 
 	arg := r.PostFormValue("arg")
 	if err := c.ExecuteScriptOnManual(arg); err != nil {
-		panic(err)
+		if !errors.Is(err, models.ErrLua) {
+			panic(err)
+		}
 	}
 
 	w.WriteHeader(200)

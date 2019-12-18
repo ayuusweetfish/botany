@@ -10,6 +10,21 @@ import (
 	"github.com/yuin/gopher-lua"
 )
 
+type ErrLuaType struct {
+	Inner   error
+	Message string
+}
+
+var ErrLua = errors.New("")
+
+func (e ErrLuaType) Unwrap() error {
+	return ErrLua
+}
+
+func (e ErrLuaType) Error() string {
+	return e.Message
+}
+
 var lCodes = map[int32]string{}
 var lStates = map[int32]*lua.LState{}
 var lCIDs = map[*lua.LState]int32{}
@@ -238,7 +253,7 @@ func (c *Contest) ExecuteScriptFunction(fnName string, args ...lua.LValue) error
 	// Find `on_timer` global function
 	fn := L.GetGlobal(fnName)
 	if fn.Type() != lua.LTFunction {
-		return errors.New("Lua global `" + fnName + "` should be a function")
+		return ErrLuaType{Message: "Lua global `" + fnName + "` should be a function"}
 	}
 
 	// Retrieve all contestants and make a Lua table
