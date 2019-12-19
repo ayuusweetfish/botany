@@ -289,7 +289,7 @@ export default {
   },
   data () {
     // eslint-disable-next-line camelcase
-    let email_validator = (rule, value, callback) => {
+    const email_validator = (rule, value, callback) => {
       if (!value) {
         callback(new Error('请输入邮箱'))
       } else if (!/^([a-zA-Z0-9]+[-_.]?)+@([a-zA-Z0-9]+\.)+[a-z]+$/.test(value)) {
@@ -320,18 +320,18 @@ export default {
       },
       rules: {
         nickname: [
-          {validator: this.$functions.globalValidator, trigger: 'blur'},
-          {required: true, message: '请输入昵称', trigger: 'blur'},
-          {min: 3, max: 16, message: '昵称应在3-16个字符之间', trigger: 'blur'}
+          { validator: this.$functions.globalValidator, trigger: 'blur' },
+          { required: true, message: '请输入昵称', trigger: 'blur' },
+          { min: 3, max: 16, message: '昵称应在3-16个字符之间', trigger: 'blur' }
         ],
         email: [
-          {validator: this.$functions.globalValidator, trigger: 'blur'},
-          {required: true, message: '请输入邮箱', trigger: 'blur'},
-          {validator: email_validator, trigger: 'blur'}
+          { validator: this.$functions.globalValidator, trigger: 'blur' },
+          { required: true, message: '请输入邮箱', trigger: 'blur' },
+          { validator: email_validator, trigger: 'blur' }
         ],
         bio: [
-          {validator: this.$functions.globalValidator, trigger: 'blur'},
-          {max: 255, message: '输入过长', trigger: 'blur'}
+          { validator: this.$functions.globalValidator, trigger: 'blur' },
+          { max: 255, message: '输入过长', trigger: 'blur' }
         ]
       },
       editingErr: {
@@ -359,13 +359,13 @@ export default {
     },
     getList () {
       this.tableLoading = true
-      let params = {
-        'page': this.page - 1,
-        'count': this.count
+      const params = {
+        page: this.page - 1,
+        count: this.count
       }
       this.$axios.get(
         '/user/' + this.handle + '/profile',
-        {params: params}
+        { params: params }
       ).then(res => {
         console.log(res.data)
         this.nickname = res.data.user.nickname
@@ -392,7 +392,7 @@ export default {
         this.minor = []
         this.major = []
         res.data.contests.forEach(item => {
-          let dateTimeString = this.$functions.dateTimeString(item.start_time) + ' 到 ' + this.$functions.dateTimeString(item.end_time)
+          const dateTimeString = this.$functions.dateTimeString(item.start_time) + ' 到 ' + this.$functions.dateTimeString(item.end_time)
           this.major.push({
             id: item.id,
             title: item.title,
@@ -419,10 +419,10 @@ export default {
       this.editing = true
     },
     submitEdit () {
-      this.$refs['editform'].validate(valid => {
+      this.$refs.editform.validate(valid => {
         if (valid) {
-          const loading = this.$loading({lock: true, text: '处理中'})
-          let params = this.$qs.stringify({
+          const loading = this.$loading({ lock: true, text: '处理中' })
+          const params = this.$qs.stringify({
             nickname: this.editingInfo.nickname,
             email: this.editingInfo.email,
             bio: this.editingInfo.bio
@@ -451,14 +451,14 @@ export default {
       this.major = []
     },
     getInfo () {
-      const loading = this.$loading({lock: true, text: '加载中'})
-      let params = {
-        'page': this.page - 1,
-        'count': this.count
+      const loading = this.$loading({ lock: true, text: '加载中' })
+      const params = {
+        page: this.page - 1,
+        count: this.count
       }
       this.$axios.get(
         '/user/' + this.handle + '/profile',
-        {params: params}
+        { params: params }
       ).then(res => {
         console.log(res.data)
         this.nickname = res.data.user.nickname
@@ -484,7 +484,7 @@ export default {
         }
         this.major = []
         res.data.contests.forEach(item => {
-          let dateTimeString = this.$functions.dateTimeString(item.start_time) + ' 到 ' + this.$functions.dateTimeString(item.end_time)
+          const dateTimeString = this.$functions.dateTimeString(item.start_time) + ' 到 ' + this.$functions.dateTimeString(item.end_time)
           this.major.push({
             id: item.id,
             title: item.title,
