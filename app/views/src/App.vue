@@ -1,27 +1,21 @@
 <template>
   <div id="app">
-    <div style="position: fixed; z-index: 100">
-      <el-row class = "topbar" type="flex" justify="space-between">
-        <el-col :span="8" v-if="$route.meta.navbarType !== 'contest'" class="topbar-tittle">
-          <div align='left' @click="$router.push('/')" style="cursor: pointer">Botany-Demo</div>
-        </el-col>
-        <el-col :span="8" v-if="$route.meta.navbarType === 'contest'" class="topbar-tittle">
-          <div style="display: inline">{{$store.state.contestInfo.title}}</div>
-        </el-col>
-        <!-- <el-col :span="6" v-if="$route.meta.navbarType === 'main'" align='left'>
-          <div style="display: inline; color:gray">|</div>
-          <router-link class="navbar-item" to="/">比赛列表</router-link>
-          <div style="display: inline; color:gray">|</div>
-          <router-link class="navbar-item" to="/profile">个人信息</router-link>
-          <div style="display: inline; color:gray">|</div>
-        </el-col> -->
-        <el-col :span="12" v-if="$route.meta.navbarType === 'contest'" align='center'>
-          <router-link class="navbar-item" :to="{path:'/contest_main', query: {cid: $route.query.cid}}">比赛首页</router-link>
+    <div id="topbar-background">
+      <div id="navbar-container" align="left">
+        <div id="navbar-banner">
+          <img height="60px" :src="require('./assets/botany.png').default" @click="$router.push('/')"/>
+        </div>
+        <el-divider direction="vertical"></el-divider>
+        <div v-if="$route.meta.navbarType === 'contest'" class="contest-title-container">{{$store.state.contestInfo.title}}</div>
+        <div v-else class="contest-title-container">博坛</div>
+        <div v-if="$route.meta.navbarType === 'contest'" id="router-links-container">
+          <router-link class="main-router-links" :to="{path:'/contest_main', query: {cid: $route.query.cid}}">比赛首页</router-link>
           <el-dropdown
             :hide-on-click="true"
-            trigger="click"
+            :show-timeout="0"
+            placement="bottom"
           >
-            <span class="navbar-item" style="cursor: pointer;">比赛操作<i class="el-icon-arrow-down"></i></span>
+            <span class="main-router-links" style="cursor: pointer;">比赛操作<i class="el-icon-arrow-down"></i></span>
             <el-dropdown-menu slot="dropdown">
               <router-link class="navbar-block" :to="{path:'/contest_detail', query: {cid: $route.query.cid}}">
                 <el-dropdown-item style="width: 110px; font-size: 16px"><i class="el-icon-magic-stick"></i>参赛指南</el-dropdown-item>
@@ -40,16 +34,12 @@
               </router-link>
             </el-dropdown-menu>
           </el-dropdown>
-          <!-- <el-button type="text" class="navbar-item" @click="gocontestranking">查看排行</el-button>
-          <div style="display: inline; color:gray">|</div>
-          <el-button type="text" class="navbar-item" @click="gocontestvss">查看对局</el-button>
-          <div style="display: inline; color:gray">|</div> -->
-          <router-link class="navbar-item" to="/">返回Botany</router-link>
-        </el-col>
-        <el-col :span="4" v-if="$route.meta.navbarType !== 'none'">
+          <router-link class="main-router-links" to="/">返回Botany</router-link>
+        </div>
+        <div v-if="$route.meta.navbarType!=='none'" id="avatar-container">
           <el-dropdown v-if="$store.state.handle" :hide-on-click="true" @command="handleCommand" trigger="click">
             <span class="el-dropdown-link" style="cursor: pointer;">
-              <el-avatar :src="defaultAva"></el-avatar>
+              <el-avatar :src="defaultAva" size="medium" style="margin-top: 4px"></el-avatar>
             </span>
             <el-dropdown-menu  slot="dropdown" style="min-width: 120px; padding: 2px 10px 2px 10px;">
               <el-dropdown-item :disabled="true" class="info-dropdown-item" style="color: #505050; font-weight: 600; border-bottom: 1px solid silver">{{$store.state.nickname}}</el-dropdown-item>
@@ -64,28 +54,27 @@
               <el-dropdown-item command="logout" class="button-dropdown-item">退出登录</el-dropdown-item>
             </el-dropdown-menu>
           </el-dropdown>
-          <div v-else>
-            <el-link :underline="false" type="primary" class="login-button" @click="goLogin">登录</el-link>
+          <div v-else id="login-button-container">
+            <el-link :underline="false" type="primary" class="login-button" style="font-size: 18px" @click="goLogin">登录</el-link>
             <el-divider direction="vertical"></el-divider>
-            <el-link :underline="false" type="" class="login-button" @click="goSignup">注册</el-link>
+            <el-link :underline="false" class="login-button" style="font-size: 18px" @click="goSignup">注册</el-link>
           </div>
-        </el-col>
-      </el-row>
+        </div>
+      </div>
+      <div v-if="$route.meta.navbarType !== 'none'" align="left" id="breadcrumb-container">
+        <div v-if="$store.state.routeList.length !== 0" id="breadcrumb-start">123</div>
+        <el-breadcrumb separator="->" style="display: inline-block; margin-left: 2px;">
+          <el-breadcrumb-item
+            v-for="(item) in $store.state.routeList"
+            :key="item.path"
+          >
+            <router-link :to="{path: item.path, query: item.query}">{{item.title}}</router-link>
+          </el-breadcrumb-item>
+        </el-breadcrumb>
+      </div>
     </div>
     <password-dialog :visible.sync="showPwdDlg" @setVisible="setPasswordDialog"></password-dialog>
-    <el-row style="margin-bottom: 10px">
-      <el-col :span="24">
-        <div v-if="$route.meta.navbarType !== 'none'" align="left">
-          <i class = "el-icon-caret-right" v-if="$store.state.routeList.length !== 0" style="display: inline-block"></i>
-          <el-breadcrumb separator="/" style = "display: inline-block; margin-left: 2px">
-            <el-breadcrumb-item v-for="(item) in $store.state.routeList" :key="item.path">
-              <router-link :to="{path: item.path, query: item.query}">{{item.title}}</router-link>
-            </el-breadcrumb-item>
-          </el-breadcrumb>
-        </div>
-      </el-col>
-    </el-row>
-    <router-view/>
+    <router-view class="main-view" style="margin-top: 90px"/>
   </div>
 </template>
 
@@ -97,6 +86,18 @@ export default {
     'password-dialog': passwordDialog
   },
   created () {
+    window.onscroll = function () {
+      const sl = -Math.max(document.body.scrollLeft, document.documentElement.scrollLeft)
+      document.getElementById('topbar-background').style.left = sl + 'px'
+      const st = Math.max(document.body.scrollTop, document.documentElement.scrollTop)
+      if (st > 90) {
+        const top = document.getElementById('topbar-background')
+        top.style.borderBottom = '1px solid #dddddd'
+      } else {
+        const top = document.getElementById('topbar-background')
+        top.style.borderBottom = 'none'
+      }
+    }
     this.$axios.get('/whoami').then(res => {
       console.log(res.data)
       this.$store.commit('login', {
@@ -216,8 +217,84 @@ export default {
   color: #2c3e50;
   margin: auto;
   margin-top: 0px;
-  width: 1080px;
   font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+#topbar-background {
+  position: fixed;
+  background-color: white;
+  z-index: 90;
+  height: 86px;
+  top: 0px;
+  left: 0px;
+  width: 100%;
+  min-width: 1080px;
+  overflow: hidden;
+}
+#navbar-container {
+  background-color: white;
+  z-index: 100;
+  width: 1080px;
+  margin: auto;
+  top: 0px;
+  line-height: 44px;
+  height: 60px;
+}
+#navbar-banner {
+  vertical-align: middle;
+  display: inline-block;
+  cursor: pointer;
+}
+.contest-title-container{
+  font-size: 24px;
+  font-weight: 600;
+  display: inline-block;
+  align-self: auto;
+  padding: 0
+}
+#contest-title{
+  font-size: 24px;
+  font-weight: 600;
+  display: inline-block;
+}
+#router-links-container{
+  display: inline-block;
+  margin-left: 20px;
+}
+#avatar-container{
+  margin-top: 10px;
+  margin-right: 8px;
+  float: right;
+}
+#login-button-container{
+  float: right;
+}
+#my-nickname{
+  display: inline;
+  font-size: 14px;
+}
+#breadcrumb-container{
+  width: 1080px;
+  margin: auto;
+  align-items: center
+
+}
+#breadcrumb-start{
+  margin-left: 5px;
+  margin-right: 5px;
+  display: inline-block;
+  font-size: 14px;
+  height: 14px;
+  line-height: 1
+}
+.main-view{
+  width: 1080px;
+  margin: auto;
+}
+.main-router-links{
+  font-size: 18px;
+  text-decoration: none;
+  color: gray;
+  margin-right: 20px
 }
 .topbar {
   border-bottom: 1px solid silver;
@@ -226,20 +303,17 @@ export default {
   align-items: flex-end;
   margin-bottom: 10px;
   min-width: 720px;
-  min-height: 64px;
 }
 .topbar-tittle {
   font-weight: 600;
   font-size: 30px;
   text-align: left;
   margin-left: 20px;
-  line-height: 48px;
 }
 .navbar-item {
   font-size: 18px;
   font-weight: 500;
   color:#545454;
-  line-height: 48px;
   text-decoration: none;
   margin: 0px 10px 0px 10px;
 }
@@ -260,7 +334,6 @@ export default {
 .login-button {
   font-size: 18px;
   font-weight: 600;
-  height: 30px;
 }
 .cm-container .CodeMirror {
   height: auto;

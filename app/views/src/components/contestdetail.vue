@@ -21,7 +21,7 @@ export default {
   name: 'contestdetail',
   created () {
     this.cid = this.$route.query.cid
-    const loading = this.$loading({lock: true, text: '查询中'})
+    const loading = this.$loading({ lock: true, text: '查询中' })
     this.$axios.get(
       '/contest/' + this.cid + '/info'
     ).then(res => {

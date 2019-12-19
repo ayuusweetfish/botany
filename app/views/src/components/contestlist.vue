@@ -1,5 +1,5 @@
 <template>
-  <el-card>
+  <div>
     <div align="left" style="margin-left: 10px">
       <router-link
         v-if="$store.state.privilege===$consts.privilege.organizer"
@@ -10,7 +10,12 @@
       添加一场比赛
       </router-link>
     </div>
-    <el-table :data="contests" @row-click="goContestMain" :cell-style="{'cursor': 'pointer'}">
+    <el-table
+      :data="contests"
+      @row-click="goContestMain"
+      :cell-style="{'cursor': 'pointer'}"
+      v-loading="listLoading"
+    >
       <el-table-column :label="title">
         <template slot-scope="scope">
           <div>
@@ -32,7 +37,7 @@
         </template>
       </el-table-column>
     </el-table>
-  </el-card>
+  </div>
 </template>
 
 <script>
@@ -44,19 +49,20 @@ export default {
   data () {
     return {
       title: '',
-      contests: []
+      contests: [],
+      listLoading: false
     }
   },
   methods: {
     getContestList () {
-      const loading = this.$loading({lock: true, text: '正在查询比赛列表'})
+      this.listLoading = true
       this.$axios.get(
         '/contest/list'
       ).then(res => {
         this.contests = []
         res.data.forEach(element => {
-          let timeStartStr = this.$functions.dateTimeString(element.start_time)
-          let timeEndStr = this.$functions.dateTimeString(element.end_time)
+          const timeStartStr = this.$functions.dateTimeString(element.start_time)
+          const timeEndStr = this.$functions.dateTimeString(element.end_time)
           this.contests.push({
             id: element.id,
             name: element.title,
@@ -68,10 +74,10 @@ export default {
         })
         this.total = this.contests.length
         this.title = '当前共有' + this.total + '场比赛'
-        loading.close()
+        this.listLoading = false
       // eslint-disable-next-line handle-callback-err
       }).catch(err => {
-        loading.close()
+        this.listLoading = false
         this.$message.error('查询比赛列表失败')
       })
     },
