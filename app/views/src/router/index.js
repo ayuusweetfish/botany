@@ -1,100 +1,208 @@
 import Vue from 'vue'
 import Router from 'vue-router'
-import HelloWorld from '@/components/HelloWorld'
+// import HelloWorld from '@/components/HelloWorld'
 import login from '@/components/login'
-import register from '@/components/register'
-import gamelist from '@/components/gamelist'
-import gamemain from '@/components/gamemain'
-import gamedetail from '@/components/gamedetail'
-import coding from '@/components/coding'
-import gameranking from '@/components/gameranking'
-import gamevss from '@/components/gamevss'
-import vsdetail from '@/components/vsdetail'
-import personalinfo from '@/components/personalinfo'
+import signup from '@/components/signup'
+import contestlist from '@/components/contestlist'
+import contestmain from '@/components/contestmain'
+import contestdetail from '@/components/contestdetail'
+import submission from '@/components/submission'
+import ranklist from '@/components/ranklist'
+import matchlist from '@/components/matchlist'
+import match from '@/components/match'
+import profile from '@/components/profile'
+import contestcreate from '@/components/contestcreate'
+import contestedit from '@/components/contestedit'
+import notfound from '@/components/404'
+import submissionlist from '@/components/submissionlist'
+import submissioninfo from '@/components/submissioninfo'
+import contestscript from '@/components/scriptview'
 
 Vue.use(Router)
 
 export default new Router({
   routes: [
     {
-      path: '/',
+      path: '/login',
       name: 'login',
       component: login,
       meta: {
-        navbarType: 'none'
+        title: '登录',
+        navbarType: 'none',
+        prePage: [],
+        stalling: false
       }
     },
     {
-      path: '/register',
-      name: 'register',
-      component: register,
+      path: '/signup',
+      name: 'signup',
+      component: signup,
       meta: {
-        navbarType: 'none'
+        title: '注册',
+        navbarType: 'none',
+        prePage: [],
+        stalling: false
       }
     },
     {
-      path: '/gamelist',
-      name: 'gamelist',
-      component: gamelist,
+      path: '/',
+      name: 'contest_list',
+      component: contestlist,
       meta: {
-        navbarType: 'main'
+        title: '主页',
+        navbarType: 'main',
+        prePage: [],
+        stalling: false
       }
     },
     {
-      path: '/gamemain',
-      name: 'gamemain',
-      component: gamemain,
+      path: '/contest_main',
+      name: 'contest_main',
+      component: contestmain,
       meta: {
-        navbarType: 'game'
+        title: '比赛主页',
+        navbarType: 'contest',
+        prePage: [],
+        stalling: false
       }
     },
     {
-      path: '/gamedetail',
-      name: 'gamemdetail',
-      component: gamedetail,
+      path: '/contest_detail',
+      name: 'contest_detail',
+      component: contestdetail,
       meta: {
-        navbarType: 'game'
+        title: '参赛指南',
+        navbarType: 'contest',
+        prePage: [{path: '/contest_main', query: ['cid']}],
+        stalling: false
       }
     },
     {
-      path: '/coding',
-      name: 'coding',
-      component: coding,
+      path: '/submission',
+      name: 'submission',
+      component: submission,
       meta: {
-        navbarType: 'game'
+        title: '提交代码',
+        navbarType: 'contest',
+        prePage: [{path: '/contest_main', query: ['cid']}],
+        stalling: false
       }
     },
     {
-      path: '/gameranking',
-      name: 'gameranking',
-      component: gameranking,
+      path: '/ranklist',
+      name: 'ranklist',
+      component: ranklist,
       meta: {
-        navbarType: 'game'
+        title: '选手排行',
+        navbarType: 'contest',
+        prePage: [{path: '/contest_main', query: ['cid']}],
+        stalling: false
       }
     },
     {
-      path: '/gamevss',
-      name: 'gamevss',
-      component: gamevss,
+      path: '/match_list',
+      name: 'match_list',
+      component: matchlist,
       meta: {
-        navbarType: 'game'
+        title: '对局列表',
+        navbarType: 'contest',
+        prePage: [{path: '/contest_main', query: ['cid']}],
+        stalling: false
       }
     },
     {
-      path: '/vsdetail',
-      name: 'vsdetail',
-      component: vsdetail,
+      path: '/match',
+      name: 'match',
+      component: match,
       meta: {
-        navbarType: 'game'
+        title: '对局信息',
+        navbarType: 'contest',
+        prePage: [
+          {path: '/contest_main', query: ['cid']},
+          {path: '/match_list', query: ['cid']}
+        ],
+        stalling: false
       }
     },
     {
-      path: '/personalinfo',
-      name: 'personalinfo',
-      component: personalinfo,
+      path: '/profile',
+      name: 'profile',
+      component: profile,
       meta: {
-        navbarType: 'main'
+        title: '选手信息',
+        navbarType: 'main',
+        prePage: [{path: '/', query: []}],
+        stalling: false
       }
     },
+    {
+      path: '/contest_create',
+      name: 'contest_create',
+      component: contestcreate,
+      meta: {
+        title: '创建比赛',
+        navbarType: 'main',
+        prePage: [{path: '/', query: []}],
+        stalling: true
+      }
+    },
+    {
+      path: '/contest_edit',
+      name: 'contest_edit',
+      component: contestedit,
+      meta: {
+        title: '修改比赛',
+        navbarType: 'contest',
+        prePage: [{path: '/contest_main', query: ['cid']}],
+        stalling: true
+      }
+    },
+    {
+      path: '/notfound',
+      name: 'notfound',
+      component: notfound,
+      meta: {
+        title: '出错了',
+        navbarType: 'main',
+        prePage: [],
+        stalling: false
+      }
+    },
+    {
+      path: '/submission_list',
+      name: 'submission_list',
+      component: submissionlist,
+      meta: {
+        title: '提交列表',
+        navbarType: 'contest',
+        prePage: [{path: '/contest_main', query: ['cid']}],
+        stalling: false
+      }
+    },
+    {
+      path: '/submission_info',
+      name: 'submission_info',
+      component: submissioninfo,
+      meta: {
+        title: '提交详情',
+        navbarType: 'contest',
+        prePage: [
+          {path: '/contest_main', query: ['cid']},
+          {path: '/submission_list', query: ['cid']}
+        ],
+        stalling: false
+      }
+    },
+    {
+      path: '/contest_script',
+      name: 'contest_script',
+      component: contestscript,
+      meta: {
+        title: '比赛脚本',
+        navbarType: 'contest',
+        prePage: [{path: '/contest_main', query: ['cid']}],
+        stalling: false
+      }
+    }
   ]
 })

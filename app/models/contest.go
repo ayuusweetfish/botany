@@ -1,6 +1,11 @@
 package models
 
-import "strconv"
+import (
+	"database/sql"
+	"fmt"
+	"strconv"
+	"time"
+)
 
 type Contest struct {
 	Id     int32
@@ -17,10 +22,11 @@ type Contest struct {
 	IsVisible bool
 	IsRegOpen bool
 
+	Script string
+
 	Rel struct {
 		Owner          User
 		Participations []ContestParticipation
-		MatchScripts   []ContestMatchScript
 	}
 }
 
@@ -30,9 +36,12 @@ const (
 )
 
 type ContestParticipation struct {
-	User    int32
-	Contest int32
-	Type    int8
+	User        int32
+	Contest     int32
+	Type        int8
+	Delegate    int32
+	Rating      int64
+	Performance string
 
 	Rel struct {
 		User    User
@@ -40,44 +49,48 @@ type ContestParticipation struct {
 	}
 }
 
-const (
-	MatchScriptHookManual = iota
-	MatchScriptHookSubmission
-	MatchScriptHookTimed
-)
-
-type ContestMatchScript struct {
-	Contest  int32
-	Hook     int8
-	Contents string
-}
-
 func init() {
 	registerSchema("contest",
 		"id SERIAL PRIMARY KEY",
 		"title TEXT NOT NULL DEFAULT ''",
 		"banner TEXT NOT NULL DEFAULT ''",
-		"owner INTEGER NOT NULL REFERENCES users(id)",
+		"owner INTEGER NOT NULL",
 		"start_time BIGINT NOT NULL",
 		"end_time BIGINT NOT NULL",
 		"descr TEXT NOT NULL DEFAULT ''",
 		"details TEXT NOT NULL DEFAULT ''",
 		"is_visible BOOLEAN NOT NULL DEFAULT FALSE",
 		"is_reg_open BOOLEAN NOT NULL DEFAULT FALSE",
+		"script TEXT NOT NULL DEFAULT ''",
+		"script_log TEXT NOT NULL DEFAULT ''",
+		"ADD CONSTRAINT fk_users FOREIGN KEY (owner) REFERENCES users (id)",
 	)
 	registerSchema("contest_participation",
-		"uid INTEGER NOT NULL REFERENCES users(id)",
-		"contest INTEGER NOT NULL REFERENCES contest(id)",
+		"uid INTEGER NOT NULL",
+		"contest INTEGER NOT NULL",
 		"type SMALLINT NOT NULL",
-	)
-	registerSchema("contest_match_script",
-		"contest INTEGER NOT NULL REFERENCES contest(id)",
-		"hook SMALLINT NOT NULL DEFAULT "+strconv.Itoa(MatchScriptHookManual),
-		"contents TEXT NOT NULL",
+		"delegate INTEGER", // Nullable
+		"rating BIGINT NOT NULL DEFAULT 0",
+		"performance TEXT NOT NULL DEFAULT ''",
+		"ADD PRIMARY KEY (uid, contest)",
+		"ADD CONSTRAINT fk_users FOREIGN KEY (uid) REFERENCES users (id)",
+		"ADD CONSTRAINT fk_contest FOREIGN KEY (contest) REFERENCES contest (id)",
+		"ADD CONSTRAINT fk_delegate FOREIGN KEY (delegate) REFERENCES submission (id)",
 	)
 }
 
-func (c *Contest) Representation() map[string]interface{} {
+func (c *Contest) Representation(u User) map[string]interface{} {
+	mods := []map[string]interface{}{}
+	rows, err := db.Query("SELECT uid FROM contest_participation where contest = $1 AND type = $2", c.Id, ParticipationTypeModerator)
+	if err != nil && err != sql.ErrNoRows {
+		panic(err)
+	}
+	for rows.Next() {
+		u := User{}
+		_ = rows.Scan(&u.Id)
+		u.ReadById()
+		mods = append(mods, u.ShortRepresentation())
+	}
 	return map[string]interface{}{
 		"id":          c.Id,
 		"title":       c.Title,
@@ -86,12 +99,16 @@ func (c *Contest) Representation() map[string]interface{} {
 		"end_time":    c.EndTime,
 		"desc":        c.Desc,
 		"details":     c.Details,
+		"is_visible":  c.IsVisible,
 		"is_reg_open": c.IsRegOpen,
+		"script":      c.Script,
 		"owner":       c.Rel.Owner.ShortRepresentation(),
+		"moderators":  mods,
+		"my_role":     c.ParticipationOf(u),
 	}
 }
 
-func (c *Contest) ShortRepresentation() map[string]interface{} {
+func (c *Contest) ShortRepresentation(u User) map[string]interface{} {
 	return map[string]interface{}{
 		"id":          c.Id,
 		"title":       c.Title,
@@ -100,13 +117,14 @@ func (c *Contest) ShortRepresentation() map[string]interface{} {
 		"end_time":    c.EndTime,
 		"desc":        c.Desc,
 		"is_reg_open": c.IsRegOpen,
+		"my_role":     c.ParticipationOf(u),
 	}
 }
 
 func (c *Contest) Create() error {
 	err := db.QueryRow("INSERT INTO "+
-		"contest(title, banner, owner, start_time, end_time, descr, details, is_visible, is_reg_open) "+
-		"VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id",
+		"contest(title, banner, owner, start_time, end_time, descr, details, is_visible, is_reg_open, script) "+
+		"VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id",
 		c.Title,
 		c.Banner,
 		c.Owner,
@@ -116,13 +134,14 @@ func (c *Contest) Create() error {
 		c.Details,
 		c.IsVisible,
 		c.IsRegOpen,
+		c.Script,
 	).Scan(&c.Id)
 	return err
 }
 
 func (c *Contest) Read() error {
 	err := db.QueryRow("SELECT "+
-		"title, banner, owner, start_time, end_time, descr, details, is_visible, is_reg_open "+
+		"title, banner, owner, start_time, end_time, descr, details, is_visible, is_reg_open, script "+
 		"FROM contest WHERE id = $1",
 		c.Id,
 	).Scan(
@@ -135,14 +154,26 @@ func (c *Contest) Read() error {
 		&c.Details,
 		&c.IsVisible,
 		&c.IsRegOpen,
+		&c.Script,
 	)
+	return err
+}
+
+func (c *Contest) ReadScriptLog() (error, string) {
+	var s string
+	err := db.QueryRow("SELECT script_log FROM contest WHERE id = $1", c.Id).Scan(&s)
+	return err, s
+}
+
+func (c *Contest) AppendScriptLog(s string) error {
+	_, err := db.Exec("UPDATE contest SET script_log = script_log || $1 WHERE id = $2", s, c.Id)
 	return err
 }
 
 func ContestReadAll() ([]Contest, error) {
 	rows, err := db.Query("SELECT " +
-		"id, title, banner, owner, start_time, end_time, descr, is_visible, is_reg_open " +
-		"FROM contest",
+		"id, title, banner, owner, start_time, end_time, descr, is_visible, is_reg_open, script " +
+		"FROM contest ORDER BY id ASC",
 	)
 	if err != nil {
 		return nil, err
@@ -161,6 +192,7 @@ func ContestReadAll() ([]Contest, error) {
 			&c.Desc,
 			&c.IsVisible,
 			&c.IsRegOpen,
+			&c.Script,
 		)
 		if err != nil {
 			return nil, err
@@ -175,7 +207,212 @@ func (c *Contest) LoadRel() error {
 	return c.Rel.Owner.ReadById()
 }
 
+func (c *Contest) AllParticipationsRequiresDelegate(d bool) ([]ContestParticipation, error) {
+	delegateCond := ""
+	if d {
+		delegateCond = " AND delegate != -1"
+	}
+	rows, err := db.Query("SELECT "+
+		"contest_participation.type, "+
+		"COALESCE(contest_participation.delegate, -1) AS delegate, "+
+		"contest_participation.rating, "+
+		"contest_participation.performance, "+
+		"users.id, users.handle, users.privilege, users.nickname "+
+		"FROM contest_participation "+
+		"LEFT JOIN users ON contest_participation.uid = users.id "+
+		"WHERE contest = $1 AND type = $2"+delegateCond+
+		"ORDER BY contest_participation.rating DESC",
+		c.Id, ParticipationTypeContestant)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	ps := []ContestParticipation{}
+	for rows.Next() {
+		p := ContestParticipation{Contest: c.Id}
+		err := rows.Scan(&p.Type, &p.Delegate, &p.Rating, &p.Performance,
+			&p.Rel.User.Id, &p.Rel.User.Handle,
+			&p.Rel.User.Privilege, &p.Rel.User.Nickname)
+		if err != nil {
+			return nil, err
+		}
+		ps = append(ps, p)
+	}
+	return ps, rows.Err()
+}
+
+func (c *Contest) AllParticipations() ([]ContestParticipation, error) {
+	return c.AllParticipationsRequiresDelegate(false)
+}
+
+func (c *Contest) AllParticipationsWithDelegate() ([]ContestParticipation, error) {
+	return c.AllParticipationsRequiresDelegate(true)
+}
+
+func (c *Contest) PartParticipation(limit, offset int) ([]ContestParticipation, int, error) {
+	rows, err := db.Query("SELECT "+
+		"contest_participation.type, "+
+		"contest_participation.rating, "+
+		"contest_participation.performance, "+
+		"COALESCE(contest_participation.delegate, -1), "+
+		"users.id, users.handle, users.privilege, users.nickname "+
+		"FROM contest_participation "+
+		"LEFT JOIN users ON contest_participation.uid = users.id "+
+		"WHERE contest = $1 AND type = $2"+
+		"ORDER BY contest_participation.rating DESC, users.handle ASC LIMIT $3 OFFSET $4",
+		c.Id, ParticipationTypeContestant, limit, offset)
+	if err != nil {
+		return nil, 0, err
+	}
+	defer rows.Close()
+	ps := []ContestParticipation{}
+	for rows.Next() {
+		p := ContestParticipation{Contest: c.Id}
+		err := rows.Scan(&p.Type, &p.Rating, &p.Performance, &p.Delegate,
+			&p.Rel.User.Id, &p.Rel.User.Handle,
+			&p.Rel.User.Privilege, &p.Rel.User.Nickname)
+		if err != nil {
+			return nil, 0, err
+		}
+		ps = append(ps, p)
+	}
+	var total int
+	rows2 := db.QueryRow("SELECT COUNT(*) from contest_participation "+
+		"where contest = $1 AND type = $2", c.Id, ParticipationTypeContestant)
+	err = rows2.Scan(&total)
+	return ps, total, rows.Err()
+}
+
 func (c *Contest) Update() error {
-	// TODO
+	_, err := db.Exec("UPDATE contest SET "+
+		"title = $1, banner = $2, owner = $3, "+
+		"start_time = $4, end_time = $5, descr = $6, details = $7, "+
+		"is_visible = $8, is_reg_open = $9, script = $10 "+
+		"WHERE id = $11",
+		c.Title,
+		c.Banner,
+		c.Owner,
+		c.StartTime,
+		c.EndTime,
+		c.Desc,
+		c.Details,
+		c.IsVisible,
+		c.IsRegOpen,
+		c.Script,
+		c.Id,
+	)
+	return err
+}
+
+func (c *Contest) UpdateModerators(uids []int64) error {
+	_, err := db.Exec("DELETE FROM contest_participation "+
+		"WHERE contest = $1 AND type = $2",
+		c.Id,
+		ParticipationTypeModerator)
+	if err != nil {
+		return err
+	}
+
+	if len(uids) > 0 {
+		stmt := "INSERT INTO contest_participation" +
+			"(uid, contest, type, rating, performance) VALUES "
+		vals := []interface{}{}
+		for i, uid := range uids {
+			if i != 0 {
+				stmt += ", "
+			}
+			stmt += fmt.Sprintf("($%d, $%d, $%d, 0, '')", i*3+1, i*3+2, i*3+3)
+			vals = append(vals, uid, c.Id, ParticipationTypeModerator)
+		}
+		stmt += " ON CONFLICT (uid, contest) DO UPDATE SET type = " + strconv.Itoa(ParticipationTypeModerator)
+		if _, err := db.Exec(stmt, vals...); err != nil {
+			return err
+		}
+	}
+
 	return nil
+}
+
+func (c *Contest) HasStarted() bool {
+	return time.Now().Unix() >= c.StartTime
+}
+
+func (c *Contest) HasEnded() bool {
+	return time.Now().Unix() >= c.EndTime
+}
+
+func (c *Contest) IsRunning() bool {
+	return c.HasStarted() && !c.HasEnded()
+}
+
+func (c *Contest) ParticipationOf(u User) int8 {
+	if c.Owner == u.Id || u.Privilege == UserPrivilegeSuperuser {
+		return ParticipationTypeModerator
+	}
+
+	// Look for the participation record
+	p := ContestParticipation{
+		User:    u.Id,
+		Contest: c.Id,
+	}
+	if err := p.Read(); err != nil {
+		if err == sql.ErrNoRows {
+			// Did not participate
+			return -1
+		} else {
+			panic(err)
+		}
+	}
+	return p.Type
+}
+
+func (c *Contest) IsVisibleTo(u User) bool {
+	return c.IsVisible || c.ParticipationOf(u) != -1
+}
+
+func (p *ContestParticipation) Representation() map[string]interface{} {
+	return map[string]interface{}{
+		"participant": p.Rel.User.ShortRepresentation(),
+		"rating":      p.Rating,
+		"performance": p.Performance,
+		"delegate":    p.Delegate,
+	}
+}
+
+func (p *ContestParticipation) Create() error {
+	_, err := db.Exec("INSERT INTO "+
+		"contest_participation(uid, contest, type, rating, performance) "+
+		"VALUES ($1, $2, $3, $4, $5) ON CONFLICT DO NOTHING",
+		p.User,
+		p.Contest,
+		p.Type,
+		p.Rating,
+		p.Performance,
+	)
+	p.Delegate = -1
+	return err
+}
+
+func (p *ContestParticipation) Read() error {
+	err := db.QueryRow("SELECT type, COALESCE(delegate, -1), rating, performance "+
+		"FROM contest_participation WHERE uid = $1 AND contest = $2",
+		p.User,
+		p.Contest,
+	).Scan(&p.Type, &p.Delegate, &p.Rating, &p.Performance)
+	return err
+}
+
+func (p *ContestParticipation) Update() error {
+	_, err := db.Exec("UPDATE contest_participation SET "+
+		"type = $1, rating = $2, delegate = NULLIF($3, -1), "+
+		"performance = $4 "+
+		"WHERE uid = $5 AND contest = $6",
+		p.Type,
+		p.Rating,
+		p.Delegate,
+		p.Performance,
+		p.User,
+		p.Contest,
+	)
+	return err
 }

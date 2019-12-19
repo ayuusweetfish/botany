@@ -31,3 +31,5 @@ jobs:
 branches:
   except:
     - /^exp-.*$/
+    - /ipc/
+    - /judge/

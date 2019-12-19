@@ -1,51 +1,85 @@
 <template>
   <div id="app">
     <el-row class = "topbar" type="flex" justify="space-between">
-      <el-col :span="10" v-if="$route.meta.navbarType !== 'game'" class="topbar-tittle">
-        <div align='left'>Botany-Demo</div>
+      <el-col :span="8" v-if="$route.meta.navbarType !== 'contest'" class="topbar-tittle">
+        <div align='left' @click="$router.push('/')" style="cursor: pointer">Botany-Demo</div>
       </el-col>
-      <el-col :span="8" v-if="$route.meta.navbarType === 'game'" class="topbar-tittle">
-        <div align='left'>GStrategy@Botany</div>
+      <el-col :span="8" v-if="$route.meta.navbarType === 'contest'" class="topbar-tittle">
+        <div style="display: inline">{{$store.state.contestInfo.title}}</div>
       </el-col>
-      <el-col :span="6" v-if="$route.meta.navbarType === 'main'" align='left'>
+      <!-- <el-col :span="6" v-if="$route.meta.navbarType === 'main'" align='left'>
         <div style="display: inline; color:gray">|</div>
-        <el-button type="text" class="navbar-item" @click="goGamelist">比赛列表</el-button>
+        <router-link class="navbar-item" to="/">比赛列表</router-link>
         <div style="display: inline; color:gray">|</div>
-        <el-button type="text" class="navbar-item" @click="goPersonalinfo">个人信息</el-button>
+        <router-link class="navbar-item" to="/profile">个人信息</router-link>
         <div style="display: inline; color:gray">|</div>
-      </el-col>
-      <el-col :span="12" v-if="$route.meta.navbarType === 'game'" align='left'>
-        <div style="display: inline; color:gray">|</div>
-        <el-button type="text" class="navbar-item" @click="goGamemain">比赛首页</el-button>
-        <div style="display: inline; color:gray">|</div>
-        <el-button type="text" class="navbar-item" @click="goGamedetail">参赛指南</el-button>
-        <div style="display: inline; color:gray">|</div>
-        <el-button type="text" class="navbar-item" @click="goCoding">我的代码</el-button>
-        <div style="display: inline; color:gray">|</div>
-        <el-button type="text" class="navbar-item" @click="goGameranking">查看排行</el-button>
-        <div style="display: inline; color:gray">|</div>
-        <el-button type="text" class="navbar-item" @click="goGamevss">查看对局</el-button>
-        <div style="display: inline; color:gray">|</div>
-        <el-button type="text" class="navbar-item" @click="goGamelist">返回</el-button>
-        <div style="display: inline; color:gray">|</div>
-      </el-col>
-      <el-col :span="2" v-if="$route.meta.navbarType !== 'none'">
-        <el-dropdown :hide-on-click="false" @command="handleCommand" v-model="username">
-          <span class="el-dropdown-link" style="cursor: pointer;">
-            <el-avatar size = "small"></el-avatar>
-            USERNAME
-          </span>
-          <el-dropdown-menu  slot="dropdown">
-            <el-dropdown-item command="logout">退出</el-dropdown-item>
+      </el-col> -->
+      <el-col :span="12" v-if="$route.meta.navbarType === 'contest'" align='center'>
+        <router-link class="navbar-item" :to="{path:'/contest_main', query: {cid: $route.query.cid}}">比赛首页</router-link>
+        <el-dropdown
+          :hide-on-click="true"
+          trigger="click"
+        >
+          <span class="navbar-item" style="cursor: pointer;">比赛操作<i class="el-icon-arrow-down"></i></span>
+          <el-dropdown-menu slot="dropdown">
+            <router-link class="navbar-block" :to="{path:'/contest_detail', query: {cid: $route.query.cid}}">
+              <el-dropdown-item style="width: 110px; font-size: 16px"><i class="el-icon-magic-stick"></i>参赛指南</el-dropdown-item>
+            </router-link>
+            <router-link v-if="checkRouteValid('imIn')&&checkTimeValid(3)" class="navbar-block" :to="{path: '/submission', query: {cid: $route.query.cid}}">
+              <el-dropdown-item style="width: 110px; font-size: 16px"><i class="el-icon-cpu"></i>我的代码</el-dropdown-item>
+            </router-link>
+            <router-link v-if="checkRouteValid('moderator')&&checkTimeValid(3)" class="navbar-block" :to="{path: '/submission_list', query: {cid: $route.query.cid}}">
+              <el-dropdown-item style="width: 110px; font-size: 16px"><i class="el-icon-document-copy"></i>提交列表</el-dropdown-item>
+            </router-link>
+            <router-link v-if="checkTimeValid(3)" class="navbar-block" :to="{path:'/match_list', query: {cid: $route.query.cid}}">
+              <el-dropdown-item style="width: 110px; font-size: 16px"><i class="el-icon-video-play"></i>对局列表</el-dropdown-item>
+            </router-link>
+            <router-link v-if="checkTimeValid(3)" class="navbar-block" :to="{path:'/ranklist', query: {cid: $route.query.cid}}">
+              <el-dropdown-item style="width: 110px; font-size: 16px"><i class="el-icon-trophy"></i>选手排行</el-dropdown-item>
+            </router-link>
           </el-dropdown-menu>
         </el-dropdown>
+        <!-- <el-button type="text" class="navbar-item" @click="gocontestranking">查看排行</el-button>
+        <div style="display: inline; color:gray">|</div>
+        <el-button type="text" class="navbar-item" @click="gocontestvss">查看对局</el-button>
+        <div style="display: inline; color:gray">|</div> -->
+        <router-link class="navbar-item" to="/">返回Botany</router-link>
+      </el-col>
+      <el-col :span="4" v-if="$route.meta.navbarType !== 'none'">
+        <el-dropdown v-if="$store.state.handle" :hide-on-click="true" @command="handleCommand" trigger="click">
+          <span class="el-dropdown-link" style="cursor: pointer;">
+            <el-avatar :src="defaultAva"></el-avatar>
+          </span>
+          <el-dropdown-menu  slot="dropdown" style="min-width: 120px; padding: 2px 10px 2px 10px;">
+            <el-dropdown-item :disabled="true" class="info-dropdown-item" style="color: #505050; font-weight: 600; border-bottom: 1px solid silver">{{$store.state.nickname}}</el-dropdown-item>
+            <!-- <el-dropdown-item :disabled="true" class="info-dropdown-item">UID: {{$store.state.id}}</el-dropdown-item> -->
+            <el-dropdown-item :disabled="true" class="info-dropdown-item" style="color: grey">{{translatePrivilege($store.state.privilege)}}</el-dropdown-item>
+            <el-dropdown-item :disabled="true" class="info-dropdown-item">账号：{{$store.state.handle}}</el-dropdown-item>
+            <el-dropdown-item :disabled="true" class="info-dropdown-item">UID：{{$store.state.id}}</el-dropdown-item>
+            <router-link :to="{path: '/profile', query: {handle: $store.state.handle}}" style="text-decoration: none">
+              <el-dropdown-item class="button-dropdown-item" style="border-top: 1px solid silver">我的资料</el-dropdown-item>
+            </router-link>
+            <el-dropdown-item command="password" class="button-dropdown-item">修改密码</el-dropdown-item>
+            <el-dropdown-item command="logout" class="button-dropdown-item">退出登录</el-dropdown-item>
+          </el-dropdown-menu>
+        </el-dropdown>
+        <div v-else>
+          <el-link :underline="false" type="primary" class="login-button" @click="goLogin">登录</el-link>
+          <el-divider direction="vertical"></el-divider>
+          <el-link :underline="false" type="" class="login-button" @click="goSignup">注册</el-link>
+        </div>
       </el-col>
     </el-row>
-    <el-row>
+    <password-dialog :visible.sync="showPwdDlg" @setVisible="setPasswordDialog"></password-dialog>
+    <el-row style="margin-bottom: 10px">
       <el-col :span="24">
         <div v-if="$route.meta.navbarType !== 'none'" align="left">
-          <i class="el-icon-caret-right"></i>
-          breadcrumb
+          <i class = "el-icon-caret-right" v-if="$store.state.routeList.length !== 0" style="display: inline-block"></i>
+          <el-breadcrumb separator="/" style = "display: inline-block; margin-left: 2px">
+            <el-breadcrumb-item v-for="(item) in $store.state.routeList" :key="item.path">
+              <router-link :to="{path: item.path, query: item.query}">{{item.title}}</router-link>
+            </el-breadcrumb-item>
+          </el-breadcrumb>
         </div>
       </el-col>
     </el-row>
@@ -54,40 +88,118 @@
 </template>
 
 <script>
-
+import passwordDialog from './components/password.vue'
 export default {
   name: 'App',
-  data() {
+  components: {
+    'password-dialog': passwordDialog
+  },
+  created () {
+    this.$axios.get('/whoami').then(res => {
+      console.log(res.data)
+      this.$store.commit('login', {
+        id: res.data.id,
+        handle: res.data.handle,
+        privilege: res.data.privilege,
+        nickname: res.data.nickname
+      })
+    }).catch(err => {
+      if (err.response.state === 400) {
+        this.$store.commit('logout')
+      }
+    })
+  },
+  beforeDestroy () {
+    this.$store.commit('logout')
+  },
+  data () {
     return {
-      username: '',
       showPwdDlg: false,
-      showPhnDlg: false
+      defaultAva: require('./assets/logo.png')
     }
   },
   methods: {
-    handleCommand(command) {
-      this.$router.push('/')
+    changeTitle (title) {
+      console.log(title)
     },
-    goGamelist(){
-      this.$router.push('/gamelist')
+    setPasswordDialog (val) {
+      this.showPwdDlg = val
     },
-    goGamemain(){
-      this.$router.push('/gamemain')
+    goLogin () {
+      this.$store.commit('setAfterLogin', {path: this.$route.path, query: this.$route.query})
+      this.$router.push({
+        path: '/login',
+        query: {
+          redirect: (this.$route.path !== '/notfound')
+        }
+      })
     },
-    goPersonalinfo(){
-      this.$router.push('/personalinfo')
+    goSignup () {
+      this.$store.commit('setAfterLogin', {path: this.$route.path, query: this.$route.query})
+      this.$router.push({
+        path: '/signup',
+        query: {
+          redirect: (this.$route.path !== '/notfound')
+        }
+      })
     },
-    goGamedetail(){
-      this.$router.push('/gamedetail')
+    handleCommand (cmd) {
+      if (cmd === 'logout') {
+        this.logout()
+      } else if (cmd === 'toProfile') {
+        this.toProfile()
+      } else if (cmd === 'password') {
+        this.showPwdDlg = true
+      }
     },
-    goGameranking(){
-      this.$router.push('/gameranking')
+    translatePrivilege (num) {
+      let str = ''
+      switch (num) {
+        case this.$consts.privilege.common:
+          str = 'Common User'
+          break
+        case this.$consts.privilege.oranizer:
+          str = 'Organizer'
+          break
+        case this.$consts.privilege.superuser:
+          str = 'Super User'
+          break
+        default:
+          break
+      }
+      return str
     },
-    goGamevss(){
-      this.$router.push('/gamevss')
+    logout () {
+      this.$axios.post('/logout').then(res => {
+        this.$store.commit('logout')
+        window.location.reload()
+      }).catch(err => {
+        console.log(err)
+      })
     },
-    goCoding(){
-      this.$router.push('/coding')
+    checkRouteValid (role) {
+      if (this.$store.state.contestInfo &&
+      this.$store.state.contestInfo.my_role !== null &&
+      this.$store.state.contestInfo.my_role !== undefined &&
+      this.$store.state.contestInfo.my_role === this.$consts.role[role]) {
+        return true
+      } else {
+        return false
+      }
+    },
+    checkTimeValid (val) {
+      if (!this.$store.state.contestInfo) {
+        return false
+      }
+      let start = this.$store.state.contestInfo.start_time
+      let end = this.$store.state.contestInfo.end_time
+      let stage = this.$functions.checkTime(start, end)
+      if (stage === this.$consts.contestStat.going) {
+        return true
+      } else if (stage === val) {
+        return true
+      }
+      return false
     }
   }
 }
@@ -102,28 +214,70 @@ export default {
   color: #2c3e50;
   margin: auto;
   margin-top: 0px;
-  min-width: 720px;
-  max-width: 1080px;
+  width: 1080px;
+  font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 .topbar {
   border-bottom: 1px solid silver;
   max-width: 1080px;
   margin: auto;
   align-items: flex-end;
-  margin-bottom: 20px;
+  margin-bottom: 10px;
   min-width: 720px;
-  height: 84px;
+  min-height: 64px;
 }
 .topbar-tittle {
   font-weight: 600;
   font-size: 30px;
   text-align: left;
   margin-left: 20px;
-  line-height: 60px;
+  line-height: 48px;
 }
 .navbar-item {
   font-size: 18px;
-  color: grey;
+  font-weight: 500;
+  color:#545454;
+  line-height: 48px;
+  text-decoration: none;
+  margin: 0px 10px 0px 10px;
+}
+.navbar-block {
+  font-weight: 500;
+  color:#545454;
+  text-decoration: none;
+  display: block;
+}
+.info-dropdown-item {
+  font-size: 14px;
+  padding: 0
+}
+.button-dropdown-item {
+  font-size: 14px;
+  padding: 0;
+}
+.login-button {
+  font-size: 18px;
+  font-weight: 600;
   height: 30px;
+}
+.cm-container .CodeMirror {
+  height: auto;
+  max-height: 480px;
+  font-family: monospace;
+  position: relative;
+  background: white;
+  direction: ltr;
+  overflow: hidden;
+}
+.cm-container .CodeMirror-wrap {
+  height: auto;
+  font-family: monospace;
+  position: relative;
+  background: white;
+  direction: ltr;
+}
+.cm-container .CodeMirror-scroll {
+  min-height: 300px;
+  max-height: 480px;
 }
 </style>
