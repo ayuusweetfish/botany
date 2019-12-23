@@ -62,19 +62,16 @@
         </div>
       </div>
       <div v-if="$route.meta.navbarType !== 'none'" align="left" id="breadcrumb-container">
-        <div v-if="$store.state.routeList.length !== 0" id="breadcrumb-start">123</div>
-        <el-breadcrumb separator="->" style="display: inline-block; margin-left: 2px;">
-          <el-breadcrumb-item
-            v-for="(item) in $store.state.routeList"
-            :key="item.path"
-          >
-            <router-link :to="{path: item.path, query: item.query}">{{item.title}}</router-link>
-          </el-breadcrumb-item>
-        </el-breadcrumb>
+        <div v-if="$store.state.routeList.length !== 0" id="breadcrumb-start">location =</div>
+        <div v-for="(item, index) in $store.state.routeList" :key="index" style="display: inline">
+          <router-link v-if="index!==$store.state.routeList.length-1" :to="{path: item.path, query: item.query}" class="breadcrumb-item">{{item.title}}</router-link>
+          <div v-if="index!==$store.state.routeList.length-1" class="breadcrumb-connector">-></div>
+          <div v-else id="breadcrumb-tail">{{item.title}}</div>
+        </div>
       </div>
     </div>
     <password-dialog :visible.sync="showPwdDlg" @setVisible="setPasswordDialog"></password-dialog>
-    <router-view class="main-view" style="margin-top: 90px"/>
+    <router-view class="main-view" style="margin-top: 100px"/>
   </div>
 </template>
 
@@ -90,7 +87,7 @@ export default {
       const sl = -Math.max(document.body.scrollLeft, document.documentElement.scrollLeft)
       document.getElementById('topbar-background').style.left = sl + 'px'
       const st = Math.max(document.body.scrollTop, document.documentElement.scrollTop)
-      if (st > 90) {
+      if (st > 70) {
         const top = document.getElementById('topbar-background')
         top.style.borderBottom = '1px solid #dddddd'
       } else {
@@ -283,8 +280,23 @@ export default {
   margin-right: 5px;
   display: inline-block;
   font-size: 14px;
-  height: 14px;
-  line-height: 1
+}
+.breadcrumb-item{
+  display: inline;
+  text-decoration: none;
+  color: #555555;
+  font-size: 14px;
+  font-weight: 600;
+}
+.breadcrumb-connector{
+  color: gray;
+  display: inline;
+  font-size: 14px;
+}
+#breadcrumb-tail{
+  color: black;
+  display: inline;
+  font-size: 14px;
 }
 .main-view{
   width: 1080px;

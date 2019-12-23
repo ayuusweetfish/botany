@@ -1,6 +1,7 @@
 <template>
-  <div>
-    <div align="left" style="margin-left: 10px">
+  <div  align="left">
+    <div style="display: inline">{{title}}</div>
+    <div style="margin-left: 10px; display: inline">
       <router-link
         v-if="$store.state.privilege===$consts.privilege.organizer"
         to="/contest_create"
@@ -10,7 +11,40 @@
       添加一场比赛
       </router-link>
     </div>
-    <el-table
+    <el-row :gutter="20">
+      <el-col 
+        :span="12"
+        v-for="(item, index) in contests"
+        :key="index"
+      >
+        <el-card 
+          shadow="never"
+          class="contest-card"
+          >
+          <div slot="header">
+            <span class="important" @click="goContestMain(item)" style="cursor: pointer">{{item.name}}</span>
+            <div v-if="item.myRole===$consts.role.moderator" style="float: right">我管理的比赛</div>
+            <div v-else-if="item.myRole===$consts.role.imIn" style="float: right">我参加的比赛</div>
+          </div>
+          <div class="contest-info">
+            <div>
+              <div class="important">时间：</div>
+              <div class="normal">{{item.time}}</div>
+            </div>
+            <div>
+              <div class="important">简介：</div>
+              <div class="normal">{{item.info}}</div>
+            </div>
+            <div class="contest-footer" align="bottom">
+              <router-link 
+                :to="{path: '/contest_main', query:{cid: item.id}}"
+                class="contest-button">查看详情</router-link>
+            </div>
+          </div>
+        </el-card>
+      </el-col>
+    </el-row>
+    <!-- <el-table
       :data="contests"
       @row-click="goContestMain"
       :cell-style="{'cursor': 'pointer'}"
@@ -36,7 +70,7 @@
           <div v-else><div class="normal">不开放报名</div></div>
         </template>
       </el-table-column>
-    </el-table>
+    </el-table> -->
   </div>
 </template>
 
@@ -105,5 +139,21 @@ export default {
   .addcontest-link{
     text-decoration: none;
     color: #409EFF;
+  }
+  .contest-card{
+    text-align: left;
+    margin-top: 30px;
+  }
+  .contest-info{
+    font-size: 14px;
+    height: 180px;
+  }
+  .contest-button{
+    font-size: 14px;
+    text-decoration: none;
+    color: #409EFF;
+  }
+  .contest-footer{
+    position:absolute
   }
 </style>
