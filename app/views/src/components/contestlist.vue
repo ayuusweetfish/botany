@@ -34,12 +34,12 @@
             <div>
               <div class="important">简介：</div>
               <div class="normal">{{item.info}}</div>
-            </div>
-            <div class="contest-footer" align="bottom">
-              <router-link 
-                :to="{path: '/contest_main', query:{cid: item.id}}"
-                class="contest-button">查看详情</router-link>
-            </div>
+            </div>          
+          </div>
+          <div align="right">
+            <router-link 
+              :to="{path: '/contest_main', query:{cid: item.id}}"
+              class="contest-button">查看详情</router-link>
           </div>
         </el-card>
       </el-col>
@@ -152,8 +152,5 @@ export default {
     font-size: 14px;
     text-decoration: none;
     color: #409EFF;
-  }
-  .contest-footer{
-    position:absolute
   }
 </style>

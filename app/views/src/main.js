@@ -49,6 +49,7 @@ axios.interceptors.response.use(
 
 Vue.prototype.$qs = qs
 
+
 router.beforeEach((to, from, next) => {
   let routeList = []
   if (!to.meta.prePage) {

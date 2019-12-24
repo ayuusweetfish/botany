@@ -83,7 +83,7 @@ export default {
     'password-dialog': passwordDialog
   },
   created () {
-    window.onscroll = function () {
+    window.addEventListener('scroll', function () {
       const sl = -Math.max(document.body.scrollLeft, document.documentElement.scrollLeft)
       document.getElementById('topbar-background').style.left = sl + 'px'
       const st = Math.max(document.body.scrollTop, document.documentElement.scrollTop)
@@ -94,7 +94,7 @@ export default {
         const top = document.getElementById('topbar-background')
         top.style.borderBottom = 'none'
       }
-    }
+    })
     this.$axios.get('/whoami').then(res => {
       console.log(res.data)
       this.$store.commit('login', {
