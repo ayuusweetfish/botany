@@ -1,15 +1,22 @@
 <template>
   <el-container>
-    <el-aside width="200px" style="border-right: 1px solid silver">
+    <!-- <el-aside width="200px" style="border-right: 1px solid silver">
       <div style="position: absolute; top: 120px" id="side-menu">
-        title
+        <div>title</div>
+        <div>item</div>
+        <div>item</div>
+        <div>item</div>
+        <div>item</div>
+        <div>item</div>
+        <div>item</div>
+        <div>item</div>
       </div>
       <el-menu>
 
       </el-menu>
-    </el-aside>
+    </el-aside> -->
     <el-main>
-      <div align="left" style="font-size: 24px; font-weight: 600; margin-bottom: 10px">创建比赛</div>
+      <!-- <div align="left" style="font-size: 24px; font-weight: 600; margin-bottom: 10px">创建比赛</div> -->
       <el-form
         ref='form'
         :model="form"
@@ -116,6 +123,7 @@
 
 <script>
 import { codemirror } from 'vue-codemirror-lite'
+import velocity from 'velocity-animate'
 
 export default {
   name: 'contest_create',
@@ -123,14 +131,15 @@ export default {
     codemirror
   },
   created () {
-    const listener = function () {
-      window.requestAnimationFrame(() => {
-        const sl = document.documentElement.scrollTop || document.body.scrollTop
-        document.getElementById('side-menu').style.top = (120 + sl) + 'px'
-      })
-    }
-    window.addEventListener('scroll', listener)
-    this.menuListener = listener
+    // const listener = () => {
+    //   this.listenerCount += 1
+    //   const count = this.listenerCount
+    //   window.setTimeout(() => {
+    //     this.updateSidebar(count)
+    //   }, 240)
+    // }
+    // window.addEventListener('scroll', listener)
+    // this.menuListener = listener
     this.$store.commit('setStallFlag', true)
   },
   beforeDestroy () {
@@ -147,6 +156,8 @@ export default {
       }
     }
     return {
+      sideBarTop: 120,
+      listenerCount: 0,
       menuListener: null,
       form: {
         title: '',
@@ -198,6 +209,16 @@ export default {
     }
   },
   methods: {
+    // updateSidebar (val) {
+    //   if (val !== this.listenerCount) {
+    //     return
+    //   }
+    //   window.requestAnimationFrame(() => {
+    //     const sl = document.documentElement.scrollTop || document.body.scrollTop
+    //     const el = document.getElementById('side-menu')
+    //     velocity(el, { top: sl + 120 }, { duration: 120 })
+    //   })
+    // },
     handleTagClose (val) {
       this.form.moderators.splice(this.form.moderators.indexOf(val), 1)
     },
