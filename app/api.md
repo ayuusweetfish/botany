@@ -399,7 +399,7 @@
 - 空响应 Content-Length: 0
 - 比赛未开始或未报名比赛
 
-### :construction: 选择裁判 POST /contest/{cid}/judge
+### 选择裁判 POST /contest/{cid}/judge
 
 请求
 - **submission** (number) 提交 ID
@@ -407,15 +407,15 @@
 	- 注：管理员可以看到本场所有的提交，所以也可以选择其他人（一般是管理员，但暂且不必刻意限制）的代码作为裁判
 
 响应 200
-- 空对象 {}
+- 空响应 Content-Length: 0
 
 响应 400
-- 空对象 {}
-- 格式不正确
+- 空响应 Content-Length: 0
+- 格式不正确，或不是本场比赛编译通过的提交 —— 前端检查严格时不应出现此项
 
 响应 403
-- 空对象 {}
-- 非管理员，或不是本场比赛编译通过的提交 —— 前端检查严格时不应出现此项
+- 空响应 Content-Length: 0
+- 非管理员 —— 前端检查严格时不应出现此项
 
 ### 排行榜 GET /contest/{cid}/ranklist
 

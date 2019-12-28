@@ -512,6 +512,45 @@ func myDelegateHandler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+func contestJudgeSelHandler(w http.ResponseWriter, r *http.Request) {
+	_, c := middlewareContestModeratorVerify(w, r)
+	if c.Id == -1 {
+		return
+	}
+
+	sid, err := strconv.Atoi(r.PostFormValue("submission"))
+	if err != nil {
+		// Malformed request
+		w.WriteHeader(400)
+		return
+	}
+
+	if sid != -1 {
+		s := models.Submission{Id: int32(sid)}
+		if err := s.Read(); err != nil {
+			if err == sql.ErrNoRows {
+				// Non-existent submission
+				w.WriteHeader(400)
+				return
+			} else {
+				panic(err)
+			}
+		}
+		if s.Contest != c.Id || s.Status != models.SubmissionStatusAccepted {
+			// Not an accepted submission in current contest
+			w.WriteHeader(400)
+			return
+		}
+	}
+
+	c.Judge = int32(sid)
+	if err := c.Update(); err != nil {
+		panic(err)
+	}
+
+	w.WriteHeader(200)
+}
+
 func contestRanklistHandler(w http.ResponseWriter, r *http.Request) {
 	u := middlewareAuthRetrieve(w, r)
 	c := middlewareReferredContest(w, r, u)
@@ -721,6 +760,7 @@ func init() {
 	registerRouterFunc("/contest/{cid:[0-9]+}/submission/list", contestSubmissionHistoryHandlerAll, "GET")
 	registerRouterFunc("/contest/{cid:[0-9]+}/delegate", contestDelegateHandler, "POST")
 	registerRouterFunc("/contest/{cid:[0-9]+}/my_delegate", myDelegateHandler, "GET")
+	registerRouterFunc("/contest/{cid:[0-9]+}/judge", contestJudgeSelHandler, "POST")
 	registerRouterFunc("/contest/{cid:[0-9]+}/ranklist", contestRanklistHandler, "GET")
 	registerRouterFunc("/contest/{cid:[0-9]+}/matches", contestMatchesHandler, "GET")
 	registerRouterFunc("/contest/{cid:[0-9]+}/match/manual", contestMatchManualHandler, "POST")
