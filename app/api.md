@@ -198,9 +198,10 @@
 - **details** (string) 长篇详细说明
 - **is_visible** (boolean) 是否公开显示
 - **is_reg_open** (boolean) 是否公开接受报名
+- **match** (number) 裁判程序的提交 ID
 - **script** (string) 赛制脚本
 - **owner** (UserShort) 创建者
-- **moderators** ([number]) 管理员的 ID 列表，用逗号分隔
+- **moderators** ([number]) 管理员的 ID 列表，不包含创建者
 - **my_role** (number) 自己的参加情况
 	- **-1** 未登录或未报名
 	- **0** 拥有管理权限（管理员或创建者）
@@ -397,6 +398,24 @@
 响应 403 
 - 空响应 Content-Length: 0
 - 比赛未开始或未报名比赛
+
+### :construction: 选择裁判 POST /contest/{cid}/judge
+
+请求
+- **submission** (number) 提交 ID
+	- 必须是编译通过的提交
+	- 注：管理员可以看到本场所有的提交，所以也可以选择其他人（一般是管理员，但暂且不必刻意限制）的代码作为裁判
+
+响应 200
+- 空对象 {}
+
+响应 400
+- 空对象 {}
+- 格式不正确
+
+响应 403
+- 空对象 {}
+- 非管理员，或不是本场比赛编译通过的提交 —— 前端检查严格时不应出现此项
 
 ### 排行榜 GET /contest/{cid}/ranklist
 

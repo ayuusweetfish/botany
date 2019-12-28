@@ -22,6 +22,7 @@ type Contest struct {
 	IsVisible bool
 	IsRegOpen bool
 
+	Judge  int32
 	Script string
 
 	Rel struct {
@@ -61,9 +62,11 @@ func init() {
 		"details TEXT NOT NULL DEFAULT ''",
 		"is_visible BOOLEAN NOT NULL DEFAULT FALSE",
 		"is_reg_open BOOLEAN NOT NULL DEFAULT FALSE",
+		"judge INTEGER", // Nullable
 		"script TEXT NOT NULL DEFAULT ''",
 		"script_log TEXT NOT NULL DEFAULT ''",
 		"ADD CONSTRAINT fk_users FOREIGN KEY (owner) REFERENCES users (id)",
+		"ADD CONSTRAINT fk_judge FOREIGN KEY (judge) REFERENCES submission (id)",
 	)
 	registerSchema("contest_participation",
 		"uid INTEGER NOT NULL",
@@ -101,6 +104,7 @@ func (c *Contest) Representation(u User) map[string]interface{} {
 		"details":     c.Details,
 		"is_visible":  c.IsVisible,
 		"is_reg_open": c.IsRegOpen,
+		"judge":       c.Judge,
 		"script":      c.Script,
 		"owner":       c.Rel.Owner.ShortRepresentation(),
 		"moderators":  mods,
@@ -141,7 +145,8 @@ func (c *Contest) Create() error {
 
 func (c *Contest) Read() error {
 	err := db.QueryRow("SELECT "+
-		"title, banner, owner, start_time, end_time, descr, details, is_visible, is_reg_open, script "+
+		"title, banner, owner, start_time, end_time, descr, details, "+
+		"is_visible, is_reg_open, COALESCE(judge, -1) AS judge, script "+
 		"FROM contest WHERE id = $1",
 		c.Id,
 	).Scan(
@@ -154,6 +159,7 @@ func (c *Contest) Read() error {
 		&c.Details,
 		&c.IsVisible,
 		&c.IsRegOpen,
+		&c.Judge,
 		&c.Script,
 	)
 	return err
@@ -172,7 +178,8 @@ func (c *Contest) AppendScriptLog(s string) error {
 
 func ContestReadAll() ([]Contest, error) {
 	rows, err := db.Query("SELECT " +
-		"id, title, banner, owner, start_time, end_time, descr, is_visible, is_reg_open, script " +
+		"id, title, banner, owner, start_time, end_time, descr, " +
+		"is_visible, is_reg_open, COALESCE(judge, -1) AS judge, script " +
 		"FROM contest ORDER BY id ASC",
 	)
 	if err != nil {
@@ -192,6 +199,7 @@ func ContestReadAll() ([]Contest, error) {
 			&c.Desc,
 			&c.IsVisible,
 			&c.IsRegOpen,
+			&c.Judge,
 			&c.Script,
 		)
 		if err != nil {
@@ -287,8 +295,8 @@ func (c *Contest) Update() error {
 	_, err := db.Exec("UPDATE contest SET "+
 		"title = $1, banner = $2, owner = $3, "+
 		"start_time = $4, end_time = $5, descr = $6, details = $7, "+
-		"is_visible = $8, is_reg_open = $9, script = $10 "+
-		"WHERE id = $11",
+		"is_visible = $8, is_reg_open = $9, judge = NULLIF($10, -1), script = $11 "+
+		"WHERE id = $12",
 		c.Title,
 		c.Banner,
 		c.Owner,
@@ -298,6 +306,7 @@ func (c *Contest) Update() error {
 		c.Details,
 		c.IsVisible,
 		c.IsRegOpen,
+		c.Judge,
 		c.Script,
 		c.Id,
 	)
