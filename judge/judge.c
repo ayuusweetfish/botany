@@ -253,25 +253,18 @@ void process_compile(redisReply *kv)
     reply = redisCommand(rctx, "RPUSH " COMPILE_RESULT_LIST " %s 1 Compiling", sid);
 
     // Compilation work
-    compile(sid, lang, contents);
+    char *msg;
+    int retcode = compile(sid, lang, contents, &msg);
     free(lang);
     free(contents);
 
     // Done!
-    WLOGF("Done:      %s", sid);
-    int code;
-    const char *msg;
-    static int cnt = 0;
-    if (++cnt % 3 != 0) {
-        // Success
-        code = 9;
-        msg = "Done!";
-    } else {
-        // Failure
-        code = -1;
-        msg = "Compilation error";
-    }
+    WLOGF("Done:      %s (exit code %d)", sid, retcode);
+    // Convert to server's status code
+    // 9: success, -1: compilation error
+    int code = (retcode == 0 ? 9 : -1);
     reply = redisCommand(rctx, "RPUSH " COMPILE_RESULT_LIST " %s %d %s", sid, code, msg);
+    free(msg);
 }
 
 void process_match(redisReply *kv)
@@ -315,17 +308,20 @@ void process_match(redisReply *kv)
             retrieve_submission(sid, &lang, &contents);
 
             // TODO: Assert that compilation succeeds
-            compile(sid, lang, contents);
+            char *msg;
+            compile(sid, lang, contents, &msg);
             free(lang);
             free(contents);
+            free(msg);
         }
     }
 
     reply = redisCommand(rctx, "RPUSH " MATCH_RESULT_LIST " %s 2 Running", mid);
 
     // Match work
-    match(mid, num_parties, (const char **)parties);
+    char *msg;
+    int retcode = match(mid, num_parties, (const char **)parties, &msg);
 
-    WLOGF("Done:      %s", mid);
+    WLOGF("Done:      %s (exit code %d)", mid, retcode);
     reply = redisCommand(rctx, "RPUSH " MATCH_RESULT_LIST " %s 9 Done", mid);
 }

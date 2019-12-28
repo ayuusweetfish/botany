@@ -15,3 +15,10 @@ cat $CODE >> $BIN
 echo "" >> $BIN
 echo "EOF" >> $BIN
 chmod +x $BIN
+
+if [ $((SID % 4)) == 0 ]; then
+    echo "Somehow failed\n(because of magic)"
+    exit 1
+else
+    exit 0
+fi

@@ -125,7 +125,7 @@ end
 				if err := s.Create(); err != nil {
 					panic(err)
 				}
-				if k%2 == 1 {
+				if false {
 					// Mark as accepted
 					r := rand.Intn(5)
 					if r == 0 {

@@ -3,7 +3,7 @@
 
 #include <string.h>
 
-void match(const char *mid, int num_parties, const char *parties[])
+int match(const char *mid, int num_parties, const char *parties[], char **msg)
 {
     pid_t ch = fork();
     if (ch == 0) {
@@ -21,6 +21,7 @@ void match(const char *mid, int num_parties, const char *parties[])
     } else {
         int wstatus;
         waitpid(ch, &wstatus, 0);
-        // TODO: Check for failure
+        if (WIFEXITED(wstatus)) return WEXITSTATUS(wstatus);
+        else return -1;
     }
 }
