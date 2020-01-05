@@ -358,9 +358,7 @@ func avatarHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if f.Id == -1 {
-		// TODO: Return a default avatar
-		w.WriteHeader(404)
-		return
+		f = globals.DefaultAvatar
 	}
 
 	w.Header().Set("Content-Type", f.Type)
