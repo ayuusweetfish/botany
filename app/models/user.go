@@ -31,6 +31,7 @@ type User struct {
 	// Customized profile
 	Nickname string
 	Bio      string
+	Avatar   int32
 }
 
 func init() {
@@ -43,6 +44,8 @@ func init() {
 		"joined_at BIGINT NOT NULL",
 		"nickname TEXT NOT NULL",
 		"bio TEXT NOT NULL DEFAULT ''",
+		"avatar INTEGER", // Nullable
+		"ADD CONSTRAINT fk_avatar FOREIGN KEY (avatar) REFERENCES file (id)",
 	)
 }
 
@@ -255,4 +258,29 @@ func UserSearchByHandle(handle string) ([]User, error) {
 		us = append(us, u)
 	}
 	return us, rows.Err()
+}
+
+// Returns extension, contents, error
+func (u *User) LoadAvatar() (File, error) {
+	// XXX: Right join possible?
+	err := db.QueryRow("SELECT COALESCE(avatar, -1) FROM users WHERE id = $1",
+		u.Id).Scan(&u.Avatar)
+	if err != nil {
+		return File{}, err
+	}
+	if u.Avatar == -1 {
+		return File{Id: -1, Content: nil}, nil
+	}
+	f := File{Id: u.Avatar}
+	if err := f.Read(); err != nil {
+		return File{}, err
+	}
+	return f, nil
+}
+
+func (u *User) UpdateAvatar() error {
+	_, err := db.Exec("UPDATE users SET "+
+		"avatar = $1 WHERE id = $2",
+		u.Avatar, u.Id)
+	return err
 }

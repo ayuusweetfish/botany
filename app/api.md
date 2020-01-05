@@ -165,21 +165,23 @@
 - 空响应 Content-Length: 0
 - 除站长外，不能修改其他人的密码
 
-### :construction: 修改头像 POST /user/{handle}/avatar/upload
+### 修改头像 POST /user/{handle}/avatar/upload
 
 请求
 - Content-Type: multipart/form-data
 - **file** 一个图像文件，保留文件名，其后缀决定图像类型（image/\*\*\*）
+	- 由 Golang 的 mime 包识别，至少支持 .gif, .jpg, .jpeg, .png, .svg, .webp
 
 响应 403 —— 前端处理正确时不应出现此项
 - 空响应 Content-Length: 0
 - 除站长外，不能修改其他人的头像
 
-响应 400 —— 前端处理正确时不应出现此项
+响应 400
 - 空响应 Content-Length: 0
-- Content-Type 不正确，或不包含有效的图像
+- 文件名后缀不是图像格式
+- 或没有包含 **file** —— 前端处理正确时不应出现此项
 
-### :construction: 获得头像 GET /user/{handle}/avatar
+### 获得头像 GET /user/{handle}/avatar
 
 响应 200
 - 图像，将会设置 Content-Type，不必再加后缀
@@ -316,7 +318,8 @@
 
 响应 400 —— 前端处理正确时不应出现此项
 - 空响应 Content-Length: 0
-- Content-Type 不正确，或不包含有效的图像
+- 文件名后缀不是图像格式
+- 或没有包含 **file** —— 前端处理正确时不应出现此项
 
 ### :construction: 获得横幅图片 GET /contest/{cid}/banner
 

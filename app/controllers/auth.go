@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"github.com/gorilla/mux"
 	"io"
+	"mime"
 	"net/http"
 	"strings"
 )
@@ -340,6 +341,32 @@ func passwordEditHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "{}")
 }
 
+func avatarHandler(w http.ResponseWriter, r *http.Request) {
+	u := models.User{Handle: mux.Vars(r)["handle"]}
+	if err := u.ReadByHandle(); err != nil {
+		if err == sql.ErrNoRows {
+			w.WriteHeader(404)
+			return
+		} else {
+			panic(err)
+		}
+	}
+
+	f, err := u.LoadAvatar()
+	if err != nil {
+		panic(err)
+	}
+
+	if f.Id == -1 {
+		// TODO: Return a default avatar
+		w.WriteHeader(404)
+		return
+	}
+
+	w.Header().Set("Content-Type", f.Type)
+	w.Write(f.Content)
+}
+
 func avatarUploadHandler(w http.ResponseWriter, r *http.Request) {
 	u := middlewareUserEditVerify(w, r)
 	if u.Id == -1 {
@@ -355,8 +382,32 @@ func avatarUploadHandler(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 
-	println(ext)
-	println(buf.String())
+	mimeType := mime.TypeByExtension("." + ext)
+	if !strings.HasPrefix(mimeType, "image/") {
+		// Unsupported file extension
+		w.WriteHeader(400)
+		return
+	}
+
+	f, err := u.LoadAvatar()
+	if err != nil {
+		panic(err)
+	}
+	f.Type = mimeType
+	f.Content = buf.Bytes()
+
+	if f.Id == -1 {
+		err = f.Create()
+		if err == nil {
+			u.Avatar = f.Id
+			err = u.UpdateAvatar()
+		}
+	} else {
+		err = f.Update()
+	}
+	if err != nil {
+		panic(err)
+	}
 }
 
 // 赋予或撤回主办权限
@@ -428,6 +479,7 @@ func init() {
 	registerRouterFunc("/user/{handle:[a-zA-Z0-9-_]+}/profile", profileHandler, "GET")
 	registerRouterFunc("/user/{handle:[a-zA-Z0-9-_]+}/profile/edit", profileEditHandler, "POST")
 	registerRouterFunc("/user/{handle:[a-zA-Z0-9-_]+}/password", passwordEditHandler, "POST")
+	registerRouterFunc("/user/{handle:[a-zA-Z0-9-_]+}/avatar", avatarHandler, "GET")
 	registerRouterFunc("/user/{handle:[a-zA-Z0-9-_]+}/avatar/upload", avatarUploadHandler, "POST")
 	registerRouterFunc("/user/{handle:[a-zA-Z0-9-_]+}/promote", promoteHandler, "POST")
 
