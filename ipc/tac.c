@@ -31,6 +31,7 @@ int main()
             v = rand() % 3;
         } while (board[u][v]);
         board[u][v] = true;
+        fprintf(stderr, "Moving at (%d, %d)\n", u, v);
 
         // Send
         char t[8];

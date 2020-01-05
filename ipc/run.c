@@ -1,6 +1,7 @@
 #include "ipc.h"
 
 #include <errno.h>
+#include <fcntl.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -11,12 +12,14 @@ typedef struct _childproc {
     /* fd_send is the child's stdin, fd_recv is stdout
        Parent writes to fd_send and reads from fd_recv */
     int fd_send, fd_recv;
+    int fd_log;
 } childproc;
 
 #define child_pause(__cp)   kill((__cp).pid, SIGSTOP)
 #define child_resume(__cp)  kill((__cp).pid, SIGCONT)
+#define child_kill(__cp)    kill((__cp).pid, SIGKILL)
 
-childproc child_create(const char *path)
+childproc child_create(const char *path, const char *log)
 {
     childproc ret;
     ret.pid = -1;
@@ -35,8 +38,14 @@ childproc child_create(const char *path)
 
     if (pid == 0) {
         /* Child process */
+        int fd_log = open(log, O_WRONLY | O_CREAT, 0644);
+        if (fd_log == -1) {
+            fprintf(stderr, "open(%s) failed with errno %d\n", log, errno);
+            exit(1);
+        }
         dup2(fd_send[0], STDIN_FILENO);
         dup2(fd_recv[1], STDOUT_FILENO);
+        dup2(fd_log, STDERR_FILENO);
         close(fd_send[1]);
         close(fd_recv[0]);
         if (execl(path, path, NULL) != 0) {
@@ -54,6 +63,12 @@ childproc child_create(const char *path)
     }
 
     return ret;
+}
+
+void child_finish(childproc proc)
+{
+    fsync(proc.fd_log);
+    child_kill(proc);
 }
 
 void child_send(childproc proc, const char *str)
@@ -84,17 +99,22 @@ static inline char *str_head(char *s, size_t n)
 }
 
 /*
+    Usage:
+    - ./run <prog-1> <prog-2> <log-1> <log-2>
+
     Protocol:
     - Startup: I "<side>" side - 0: first to move, 1: next to move
     - Move: O "<row> <col>" row, col - 0..2
     - Response: I "<row> <col>" row, col - 0..2
 */
 
-int main()
+int main(int argc, char *argv[])
 {
+    if (argc < 5) return 1;
+
     childproc par[2];
-    par[0] = child_create("./a.out");
-    par[1] = child_create("./a.out");
+    par[0] = child_create(argv[1], argv[3]);
+    par[1] = child_create(argv[2], argv[4]);
 
     child_send(par[0], "0");
     child_send(par[1], "1");
@@ -166,6 +186,9 @@ int main()
         printf("\\n");
     }
     printf("\"\n}\n");
+
+    child_finish(par[0]);
+    child_finish(par[1]);
 
     return 0;
 }
