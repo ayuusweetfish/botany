@@ -27,22 +27,24 @@ childproc child_create(const char *path, const char *log)
     int fd_send[2], fd_recv[2];
     if (pipe(fd_send) != 0 || pipe(fd_recv) != 0) {
         fprintf(stderr, "pipe() failed with errno %d\n", errno);
-        return ret;
+        exit(1);    /* Non-zero exit status by the judge will be
+                       reported as "System Error" */
+    }
+
+    int fd_log = open(log, O_WRONLY | O_CREAT, 0644);
+    if (fd_log == -1) {
+        fprintf(stderr, "open(%s) failed with errno %d\n", log, errno);
+        exit(1);
     }
 
     pid_t pid = fork();
     if (pid == -1) {
         fprintf(stderr, "fork() failed with errno %d\n", errno);
-        return ret;
+        exit(1);
     }
 
     if (pid == 0) {
         /* Child process */
-        int fd_log = open(log, O_WRONLY | O_CREAT, 0644);
-        if (fd_log == -1) {
-            fprintf(stderr, "open(%s) failed with errno %d\n", log, errno);
-            exit(1);
-        }
         dup2(fd_send[0], STDIN_FILENO);
         dup2(fd_recv[1], STDOUT_FILENO);
         dup2(fd_log, STDERR_FILENO);
