@@ -165,6 +165,25 @@
 - 空对象 {}
 - 除站长外，不能修改其他人的密码
 
+### :construction: 修改头像 POST /user/{handle}/avatar/upload
+
+请求
+- Content-Type: multipart/form-data
+- 一个图像文件，保留文件名，其后缀决定图像类型（image/\*\*\*）
+
+响应 403 —— 前端处理正确时不应出现此项
+- 空响应 Content-Length: 0
+- 除站长外，不能修改其他人的头像
+
+响应 400 —— 前端处理正确时不应出现此项
+- 空响应 Content-Length: 0
+- Content-Type 不正确，或不包含有效的图像
+
+### :construction: 获得头像 GET /user/{handle}/avatar
+
+响应 200
+- 图像，将会设置 Content-Type，不必再加后缀
+
 ### 赋予或撤回主办权限 POST /user/{handle}/promote
 
 请求
@@ -191,7 +210,6 @@
 
 - **id** (number) ID
 - **title** (string) 标题
-- **banner** (string) Banner 图片链接（暂不使用）
 - **start_time** (number) 开始时刻的 Unix 时间戳，单位为秒
 - **end_time** (number) 结束时刻的 Unix 时间戳，单位为秒
 - **desc** (string) 简要描述
@@ -209,7 +227,7 @@
 
 ### 比赛数据结构 ContestShort
 
-仅包含 Contest 的 **id**, **title**, **banner**, **start_time**, **end_time**, **desc**, **is_reg_open**
+仅包含 Contest 的 **id**, **title**, **start_time**, **end_time**, **desc**, **is_reg_open**
 
 ### 提交记录数据结构 Submission
 
@@ -250,7 +268,6 @@
 
 请求
 - **title** (string) 标题
-- **banner** (string) Banner 图片链接（暂不使用）
 - **start_time** (number) 开始时刻的 Unix 时间戳，单位为秒
 - **end_time** (number) 结束时刻的 Unix 时间戳，单位为秒
 - **desc** (string) 简要描述
@@ -286,6 +303,25 @@
 响应 403
 - 空对象 {}
 - 不是比赛拥有者 —— 前端检查严格时不应出现此项
+
+### :construction: 修改横幅图片 POST /contest/{cid}/banner/upload
+
+请求
+- Content-Type: multipart/form-data
+- 一个图像文件，保留文件名，其后缀决定图像类型（image/\*\*\*）
+
+响应 403 —— 前端处理正确时不应出现此项
+- 空响应 Content-Length: 0
+- 非管理员
+
+响应 400 —— 前端处理正确时不应出现此项
+- 空响应 Content-Length: 0
+- Content-Type 不正确，或不包含有效的图像
+
+### :construction: 获得横幅图片 GET /contest/{cid}/banner
+
+响应 200
+- 图像，将会设置 Content-Type，不必再加后缀
 
 ### 发布或隐藏比赛 POST /contest/{cid}/publish
 
