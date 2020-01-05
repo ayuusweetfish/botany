@@ -1,6 +1,10 @@
 #ifndef _IPC_H_
 #define _IPC_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <unistd.h>
 
 #define IPC_ERR_NONE    0
@@ -22,5 +26,9 @@ char *ipc_recv(int pipe, size_t *o_len, int timeout);
 
 void ipc_send_str(const char *s);
 char *ipc_recv_str();
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
