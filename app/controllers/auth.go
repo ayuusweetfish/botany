@@ -4,11 +4,15 @@ import (
 	"github.com/kawa-yoiko/botany/app/globals"
 	"github.com/kawa-yoiko/botany/app/models"
 
+	"bytes"
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/gorilla/mux"
+	"io"
 	"net/http"
+	"strings"
 )
 
 // Returns a User struct
@@ -51,6 +55,55 @@ func middlewareCaptchaVerify(w http.ResponseWriter, r *http.Request) bool {
 	captchaKey := r.PostFormValue("captcha_key")
 	captchaValue := r.PostFormValue("captcha_value")
 	return globals.CaptchaVerfiy(captchaKey, captchaValue)
+}
+
+func middlewareUserEditVerify(w http.ResponseWriter, r *http.Request) models.User {
+	u := middlewareAuthRetrieve(w, r)
+	if u.Id == -1 {
+		w.WriteHeader(401)
+		return u
+	}
+
+	// The user being referred to
+	ur := models.User{Handle: mux.Vars(r)["handle"]}
+	if u.Handle != ur.Handle && u.Privilege != models.UserPrivilegeSuperuser {
+		// Not superuser and handle does match logged-in user
+		w.WriteHeader(403)
+		return models.User{Id: -1}
+	}
+
+	if err := ur.ReadByHandle(); err != nil {
+		if err == sql.ErrNoRows {
+			w.WriteHeader(404)
+			return models.User{Id: -1}
+		} else {
+			panic(err)
+		}
+	}
+
+	return ur
+}
+
+// Returns file name extension and a buffer of contents
+func middlewareMultipartFormFile(r *http.Request) (error, string, bytes.Buffer) {
+	var buf bytes.Buffer
+
+	// 1 MiB maximum
+	// TODO: Allow changing this in configuration
+	r.ParseMultipartForm(1 << 20)
+	f, h, err := r.FormFile("file")
+	if err != nil {
+		return err, "", buf
+	}
+	defer f.Close()
+
+	nameParts := strings.Split(h.Filename, ".")
+	extension := ""
+	if len(nameParts) >= 2 {
+		extension = nameParts[len(nameParts)-1]
+	}
+	io.Copy(&buf, f)
+	return nil, extension, buf
 }
 
 // curl http://localhost:3434/signup -i -d "handle=abc&password=qwq&email=gamma@example.com&nickname=ABC&captcha_key=...&captcha_value=..."
@@ -230,29 +283,7 @@ func profileHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func profileEditHandler(w http.ResponseWriter, r *http.Request) {
-	u := middlewareAuthRetrieve(w, r)
-	if u.Id == -1 {
-		w.WriteHeader(401)
-		return
-	}
-
-	user := models.User{Handle: mux.Vars(r)["handle"]}
-	if u.Handle != user.Handle && u.Privilege != models.UserPrivilegeSuperuser {
-		// this user is not superuser
-		// and the user's handle is not the same with the user whose info is being updated
-		w.WriteHeader(403)
-		fmt.Fprintf(w, "{}")
-		return
-	}
-
-	if err := user.ReadByHandle(); err != nil {
-		if err == sql.ErrNoRows {
-			w.WriteHeader(404)
-			return
-		} else {
-			panic(err)
-		}
-	}
+	user := middlewareUserEditVerify(w, r)
 
 	user.Email = r.PostFormValue("email")
 	user.Nickname = r.PostFormValue("nickname")
@@ -286,28 +317,9 @@ func profileEditHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func passwordEditHandler(w http.ResponseWriter, r *http.Request) {
-	u := middlewareAuthRetrieve(w, r)
-	if u.Id == -1 {
-		w.WriteHeader(401)
+	user := middlewareUserEditVerify(w, r)
+	if user.Id == -1 {
 		return
-	}
-
-	user := models.User{Handle: mux.Vars(r)["handle"]}
-	if u.Handle != user.Handle && u.Privilege != models.UserPrivilegeSuperuser {
-		// this user is not superuser
-		// and the user's handle is not the same with the user whose password is being updated
-		w.WriteHeader(403)
-		fmt.Fprintf(w, "{}")
-		return
-	}
-
-	if err := user.ReadByHandle(); err != nil {
-		if err == sql.ErrNoRows {
-			w.WriteHeader(404)
-			return
-		} else {
-			panic(err)
-		}
 	}
 
 	old := r.PostFormValue("old")
@@ -326,6 +338,25 @@ func passwordEditHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	w.WriteHeader(200)
 	fmt.Fprintf(w, "{}")
+}
+
+func avatarUploadHandler(w http.ResponseWriter, r *http.Request) {
+	u := middlewareUserEditVerify(w, r)
+	if u.Id == -1 {
+		return
+	}
+
+	err, ext, buf := middlewareMultipartFormFile(r)
+	if errors.Is(err, http.ErrMissingFile) {
+		// No such file
+		w.WriteHeader(400)
+		return
+	} else if err != nil {
+		panic(err)
+	}
+
+	println(ext)
+	println(buf.String())
 }
 
 // 赋予或撤回主办权限
@@ -397,6 +428,7 @@ func init() {
 	registerRouterFunc("/user/{handle:[a-zA-Z0-9-_]+}/profile", profileHandler, "GET")
 	registerRouterFunc("/user/{handle:[a-zA-Z0-9-_]+}/profile/edit", profileEditHandler, "POST")
 	registerRouterFunc("/user/{handle:[a-zA-Z0-9-_]+}/password", passwordEditHandler, "POST")
+	registerRouterFunc("/user/{handle:[a-zA-Z0-9-_]+}/avatar/upload", avatarUploadHandler, "POST")
 	registerRouterFunc("/user/{handle:[a-zA-Z0-9-_]+}/promote", promoteHandler, "POST")
 
 	registerRouterFunc("/user_search/{handle:[a-zA-Z0-9-_]+}", userSearchHandler, "GET")

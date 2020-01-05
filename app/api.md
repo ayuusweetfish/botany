@@ -140,7 +140,7 @@
 - 空对象 {}
 
 响应 403 —— 前端处理正确时不应出现此项
-- 空对象 {}
+- 空响应 Content-Length: 0
 - 除站长外，不能修改其他人的个人信息
 
 响应 400
@@ -162,14 +162,14 @@
 - 原密码错误
 
 响应 403 —— 前端处理正确时不应出现此项
-- 空对象 {}
+- 空响应 Content-Length: 0
 - 除站长外，不能修改其他人的密码
 
 ### :construction: 修改头像 POST /user/{handle}/avatar/upload
 
 请求
 - Content-Type: multipart/form-data
-- 一个图像文件，保留文件名，其后缀决定图像类型（image/\*\*\*）
+- **file** 一个图像文件，保留文件名，其后缀决定图像类型（image/\*\*\*）
 
 响应 403 —— 前端处理正确时不应出现此项
 - 空响应 Content-Length: 0
@@ -308,7 +308,7 @@
 
 请求
 - Content-Type: multipart/form-data
-- 一个图像文件，保留文件名，其后缀决定图像类型（image/\*\*\*）
+- **file** 一个图像文件，保留文件名，其后缀决定图像类型（image/\*\*\*）
 
 响应 403 —— 前端处理正确时不应出现此项
 - 空响应 Content-Length: 0
