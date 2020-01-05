@@ -13,10 +13,10 @@ typedef struct _childproc {
     int fd_send, fd_recv;
 } childproc;
 
-#define pause_child(__cp)   kill((__cp).pid, SIGSTOP)
-#define resume_child(__cp)  kill((__cp).pid, SIGCONT)
+#define child_pause(__cp)   kill((__cp).pid, SIGSTOP)
+#define child_resume(__cp)  kill((__cp).pid, SIGCONT)
 
-childproc create_child(const char *path)
+childproc child_create(const char *path)
 {
     childproc ret;
     ret.pid = -1;
@@ -50,10 +50,24 @@ childproc create_child(const char *path)
         ret.pid = pid;
         ret.fd_send = fd_send[1];
         ret.fd_recv = fd_recv[0];
-        pause_child(ret);
+        child_pause(ret);
     }
 
     return ret;
+}
+
+void child_send(childproc proc, const char *str)
+{
+    ipc_send(proc.fd_send, 0, str);
+}
+
+/* Returned value should be free()'d */
+char *child_recv(childproc proc, size_t *o_len, int timeout)
+{
+    child_resume(proc);
+    char *resp = ipc_recv(proc.fd_recv, o_len, timeout);
+    child_pause(proc);
+    return resp;
 }
 
 /* Modifies contents in `s` */
@@ -79,11 +93,11 @@ static inline char *str_head(char *s, size_t n)
 int main()
 {
     childproc par[2];
-    par[0] = create_child("./a.out");
-    par[1] = create_child("./a.out");
+    par[0] = child_create("./a.out");
+    par[1] = child_create("./a.out");
 
-    ipc_send(par[0].fd_send, 0, "0");
-    ipc_send(par[1].fd_send, 0, "1");
+    child_send(par[0], "0");
+    child_send(par[1], "1");
 
     char buf[8];
     char *resp;
@@ -97,11 +111,8 @@ int main()
 
     for (; win == -1 && count < 9; free(resp), move ^= 1) {
         snprintf(buf, sizeof buf, "%d %d", row, col);
-        ipc_send(par[move].fd_send, 0, buf);
-
-        resume_child(par[move]);
-        resp = ipc_recv(par[move].fd_recv, &len, 1000);
-        pause_child(par[move]);
+        child_send(par[move], buf);
+        resp = child_recv(par[move], &len, 1000);
 
         if (resp == NULL) {
             fprintf(stderr, "Side #%d errors with %d, considered resignation\n",
