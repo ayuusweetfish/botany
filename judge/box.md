@@ -23,6 +23,8 @@ stdout and stderr are concatenated as the compilation log.
 
 Non-zero return codes denote compilation failures.
 
+This script will be run under resource limits stricter than usual.
+
 ### match.sh
 
 ```
