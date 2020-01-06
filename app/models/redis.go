@@ -44,12 +44,13 @@ func (s *Submission) SendToQueue() error {
 	return err
 }
 
-func (m *Match) SendToQueue() error {
+func (m *Match) SendToQueue(judge int32) error {
 	if rcli == nil {
 		return nil
 	}
 	values := map[string]interface{}{
 		"mid":         m.Id,
+		"judge":       judge,
 		"num_parties": len(m.Rel.Parties),
 	}
 	for i, p := range m.Rel.Parties {

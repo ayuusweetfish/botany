@@ -6,8 +6,6 @@ LANG=$2
 CODE=submissions/$SID/code.$LANG
 BIN=submissions/$SID/bin
 
-sleep 1
-
 if [[ "$LANG" == "c" ]]; then
     gcc $CODE -O2 -o $BIN 2>&1
 elif [[ "$LANG" == "lua" ]]; then

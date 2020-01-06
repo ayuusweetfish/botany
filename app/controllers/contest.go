@@ -653,7 +653,7 @@ func contestMatchManualHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Send for match
-	if err := m.SendToQueue(); err != nil {
+	if err := m.SendToQueue(c.Judge); err != nil {
 		panic(err)
 	}
 

@@ -76,6 +76,7 @@ function on_timer(all)
     count = 0
     print('Superuser has ID ' .. tostring(su_id))
     print('Creating matches for contest #` + strconv.Itoa(i) + `')
+    print('Number of participants with delegates ' .. tostring(#all))
     for i = 1, #all do
         print(string.format('Contestant %s (%d)', get_handle(all[i]), all[i]))
         if i > 1 then create_match(all[i], all[i - 1]) end
@@ -125,6 +126,8 @@ end
 				if err := s.Create(); err != nil {
 					panic(err)
 				}
+				// TODO: Move delegate & match creation to a separate endpoint
+				p.Delegate = s.Id
 				if false {
 					// Mark as accepted
 					r := rand.Intn(5)
@@ -155,6 +158,10 @@ end
 				} else {
 					s.SendToQueue()
 				}
+			}
+
+			if err := p.Update(); err != nil {
+				panic(err)
 			}
 		}
 	}

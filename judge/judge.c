@@ -272,18 +272,21 @@ void process_match(redisReply *kv)
     redisReply *reply;
 
     const char *mid = NULL;
+    const char *judge = NULL;
     int num_parties = 0;
     for (int i = 0; i + 1 < kv->elements; i += 2) {
         assert(kv->element[i]->type == REDIS_REPLY_STRING);
         assert(kv->element[i + 1]->type == REDIS_REPLY_STRING);
         if (strcmp(kv->element[i]->str, "mid") == 0) {
             mid = kv->element[i + 1]->str;
+        } else if (strcmp(kv->element[i]->str, "judge") == 0) {
+            judge = kv->element[i + 1]->str;
         } else if (strcmp(kv->element[i]->str, "num_parties") == 0) {
             num_parties = (int)strtol(kv->element[i + 1]->str, NULL, 10);
         }
     }
 
-    assert(mid != NULL && num_parties != 0);
+    assert(mid != NULL && judge != NULL && num_parties != 0);
 
     char *parties[num_parties];
     for (int i = 0; i + 1 < kv->elements; i += 2) {
@@ -320,7 +323,7 @@ void process_match(redisReply *kv)
 
     // Match work
     char *msg;
-    int retcode = match(mid, num_parties, (const char **)parties, &msg);
+    int retcode = match(mid, judge, num_parties, (const char **)parties, &msg);
 
     WLOGF("Done:      %s (exit code %d)", mid, retcode);
     reply = redisCommand(rctx, "RPUSH " MATCH_RESULT_LIST " %s 9 Done", mid);

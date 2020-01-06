@@ -238,7 +238,14 @@ func luaCreateMatch(L *lua.LState) int {
 		log.Println(err.Error())
 		return 0
 	}
-	if err := m.SendToQueue(); err != nil {
+
+	// Get judge ID and then add to judge queue
+	c := Contest{Id: cid}
+	if err := c.Read(); err != nil {
+		log.Println(err.Error())
+		return 0
+	}
+	if err := m.SendToQueue(c.Judge); err != nil {
 		log.Println(err.Error())
 		return 0
 	}
@@ -250,7 +257,7 @@ func luaCreateMatch(L *lua.LState) int {
 func (c *Contest) ExecuteScriptFunction(fnName string, args ...lua.LValue) error {
 	L := c.LuaState()
 
-	// Find `on_timer` global function
+	// Find global function by name
 	fn := L.GetGlobal(fnName)
 	if fn.Type() != lua.LTFunction {
 		return ErrLuaType{Message: "Lua global `" + fnName + "` should be a function"}

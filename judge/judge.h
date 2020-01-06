@@ -7,6 +7,6 @@ extern const char *judge_chroot;
 
 int compile(const char *sid, const char *lang, const char *contents, char **msg);
 bool is_compiled(const char *sid);
-int match(const char *mid, int num_parties, const char *parties[], char **msg);
+int match(const char *mid, const char *judge, int num_parties, const char *parties[], char **msg);
 
 #endif

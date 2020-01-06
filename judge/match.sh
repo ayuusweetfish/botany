@@ -1,8 +1,9 @@
 #!/bin/sh
 
-echo "Running match $1"
 MID=$1
-shift
+JUDGE=$2
+echo "Running match $MID (judge $JUDGE)"
+shift 2
 
 sleep 1
 

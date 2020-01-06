@@ -28,7 +28,7 @@ This script will be run under resource limits stricter than usual.
 ### match.sh
 
 ```
-./match.sh <judge-sid> <mid> <party-sid> <party-sid> ...
+./match.sh <mid> <judge-sid> <party-sid> <party-sid> ...
 ```
 
 stdout is the report while stderr is the log.
