@@ -48,3 +48,35 @@ cp /path/to/match.sh .
 ```
 
 Install: isolate, gcc, lua
+
+Requires the host environment to have the cURL binary in $PATH.
+
+### Alpine mini-rootfs
+
+```sh
+# Move projects inside
+mkdir -p alpine/var/botany
+cp botany/judge/compile.sh botany/judge/match.sh alpine/var/botany
+git clone https://github.com/ioi/isolate.git alpine/home/isolate
+
+sudo mkdir alpine/proc/self
+sudo mount --bind alpine alpine
+sudo mount --bind /proc alpine/proc
+
+# Set up network
+sudo cp /etc/resolv.conf alpine/etc
+
+sudo chroot alpine sh
+# Inside chroot
+sed -i 's/dl-cdn.alpinelinux.org/mirrors.tuna.tsinghua.edu.cn/g' /etc/apk/repositories
+apk add gcc make libc-dev libcap-dev
+
+cd /home/isolate
+make
+make install
+
+# Test isolate
+isolate --init
+isolate --run -- /bin/echo hi
+isolate --cleanup
+```
