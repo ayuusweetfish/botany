@@ -40,7 +40,9 @@ Non-zero return codes denote internal system errors.
 Set up a chroot jail and log in with `root`.
 
 ```sh
-mkdir -p /var/botany
+mkdir -p /var/botany/submissions
+chown 1000 /var/botany/submissions
+chgrp 1000 /var/botany/submissions
 cd /var/botany
 chown <outside_user> -R .
 cp /path/to/compile.sh .
@@ -59,18 +61,21 @@ mkdir -p alpine/var/botany
 cp botany/judge/compile.sh botany/judge/match.sh alpine/var/botany
 git clone https://github.com/ioi/isolate.git alpine/home/isolate
 
-sudo mkdir alpine/proc/self
+# Create mount points
 sudo mount --bind alpine alpine
-sudo mount --bind /proc alpine/proc
+sudo mount --bind /proc alpine/proc # TODO: Do not mount /proc entirely
 
 # Set up network
 sudo cp /etc/resolv.conf alpine/etc
 
+# Enter chroot
 sudo chroot alpine sh
-# Inside chroot
+
+# Install packages
 sed -i 's/dl-cdn.alpinelinux.org/mirrors.tuna.tsinghua.edu.cn/g' /etc/apk/repositories
 apk add gcc make libc-dev libcap-dev
 
+# Build isolate
 cd /home/isolate
 make
 make install
@@ -79,4 +84,14 @@ make install
 isolate --init
 isolate --run -- /bin/echo hi
 isolate --cleanup
+```
+
+In the host environment, run Botany's judge side:
+
+```sh
+sudo apt-get install libhiredis-dev libb2-dev
+
+cd botany/judge
+sudo ./build.sh
+./a.out -i 1 -d /path/to/alpine
 ```

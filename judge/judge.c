@@ -226,6 +226,7 @@ retry:
         }
         i += j;
     }
+    buf[code_len] = '\0';
     *contents = buf;
 
     pclose(fp);
