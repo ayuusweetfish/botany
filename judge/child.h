@@ -5,6 +5,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/resource.h>
+#include <sys/time.h>
 #include <unistd.h>
 
 static inline void child_enter_box()
@@ -43,6 +45,30 @@ static inline void write_file(const char *path, const char *contents)
         exit(1);
     }
     fclose(fp);
+}
+
+static inline void impose_rlimits()
+{
+    struct rlimit l;
+    // Memory limit (address space)
+    l.rlim_cur = 1 << 30;
+    l.rlim_max = 1 << 30;
+    setrlimit(RLIMIT_AS, &l);
+    // Memory limit (data segment)
+    l.rlim_cur = 1 << 30;
+    l.rlim_max = 1 << 30;
+    setrlimit(RLIMIT_DATA, &l);
+    // CPU limit
+    l.rlim_cur = 15;
+    l.rlim_max = 20;
+    setrlimit(RLIMIT_CPU, &l);
+    // Wall clock limit
+    // Compilers usually do not override SIGALRM behaviour
+    struct itimerval t;
+    t.it_interval.tv_sec = 20;
+    t.it_interval.tv_usec = 0;
+    t.it_value = t.it_interval;
+    setitimer(ITIMER_REAL, &t, NULL);
 }
 
 #endif

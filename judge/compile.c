@@ -38,6 +38,7 @@ int compile(const char *sid, const char *lang, const char *contents, char **msg)
         snprintf(path, sizeof path, "submissions/%s/code.%s", sid, lang);
         write_file(path, contents);
 
+        impose_rlimits();
         execl("./compile.sh", "./compile.sh", sid, lang, NULL);
         exit(42);   // Unreachable
     } else {
