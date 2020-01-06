@@ -1,7 +1,9 @@
 #include "judge.h"
 #include "child.h"
 
+#include <stdio.h>
 #include <string.h>
+#include <sys/wait.h>
 
 int match(const char *mid, int num_parties, const char *parties[], char **msg)
 {
@@ -21,7 +23,15 @@ int match(const char *mid, int num_parties, const char *parties[], char **msg)
     } else {
         int wstatus;
         waitpid(ch, &wstatus, 0);
-        if (WIFEXITED(wstatus)) return WEXITSTATUS(wstatus);
-        else return -1;
+        if (WIFEXITED(wstatus)) {
+            return WEXITSTATUS(wstatus);
+        } else if (WIFSIGNALED(wstatus)) {
+            snprintf(*msg, 1024, "Match terminated by signal %s",
+                strsignal(WTERMSIG(wstatus)));
+            return -1;
+        } else {
+            strcpy(*msg, "Unknown internal anomalies");
+            return -1;
+        }
     }
 }

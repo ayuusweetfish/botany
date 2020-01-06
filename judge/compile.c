@@ -49,8 +49,16 @@ int compile(const char *sid, const char *lang, const char *contents, char **msg)
         (*msg)[len > 0 ? len : 0] = '\0';
         close(fd_pipe[0]);
         close(fd_pipe[1]);
-        if (WIFEXITED(wstatus)) return WEXITSTATUS(wstatus);
-        else return -1;
+        if (WIFEXITED(wstatus)) {
+            return WEXITSTATUS(wstatus);
+        } else if (WIFSIGNALED(wstatus)) {
+            snprintf(*msg, 1024, "Compiler terminated by signal %s",
+                strsignal(WTERMSIG(wstatus)));
+            return -1;
+        } else {
+            strcpy(*msg, "Unknown internal anomalies");
+            return -1;
+        }
     }
 }
 
