@@ -19,7 +19,7 @@ typedef struct _childproc {
 #define child_resume(__cp)  kill((__cp).pid, SIGCONT)
 #define child_kill(__cp)    kill((__cp).pid, SIGKILL)
 
-childproc child_create(const char *path, const char *log)
+childproc child_create(const char *cmd, const char *log)
 {
     childproc ret;
     ret.pid = -1;
@@ -50,8 +50,8 @@ childproc child_create(const char *path, const char *log)
         dup2(fd_log, STDERR_FILENO);
         close(fd_send[1]);
         close(fd_recv[0]);
-        if (execl(path, path, NULL) != 0) {
-            fprintf(stderr, "exec(%s) failed with errno %d\n", path, errno);
+        if (execl("/bin/sh", "/bin/sh", "-c", cmd, NULL) != 0) {
+            fprintf(stderr, "exec(%s) failed with errno %d\n", cmd, errno);
             exit(1);
         }
     } else {
