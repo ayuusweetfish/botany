@@ -305,9 +305,9 @@ void process_match(redisReply *kv)
     }
 
     reply = redisCommand(rctx, "RPUSH " MATCH_RESULT_LIST " %s 1 Compiling", mid);
-    for (int i = 0; i < num_parties; i++) {
-        if (!is_compiled(parties[i])) {
-            const char *sid = parties[i];
+    for (int i = -1; i < num_parties; i++) {
+        const char *sid = (i == -1 ? judge : parties[i]);
+        if (!is_compiled(sid)) {
             char *lang, *contents;
             retrieve_submission(sid, &lang, &contents);
 
