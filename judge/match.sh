@@ -10,7 +10,7 @@ mkdir -p matches/$MID
 argv=()
 
 for s in $@; do
-    argv+=($s)
+    argv+=(submissions/$s/bin)
 done
 
 i=0
