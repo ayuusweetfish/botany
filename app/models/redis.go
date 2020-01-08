@@ -116,5 +116,26 @@ func redisUpdateMatchStatus(mid int32, status int8, msg string) error {
 
 	m.Status = status
 	m.Report = msg
-	return m.Update()
+	if err := m.Update(); err != nil {
+		return err
+	}
+
+	if status == MatchStatusDone {
+		// Save participant logs
+		num, err := m.PartiesCount()
+		if err != nil {
+			return err
+		}
+		println("Number of parties: ", num)
+		for i := 0; i < num; i++ {
+			log, _ := rcli.LPop("match_result").Result()
+			println(i, log)
+			p := MatchParty{Match: mid, Index: int32(i), Log: log}
+			if err := p.UpdateLog(); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
 }

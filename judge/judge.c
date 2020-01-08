@@ -323,9 +323,17 @@ void process_match(redisReply *kv)
     reply = redisCommand(rctx, "RPUSH " MATCH_RESULT_LIST " %s 2 Running", mid);
 
     // Match work
-    char *msg;
-    int retcode = match(mid, judge, num_parties, (const char **)parties, &msg);
+    char *msg, **logs;
+    int retcode = match(mid, judge, num_parties, (const char **)parties, &msg, &logs);
 
     WLOGF("Done:      %s (exit code %d)", mid, retcode);
-    reply = redisCommand(rctx, "RPUSH " MATCH_RESULT_LIST " %s 9 Done", mid);
+    reply = redisCommand(rctx, "RPUSH " MATCH_RESULT_LIST " %s 9 %s", mid, msg);
+
+    // Participant logs
+    if (logs != NULL) for (int i = 0; i < num_parties; i++) {
+        reply = redisCommand(rctx, "RPUSH " MATCH_RESULT_LIST " %s", logs[i]);
+        free(logs[i]);
+    }
+
+    free(msg);
 }

@@ -231,7 +231,7 @@ func luaCreateMatch(L *lua.LState) int {
 	// Create match
 	m := Match{
 		Contest: cid,
-		Report:  "{\"winner\": \"In queue\"}",
+		Report:  "Pending",
 	}
 	m.Rel.Parties = ss
 	if err := m.Create(); err != nil {

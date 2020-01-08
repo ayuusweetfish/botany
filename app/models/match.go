@@ -27,6 +27,7 @@ type MatchParty struct {
 	Match      int32
 	Index      int32
 	Submission int32
+	Log        string
 
 	Rel struct {
 		Match      Match
@@ -46,6 +47,7 @@ func init() {
 		"match INTEGER NOT NULL",
 		"index INTEGER NOT NULL",
 		"submission INTEGER NOT NULL",
+		"log TEXT NOT NULL DEFAULT ''",
 		"ADD CONSTRAINT fk_match FOREIGN KEY (match) REFERENCES match (id)",
 		"ADD CONSTRAINT fk_submission FOREIGN KEY (submission) REFERENCES submission (id)",
 	)
@@ -167,6 +169,13 @@ func ReadByContest(cid int32) ([]Match, error) {
 	return ms, rows.Err()
 }
 
+func (m *Match) PartiesCount() (int, error) {
+	var num int
+	err := db.QueryRow("SELECT COUNT(*) FROM match_party WHERE match = $1",
+		m.Id).Scan(&num)
+	return num, err
+}
+
 func (m *Match) LoadRel() error {
 	m.Rel.Contest.Id = m.Contest
 	if err := m.Rel.Contest.Read(); err != nil {
@@ -202,5 +211,16 @@ func (m *Match) Update() error {
 	_, err := db.Exec("UPDATE match SET "+
 		"status = $1, report = $2 WHERE id = $3",
 		m.Status, m.Report, m.Id)
+	return err
+}
+
+func (p *MatchParty) LoadLog() error {
+	return db.QueryRow("SELECT log FROM match_party WHERE match = $1 AND index = $2",
+		p.Match, p.Index).Scan(&p.Log)
+}
+
+func (p *MatchParty) UpdateLog() error {
+	_, err := db.Exec("UPDATE match_party SET log = $1 WHERE match = $2 AND index = $3",
+		p.Log, p.Match, p.Index)
 	return err
 }

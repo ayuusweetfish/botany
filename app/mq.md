@@ -48,6 +48,6 @@ RPUSH match_result <mid> 1 <report>
 RPUSH compile_result <sid> 9 <message>
 XACK compile judge_group <redis-id>
 -- or --
-RPUSH match_result <mid> 9 <report>
+RPUSH match_result <mid> 9 <report> <log-1> <log-2> ...
 XACK match judge_group <redis-id>
 ```

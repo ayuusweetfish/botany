@@ -635,7 +635,7 @@ func contestMatchManualHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	sids := strings.Split(r.PostFormValue("submissions"), ",")
-	m := models.Match{Contest: c.Id, Report: "{\"winner\": \"In queue\"}"}
+	m := models.Match{Contest: c.Id, Report: "Pending"}
 	for _, sid := range sids {
 		sidN, err := strconv.Atoi(sid)
 		if err != nil {
