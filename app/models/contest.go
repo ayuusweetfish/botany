@@ -22,8 +22,9 @@ type Contest struct {
 	IsVisible bool
 	IsRegOpen bool
 
-	Judge  int32
-	Script string
+	Judge    int32
+	Script   string
+	Playback string
 
 	Rel struct {
 		Owner          User
@@ -65,6 +66,7 @@ func init() {
 		"judge INTEGER", // Nullable
 		"script TEXT NOT NULL DEFAULT ''",
 		"script_log TEXT NOT NULL DEFAULT ''",
+		"playback TEXT NOT NULL DEFAULT ''",
 		"ADD CONSTRAINT fk_users FOREIGN KEY (owner) REFERENCES users (id)",
 		"ADD CONSTRAINT fk_judge FOREIGN KEY (judge) REFERENCES submission (id)",
 	)
@@ -127,8 +129,8 @@ func (c *Contest) ShortRepresentation(u User) map[string]interface{} {
 
 func (c *Contest) Create() error {
 	err := db.QueryRow("INSERT INTO "+
-		"contest(title, banner, owner, start_time, end_time, descr, details, is_visible, is_reg_open, script) "+
-		"VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id",
+		"contest(title, banner, owner, start_time, end_time, descr, details, is_visible, is_reg_open, script, playback) "+
+		"VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING id",
 		c.Title,
 		c.Banner,
 		c.Owner,
@@ -139,6 +141,7 @@ func (c *Contest) Create() error {
 		c.IsVisible,
 		c.IsRegOpen,
 		c.Script,
+		c.Playback,
 	).Scan(&c.Id)
 	return err
 }
@@ -295,8 +298,8 @@ func (c *Contest) Update() error {
 	_, err := db.Exec("UPDATE contest SET "+
 		"title = $1, banner = $2, owner = $3, "+
 		"start_time = $4, end_time = $5, descr = $6, details = $7, "+
-		"is_visible = $8, is_reg_open = $9, judge = NULLIF($10, -1), script = $11 "+
-		"WHERE id = $12",
+		"is_visible = $8, is_reg_open = $9, judge = NULLIF($10, -1), script = $11, playback = $12 "+
+		"WHERE id = $13",
 		c.Title,
 		c.Banner,
 		c.Owner,
@@ -308,6 +311,7 @@ func (c *Contest) Update() error {
 		c.IsRegOpen,
 		c.Judge,
 		c.Script,
+		c.Playback,
 		c.Id,
 	)
 	return err
@@ -340,6 +344,11 @@ func (c *Contest) UpdateModerators(uids []int64) error {
 	}
 
 	return nil
+}
+
+func (c *Contest) LoadPlayback() error {
+	return db.QueryRow("SELECT playback FROM contest WHERE id = $1",
+		c.Id).Scan(&c.Playback)
 }
 
 func (c *Contest) HasStarted() bool {

@@ -53,6 +53,7 @@ func parseRequestContest(r *http.Request) (models.Contest, []int64, bool) {
 	isVisible := (r.PostFormValue("is_visible") == "true")
 	isRegOpen := (r.PostFormValue("is_reg_open") == "true")
 	script := r.PostFormValue("script")
+	playback := r.PostFormValue("playback")
 
 	if err1 != nil || err2 != nil || startTime >= endTime {
 		return models.Contest{}, nil, false
@@ -80,6 +81,7 @@ func parseRequestContest(r *http.Request) (models.Contest, []int64, bool) {
 		IsVisible: isVisible,
 		IsRegOpen: isRegOpen,
 		Script:    script,
+		Playback:  playback,
 	}
 	return c, mods, true
 }
@@ -678,35 +680,64 @@ func contestMatchManualScriptHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(200)
 }
 
-func contestMatchDetailsHandler(w http.ResponseWriter, r *http.Request) {
+func middlewareMatchDetails(w http.ResponseWriter, r *http.Request) (models.Contest, models.Match) {
 	u := middlewareAuthRetrieve(w, r)
 	c := middlewareReferredContest(w, r, u)
 	if c.Id == -1 {
 		w.WriteHeader(404)
-		return
+		return models.Contest{Id: -1}, models.Match{Id: -1}
 	}
 
 	mid, _ := strconv.Atoi(mux.Vars(r)["mid"])
 	m := models.Match{Id: int32(mid)}
-	if err := m.Read(); err != nil {
-		if err == sql.ErrNoRows {
-			// No such match
+
+	if mid != 0 {
+		if err := m.Read(); err != nil {
+			if err == sql.ErrNoRows {
+				// No such match
+				w.WriteHeader(404)
+				return models.Contest{Id: -1}, models.Match{Id: -1}
+			} else {
+				panic(err)
+			}
+		}
+		if m.Contest != c.Id {
+			// Match not in contest
 			w.WriteHeader(404)
-			return
-		} else {
-			panic(err)
+			return models.Contest{Id: -1}, models.Match{Id: -1}
 		}
 	}
-	if m.Contest != c.Id {
-		// Match not in contest
-		w.WriteHeader(404)
+
+	return c, m
+}
+
+func contestMatchDetailsHandler(w http.ResponseWriter, r *http.Request) {
+	_, m := middlewareMatchDetails(w, r)
+	if m.Id == -1 || m.Id == 0 {
 		return
 	}
-	m.LoadRel()
 
+	m.LoadRel()
 	enc := json.NewEncoder(w)
 	enc.SetEscapeHTML(false)
 	enc.Encode(m.Representation())
+}
+
+func contestMatchPlaybackHandler(w http.ResponseWriter, r *http.Request) {
+	c, m := middlewareMatchDetails(w, r)
+	if m.Id == -1 {
+		return
+	}
+
+	c.LoadPlayback()
+	s := c.Playback
+	if m.Id != 0 {
+		s = strings.Replace(s, "<% report %>", m.Report, -1)
+	}
+
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.WriteHeader(200)
+	w.Write([]byte(s))
 }
 
 func contestScriptLogHandler(w http.ResponseWriter, r *http.Request) {
@@ -766,5 +797,6 @@ func init() {
 	registerRouterFunc("/contest/{cid:[0-9]+}/match/manual", contestMatchManualHandler, "POST")
 	registerRouterFunc("/contest/{cid:[0-9]+}/match/manual_script", contestMatchManualScriptHandler, "POST")
 	registerRouterFunc("/contest/{cid:[0-9]+}/match/{mid:[0-9]+}", contestMatchDetailsHandler, "GET")
+	registerRouterFunc("/contest/{cid:[0-9]+}/match/{mid:[0-9]+}/playback", contestMatchPlaybackHandler, "GET")
 	registerRouterFunc("/contest/{cid:[0-9]+}/script_log", contestScriptLogHandler, "GET")
 }

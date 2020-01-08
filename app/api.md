@@ -220,6 +220,7 @@
 - **is_reg_open** (boolean) 是否公开接受报名
 - **judge** (number) 裁判程序的提交 ID
 - **script** (string) 赛制脚本
+- **playback** (string) 播放器 HTML
 - **owner** (UserShort) 创建者
 - **moderators** ([number]) 管理员的 ID 列表，不包含创建者
 - **my_role** (number) 自己的参加情况
@@ -278,6 +279,7 @@
 - **is_reg_open** (boolean) 是否公开接受报名
 - **moderators** ([number]) 管理员的 ID 列表，用逗号分隔
 - **script** (string) 赛制脚本
+- **playback** (string) 播放器 HTML
 
 响应 200
 - **id** (number) 新比赛的 ID
@@ -487,24 +489,13 @@
 
 注：比赛不存在、对局不存在或对局不属于比赛均认为 404
 
-### :construction: 设置播放器 POST /contest/{cid}/playback/
-
-请求
-- **playback** (string) 一段 HTML
-
-响应 200
-- 空响应 Content-Length: 0
-
-响应 403
-- 空响应 Content-Length: 0
-- 非管理员 —— 前端检查严格时不应出现此项
-
-### :construction: 播放器 GET /contest/{cid}/playback
+### 播放器 GET /contest/{cid}/match/{mid}/playback
 
 响应
 - Content-Type: text/html; charset=utf-8
-- 播放器 HTML
-	- 需要将其中的 `<% report %>` 替换为实际对局的 report，作为 iframe 嵌入页面
+- 播放器 HTML，可作为 iframe 嵌入页面
+	- 原文中的 `<% report %>` 被替换为实际对局的 report
+	- 另外，若 mid = 0，则返回原文
 
 ### 手动发起对局 POST /contest/{cid}/match/manual
 
