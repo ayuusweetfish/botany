@@ -11,6 +11,11 @@
 | | | - code.<lang>
 | | | - bin
 | | - ...
+| - matches/
+| | - <mid>/
+| | | - 0.log
+| | | - 1.log
+| | | - ...
 ```
 
 ### compile.sh
@@ -43,6 +48,9 @@ Set up a chroot jail and log in with `root`.
 mkdir -p /var/botany/submissions
 chown 1000 /var/botany/submissions
 chgrp 1000 /var/botany/submissions
+mkdir -p /var/botany/matches
+chown 1000 /var/botany/matches
+chgrp 1000 /var/botany/matches
 cd /var/botany
 chown <outside_user> -R .
 cp /path/to/compile.sh .

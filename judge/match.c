@@ -42,9 +42,19 @@ int match(const char *mid, const char *judge, int num_parties, const char *parti
         if (WIFEXITED(wstatus)) {
             // Read participant logs
             *logs = (char **)malloc(sizeof(char *) * num_parties);
+            char log_path[1024];
             for (int i = 0; i < num_parties; i++) {
                 (*logs)[i] = (char *)malloc(65536);
-                snprintf((*logs)[i], 65536, "Log from party %d\n", i + 1);
+                size_t len = 0;
+
+                snprintf(log_path, sizeof log_path, "%s/var/botany/matches/%s/%d.log",
+                    judge_chroot, mid, i);
+                FILE *f = fopen(log_path, "r");
+                if (f != NULL) {
+                    len = fread((*logs)[i], 1, 65535, f);
+                    fclose(f);
+                }
+                (*logs)[i][len + 1] = '\0';
             }
 
             return WEXITSTATUS(wstatus);
