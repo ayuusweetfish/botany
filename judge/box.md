@@ -81,7 +81,7 @@ sudo chroot alpine sh
 
 # Install packages
 sed -i 's/dl-cdn.alpinelinux.org/mirrors.tuna.tsinghua.edu.cn/g' /etc/apk/repositories
-apk add gcc make libc-dev libcap-dev
+apk add gcc make libc-dev libcap-dev bash
 
 # Build isolate
 cd /home/isolate
