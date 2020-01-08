@@ -1,6 +1,7 @@
 package models
 
 import (
+	"io/ioutil"
 	"log"
 	"math/rand"
 	"strconv"
@@ -104,6 +105,27 @@ end
 			panic(err)
 		}
 
+		// Judge
+		judgeCode, err := ioutil.ReadFile("../ipc/run.c")
+		if err != nil {
+			panic(err)
+		}
+		j := Submission{
+			User:     int32(6 + (1 + i/2)),
+			Contest:  int32(i),
+			Language: "c",
+			Contents: string(judgeCode),
+		}
+		if err := j.Create(); err != nil {
+			panic(err)
+		}
+		j.SendToQueue()
+
+		c.Judge = j.Id
+		if err := c.Update(); err != nil {
+			panic(err)
+		}
+
 		// Participants
 		for j := 1 + i/2; j <= 20; j += i {
 			log.Printf("User %d joins contest %d\n", j, i)
@@ -121,44 +143,59 @@ end
 				s := Submission{
 					User:     int32(6 + j),
 					Contest:  int32(i),
-					Language: "lua",
-					Contents: "print(" + strconv.Itoa(i+j+k) + ")",
+					Language: "c",
+					Contents: `
+#include "ipc.h"
+
+#include <stdbool.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <time.h>
+
+int main()
+{
+    char *s = ipc_recv_str();
+    int side;
+    sscanf(s, "%d", &side);
+    free(s);
+    fprintf(stderr, "Hello, submission ` + strconv.Itoa(rand.Intn(900000)+100000) + ` from side #%d\n", side);
+
+    srand(((unsigned)time(NULL) << 1) | side);
+    bool board[3][3] = {{ false }};
+
+    while (1) {
+        // Board state change
+        int row, col;
+        s = ipc_recv_str();
+        sscanf(s, "%d%d", &row, &col);
+        free(s);
+        if (row != -1) board[row][col] = true;
+
+        // Pick a random cell
+        int u, v;
+        do {
+            u = rand() % 3;
+            v = rand() % 3;
+        } while (board[u][v]);
+        board[u][v] = true;
+        fprintf(stderr, "Moving at (%d, %d)\n", u, v);
+
+        // Send
+        char t[8];
+        sprintf(t, "%d %d", u, v);
+        ipc_send_str(t);
+    }
+
+    return 0;
+}
+`,
 				}
 				if err := s.Create(); err != nil {
 					panic(err)
 				}
 				// TODO: Move delegate & match creation to a separate endpoint
 				p.Delegate = s.Id
-				if false {
-					// Mark as accepted
-					r := rand.Intn(5)
-					if r == 0 {
-						s.Status = SubmissionStatusPending
-					} else if r == 1 {
-						s.Status = SubmissionStatusCompiling
-					} else if r == 2 {
-						s.Status = SubmissionStatusAccepted
-					} else if r == 3 {
-						s.Status = SubmissionStatusCompilationFailed
-					} else if r == 4 {
-						s.Status = SubmissionStatusSystemError
-					} else {
-						s.Status = SubmissionStatusAccepted
-					}
-					s.Message = "Automagically compiled"
-					if err := s.Update(); err != nil {
-						panic(err)
-					}
-					if k == 3 {
-						// Set as delegate
-						p.Delegate = s.Id
-						if err := p.Update(); err != nil {
-							panic(err)
-						}
-					}
-				} else {
-					s.SendToQueue()
-				}
+				s.SendToQueue()
 			}
 
 			if err := p.Update(); err != nil {

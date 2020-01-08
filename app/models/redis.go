@@ -48,6 +48,11 @@ func (m *Match) SendToQueue(judge int32) error {
 	if rcli == nil {
 		return nil
 	}
+	if judge == -1 {
+		m.Status = MatchStatusSystemError
+		m.Report = "No judge selected"
+		return m.Update()
+	}
 	values := map[string]interface{}{
 		"mid":         m.Id,
 		"judge":       judge,
