@@ -327,11 +327,13 @@ void process_match(redisReply *kv)
     int retcode = match(mid, judge, num_parties, (const char **)parties, &msg, &logs);
 
     WLOGF("Done:      %s (exit code %d)", mid, retcode);
-    reply = redisCommand(rctx, "RPUSH " MATCH_RESULT_LIST " %s 9 %s", mid, msg);
+    reply = redisCommand(rctx, "RPUSH " MATCH_RESULT_LIST " %s %d %s",
+        mid, retcode == 0 ? 9 : -9, msg);
 
     // Participant logs
     if (logs != NULL) for (int i = 0; i < num_parties; i++) {
-        reply = redisCommand(rctx, "RPUSH " MATCH_RESULT_LIST " %s", logs[i]);
+        if (retcode == 0)
+            reply = redisCommand(rctx, "RPUSH " MATCH_RESULT_LIST " %s", logs[i]);
         free(logs[i]);
     }
 

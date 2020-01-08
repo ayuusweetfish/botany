@@ -7,17 +7,18 @@
 
 int match(const char *mid, const char *judge, int num_parties, const char *parties[], char **msg, char ***logs)
 {
-    int fd_pipe[2];
-    if (pipe(fd_pipe) != 0) {
+    int pipe_stdout[2];
+    if (pipe(pipe_stdout) != 0) {
         *msg = (char *)malloc(64);
         snprintf(*msg, 64, "pipe() failed: %s\n", strerror(errno));
+        *logs = NULL;
         return 1;
     }
 
     pid_t ch = fork();
     if (ch == 0) {
-        dup2(fd_pipe[1], STDOUT_FILENO);
-        close(fd_pipe[0]);
+        dup2(pipe_stdout[1], STDOUT_FILENO);
+        close(pipe_stdout[0]);
 
         child_enter_box();
 
@@ -35,10 +36,10 @@ int match(const char *mid, const char *judge, int num_parties, const char *parti
         int wstatus;
         waitpid(ch, &wstatus, 0);
         *msg = (char *)malloc(1024);
-        ssize_t len = read(fd_pipe[0], *msg, 1023);
+        ssize_t len = read(pipe_stdout[0], *msg, 1023);
         (*msg)[len > 0 ? len : 0] = '\0';
-        close(fd_pipe[0]);
-        close(fd_pipe[1]);
+        close(pipe_stdout[0]);
+        close(pipe_stdout[1]);
         if (WIFEXITED(wstatus)) {
             // Read participant logs
             *logs = (char **)malloc(sizeof(char *) * num_parties);
@@ -54,7 +55,7 @@ int match(const char *mid, const char *judge, int num_parties, const char *parti
                     len = fread((*logs)[i], 1, 65535, f);
                     fclose(f);
                 }
-                (*logs)[i][len + 1] = '\0';
+                (*logs)[i][len] = '\0';
             }
 
             return WEXITSTATUS(wstatus);
