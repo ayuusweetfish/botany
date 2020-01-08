@@ -140,6 +140,10 @@ func redisUpdateMatchStatus(mid int32, status int8, msg string) error {
 				return err
 			}
 		}
+
+		if err := m.ExecuteStatsUpdateScript(); err != nil {
+			return err
+		}
 	}
 
 	return nil

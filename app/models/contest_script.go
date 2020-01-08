@@ -254,7 +254,7 @@ func luaCreateMatch(L *lua.LState) int {
 	return 0
 }
 
-func (c *Contest) ExecuteScriptFunction(fnName string, args ...lua.LValue) error {
+func (c *Contest) ExecuteMatchScriptFunction(fnName string, args ...lua.LValue) error {
 	L := c.LuaState()
 
 	// Find global function by name
@@ -287,16 +287,54 @@ func (c *Contest) ExecuteScriptFunction(fnName string, args ...lua.LValue) error
 	return nil
 }
 
-func (c *Contest) ExecuteScriptOnSubmission(from int32) error {
-	return c.ExecuteScriptFunction("on_submission", lua.LNumber(from))
+func (c *Contest) ExecuteMatchScriptOnSubmission(from int32) error {
+	return c.ExecuteMatchScriptFunction("on_submission", lua.LNumber(from))
 }
 
-func (c *Contest) ExecuteScriptOnTimer() error {
-	return c.ExecuteScriptFunction("on_timer")
+func (c *Contest) ExecuteMatchScriptOnTimer() error {
+	return c.ExecuteMatchScriptFunction("on_timer")
 }
 
-func (c *Contest) ExecuteScriptOnManual(arg string) error {
-	return c.ExecuteScriptFunction("on_manual", lua.LString(arg))
+func (c *Contest) ExecuteMatchScriptOnManual(arg string) error {
+	return c.ExecuteMatchScriptFunction("on_manual", lua.LString(arg))
+}
+
+func (m *Match) ExecuteStatsUpdateScript() error {
+	if err := m.LoadRel(); err != nil {
+		return err
+	}
+
+	// TODO: Thread safety!
+	c := m.Rel.Contest
+	L := c.LuaState()
+
+	// Find global function by name
+	fnName := "update_stats"
+	fn := L.GetGlobal(fnName)
+	if fn.Type() != lua.LTFunction {
+		return ErrLuaType{Message: "Lua global `" + fnName + "` should be a function"}
+	}
+
+	// Parties list
+	t := &lua.LTable{}
+	for _, _ = range m.Rel.Parties {
+		t2 := &lua.LTable{}
+		t2.RawSetString("rating", lua.LNumber(0))
+		t2.RawSetString("performance", lua.LString("'~'"))
+		t.Append(t2)
+	}
+
+	err := L.CallByParam(lua.P{
+		Fn:      fn,
+		NRet:    0,
+		Protect: true,
+	}, lua.LString(m.Report), t)
+	if err != nil {
+		return err
+	}
+
+	flushLog(c.Id)
+	return nil
 }
 
 func timerForAllContests() {
@@ -309,7 +347,7 @@ func timerForAllContests() {
 		}
 		for _, c := range cs {
 			if c.IsRunning() {
-				if err := c.ExecuteScriptOnTimer(); err != nil {
+				if err := c.ExecuteMatchScriptOnTimer(); err != nil {
 					log.Println(err.Error())
 					continue
 				}

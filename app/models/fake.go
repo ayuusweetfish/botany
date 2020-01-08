@@ -87,6 +87,14 @@ end
 function on_manual(all, arg)
     print('Manual', arg)
 end
+
+function update_stats(report, par)
+    print('Update with ' .. tostring(#par) .. ' parties')
+	print(report)
+	for i = 1, #par do
+		print(i, par[i].rating, par[i].performance)
+	end
+end
 `
 		c := Contest{
 			Title:     "Grand Contest " + strconv.Itoa(i),

@@ -313,7 +313,7 @@ func contestSubmitHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Invoke contest script
-	if err := c.ExecuteScriptOnSubmission(u.Id); err != nil {
+	if err := c.ExecuteMatchScriptOnSubmission(u.Id); err != nil {
 		if !errors.Is(err, models.ErrLua) {
 			panic(err)
 		}
@@ -671,7 +671,7 @@ func contestMatchManualScriptHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	arg := r.PostFormValue("arg")
-	if err := c.ExecuteScriptOnManual(arg); err != nil {
+	if err := c.ExecuteMatchScriptOnManual(arg); err != nil {
 		if !errors.Is(err, models.ErrLua) {
 			panic(err)
 		}

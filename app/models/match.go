@@ -184,7 +184,7 @@ func (m *Match) LoadRel() error {
 
 	// Find out all parties
 	rows, err := db.Query("SELECT submission FROM match_party "+
-		"WHERE match = $1 ORDER BY submission ASC", m.Id)
+		"WHERE match = $1 ORDER BY index ASC", m.Id)
 	if err != nil {
 		return err
 	}
