@@ -94,7 +94,7 @@ function update_stats(report, par)
     for i = 1, #par do
         print(i, par[i].rating, par[i].performance)
         par[i].rating = par[i].rating + 1
-        par[i].performance = 'hahaha'
+        par[i].performance = par[i].performance .. 'h'
     end
 end
 `

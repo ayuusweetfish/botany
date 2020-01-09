@@ -434,3 +434,13 @@ func (p *ContestParticipation) Update() error {
 	)
 	return err
 }
+
+func (p *ContestParticipation) UpdateStats() error {
+	_, err := db.Exec("UPDATE contest_participation SET "+
+		"rating = $1, performance = $2 "+
+		"WHERE uid = $3 AND contest = $4",
+		p.Rating, p.Performance,
+		p.User, p.Contest,
+	)
+	return err
+}

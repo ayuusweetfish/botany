@@ -131,10 +131,10 @@ func redisUpdateMatchStatus(mid int32, status int8, msg string) error {
 		if err != nil {
 			return err
 		}
-		println("Number of parties: ", num)
+		// println("Number of parties: ", num)
 		for i := 0; i < num; i++ {
 			log, _ := rcli.LPop("match_result").Result()
-			println(i, log)
+			// println(i, log)
 			p := MatchParty{Match: mid, Index: int32(i), Log: log}
 			if err := p.UpdateLog(); err != nil {
 				return err
