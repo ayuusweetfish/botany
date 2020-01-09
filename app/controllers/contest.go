@@ -47,7 +47,6 @@ func contestListHandler(w http.ResponseWriter, r *http.Request) {
 
 func parseRequestContest(r *http.Request, c models.Contest) (models.Contest, []int64, bool) {
 	title := r.PostFormValue("title")
-	// banner := r.PostFormValue("banner")
 	startTime, err1 := strconv.ParseInt(r.PostFormValue("start_time"), 10, 64)
 	endTime, err2 := strconv.ParseInt(r.PostFormValue("end_time"), 10, 64)
 	desc := r.PostFormValue("desc")
