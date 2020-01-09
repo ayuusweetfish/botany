@@ -168,6 +168,25 @@ func (c *Contest) Read() error {
 	return err
 }
 
+func (c *Contest) ReadModerators() []int32 {
+	mods := []int32{}
+	var uid int32
+	rows, err := db.Query("SELECT uid FROM contest_participation where contest = $1 AND type = $2", c.Id, ParticipationTypeModerator)
+	if err != nil && err != sql.ErrNoRows {
+		panic(err)
+	}
+	for rows.Next() {
+		_ = rows.Scan(&uid)
+		mods = append(mods, uid)
+	}
+	err = db.QueryRow("SELECT owner FROM contest WHERE id = $1", c.Id).Scan(&c.Owner)
+	if err != nil {
+		panic(err)
+	}
+	mods = append(mods, c.Owner)
+	return mods
+}
+
 func (c *Contest) ReadScriptLog() (error, string) {
 	var s string
 	err := db.QueryRow("SELECT script_log FROM contest WHERE id = $1", c.Id).Scan(&s)
