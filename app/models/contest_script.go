@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"strconv"
 	"strings"
 	"time"
 
@@ -331,6 +332,26 @@ func (m *Match) ExecuteStatsUpdateScript() error {
 	}, lua.LString(m.Report), t)
 	if err != nil {
 		return err
+	}
+
+	for i, _ := range m.Rel.Parties {
+		t2v := t.RawGetInt(i + 1)
+		if t2v.Type() != lua.LTTable {
+			return ErrLuaType{
+				Message: "Updated participant [" + strconv.Itoa(i + 1) + "] is not a valid table",
+			}
+		}
+		t2 := t2v.(*lua.LTable)
+		rv, rok := t2.RawGetString("rating").(lua.LNumber)
+		pv, pok := t2.RawGetString("performance").(lua.LString)
+		if !rok || !pok {
+			return ErrLuaType{
+				Message: "Updated participant [" + strconv.Itoa(i + 1) + "] does not fully describe rating (number) and performance (string)",
+			}
+		}
+		rating := int(rv)
+		performance := pv.String()
+		println(i, rating, performance)
 	}
 
 	flushLog(c.Id)
