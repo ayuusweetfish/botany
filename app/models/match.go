@@ -123,7 +123,7 @@ func (m *Match) Read() error {
 
 func ReadByContest(cid int32) ([]Match, error) {
 	rows, err := db.Query("SELECT DISTINCT match.id, match.status, match.report, "+
-		"c.id, c.title, c.banner, c.owner, c.start_time, c.end_time, c.descr, c.details, c.is_visible, c.is_reg_open, c.script, "+
+		"c.id, c.title, c.owner, c.start_time, c.end_time, c.descr, c.details, c.is_visible, c.is_reg_open, c.script, "+
 		"submission.id, submission.uid, submission.contest, submission.created_at, submission.status, submission.message, submission.language, submission.contents, "+
 		"u.id, u.handle, u.email, u.password, u.privilege, u.joined_at, u.nickname, u.bio "+
 		"FROM match "+
@@ -141,7 +141,7 @@ func ReadByContest(cid int32) ([]Match, error) {
 		m := Match{Contest: cid}
 		s := Submission{}
 		u := User{}
-		err := rows.Scan(&m.Id, &m.Status, &m.Report, &m.Rel.Contest.Id, &m.Rel.Contest.Title, &m.Rel.Contest.Banner, &m.Rel.Contest.Owner, &m.Rel.Contest.StartTime,
+		err := rows.Scan(&m.Id, &m.Status, &m.Report, &m.Rel.Contest.Id, &m.Rel.Contest.Title, &m.Rel.Contest.Owner, &m.Rel.Contest.StartTime,
 			&m.Rel.Contest.EndTime, &m.Rel.Contest.Desc, &m.Rel.Contest.Details, &m.Rel.Contest.IsVisible, &m.Rel.Contest.IsRegOpen, &m.Rel.Contest.Script,
 			&s.Id, &s.User, &s.Contest, &s.CreatedAt, &s.Status, &s.Message, &s.Language, &s.Contents,
 			&u.Id, &u.Handle, &u.Email, &u.Password, &u.Privilege, &u.JoinedAt, &u.Nickname, &u.Bio)
