@@ -220,7 +220,6 @@
 - **is_reg_open** (boolean) 是否公开接受报名
 - **judge** (number) 裁判程序的提交 ID
 - **script** (string) 赛制脚本
-- **playback** (string) 播放器 HTML
 - **owner** (UserShort) 创建者
 - **moderators** ([number]) 管理员的 ID 列表，不包含创建者
 - **my_role** (number) 自己的参加情况

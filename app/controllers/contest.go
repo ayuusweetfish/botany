@@ -43,7 +43,7 @@ func contestListHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("]\n"))
 }
 
-func parseRequestContest(r *http.Request) (models.Contest, []int64, bool) {
+func parseRequestContest(r *http.Request, c models.Contest) (models.Contest, []int64, bool) {
 	title := r.PostFormValue("title")
 	banner := r.PostFormValue("banner")
 	startTime, err1 := strconv.ParseInt(r.PostFormValue("start_time"), 10, 64)
@@ -71,18 +71,16 @@ func parseRequestContest(r *http.Request) (models.Contest, []int64, bool) {
 		}
 	}
 
-	c := models.Contest{
-		Title:     title,
-		Banner:    banner,
-		StartTime: startTime,
-		EndTime:   endTime,
-		Desc:      desc,
-		Details:   details,
-		IsVisible: isVisible,
-		IsRegOpen: isRegOpen,
-		Script:    script,
-		Playback:  playback,
-	}
+	c.Title = title
+	c.Banner = banner
+	c.StartTime = startTime
+	c.EndTime = endTime
+	c.Desc = desc
+	c.Details = details
+	c.IsVisible = isVisible
+	c.IsRegOpen = isRegOpen
+	c.Script = script
+	c.Playback = playback
 	return c, mods, true
 }
 
@@ -101,7 +99,7 @@ func contestCreateHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	c, mods, ok := parseRequestContest(r)
+	c, mods, ok := parseRequestContest(r, models.Contest{})
 	if !ok {
 		// Malformed request
 		w.WriteHeader(400)
@@ -161,12 +159,12 @@ func middlewareContestModeratorVerify(w http.ResponseWriter, r *http.Request) (m
 }
 
 func contestEditHandler(w http.ResponseWriter, r *http.Request) {
-	u, c := middlewareContestModeratorVerify(w, r)
+	_, c := middlewareContestModeratorVerify(w, r)
 	if c.Id == -1 {
 		return
 	}
 
-	cNew, mods, ok := parseRequestContest(r)
+	cNew, mods, ok := parseRequestContest(r, c)
 	if !ok {
 		// Malformed request
 		w.WriteHeader(400)
@@ -174,8 +172,6 @@ func contestEditHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	cNew.Id = c.Id
-	cNew.Owner = u.Id
 	if err := cNew.Update(); err != nil {
 		panic(err)
 	}
