@@ -440,6 +440,13 @@
 - 空响应 Content-Length: 0
 - 比赛未开始或未报名比赛
 
+### 查询裁判提交号 GET /contest/{cid}/judge_id
+响应 200
+- **judge** 裁判的提交号
+
+响应 403
+- 非管理员
+
 ### 选择裁判 POST /contest/{cid}/judge
 
 请求

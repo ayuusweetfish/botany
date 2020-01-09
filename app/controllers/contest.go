@@ -555,6 +555,22 @@ func contestJudgeSelHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(200)
 }
 
+func contestJudgeIdHandler(w http.ResponseWriter, r *http.Request) {
+	_, c := middlewareContestModeratorVerify(w, r)
+	if c.Id == -1 {
+		return
+	}
+	if err := c.Read(); err != nil {
+		panic(err)
+	}
+
+	enc := json.NewEncoder(w)
+	enc.SetEscapeHTML(false)
+	enc.Encode(map[string]interface{}{
+		"judge": c.Judge,
+	})
+}
+
 func contestRanklistHandler(w http.ResponseWriter, r *http.Request) {
 	u := middlewareAuthRetrieve(w, r)
 	c := middlewareReferredContest(w, r, u)
@@ -845,7 +861,6 @@ func contestBannerUploadHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println("EMMM")
 }
 
 func init() {
@@ -871,4 +886,5 @@ func init() {
 	registerRouterFunc("/contest/{cid:[0-9]+}/script_log", contestScriptLogHandler, "GET")
 	registerRouterFunc("/contest/{cid:[0-9]+}/banner", contestBannerHandler, "GET")
 	registerRouterFunc("/contest/{cid:[0-9]+}/banner/upload", contestBannerUploadHandler, "POST")
+	registerRouterFunc("/contest/{cid:[0-9]+}/judge_id", contestJudgeIdHandler, "GET")
 }
