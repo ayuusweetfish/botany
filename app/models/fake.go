@@ -90,10 +90,12 @@ end
 
 function update_stats(report, par)
     print('Update with ' .. tostring(#par) .. ' parties')
-	print(report)
-	for i = 1, #par do
-		print(i, par[i].rating, par[i].performance)
-	end
+    print(report)
+    for i = 1, #par do
+        print(i, par[i].rating, par[i].performance)
+        par[i].rating = par[i].rating + 1
+        par[i].performance = par[i].performance .. 'h'
+    end
 end
 `
 		c := Contest{

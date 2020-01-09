@@ -176,6 +176,32 @@ func (m *Match) PartiesCount() (int, error) {
 	return num, err
 }
 
+func (m *Match) LoadParticipations() ([]ContestParticipation, error) {
+	rows, err := db.Query("SELECT "+
+		"contest_participation.uid, "+
+		"contest_participation.rating, "+
+		"contest_participation.performance "+
+		"FROM match_party "+
+		"LEFT JOIN submission ON match_party.submission = submission.id "+
+		"LEFT JOIN contest_participation ON (submission.uid, submission.contest) = (contest_participation.uid, contest_participation.contest) "+
+		"WHERE match_party.match = $1 "+
+		"ORDER BY index ASC", m.Id)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	ps := []ContestParticipation{}
+	for rows.Next() {
+		p := ContestParticipation{Contest: m.Contest}
+		err := rows.Scan(&p.User, &p.Rating, &p.Performance)
+		if err != nil {
+			return nil, err
+		}
+		ps = append(ps, p)
+	}
+	return ps, rows.Err()
+}
+
 func (m *Match) LoadRel() error {
 	m.Rel.Contest.Id = m.Contest
 	if err := m.Rel.Contest.Read(); err != nil {
