@@ -39,7 +39,7 @@ export default {
     }
   },
   data () {
-    let validator2 = (rule, value, callback) => {
+    const validator2 = (rule, value, callback) => {
       if (value !== this.password.old) {
         callback(new Error('输入不一致'))
       } else {
@@ -78,10 +78,10 @@ export default {
   },
   methods: {
     confirmChange () {
-      const loading = this.$loading({lock: true, text: '处理中'})
-      let params = this.$qs.stringify({
-        'old': this.passwords.old,
-        'new': this.passwords.new
+      const loading = this.$loading({ lock: true, text: '处理中' })
+      const params = this.$qs.stringify({
+        old: this.passwords.old,
+        new: this.passwords.new
       })
       this.$axios.post(
         '/user/' + this.$store.state.handle + '/password',
@@ -109,7 +109,7 @@ export default {
   computed: {
     show: {
       set (val) {
-        this.$refs['passwords'].resetFields()
+        this.$refs.passwords.resetFields()
         this.$emit('setVisible', val)
       },
       get () {
