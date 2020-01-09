@@ -1,6 +1,6 @@
 <template>
   <div  align="left">
-    <div style="display: inline">{{title}}</div>
+    <div style="display: inline; margin-left: 10px;">{{title}}</div>
     <div style="margin-left: 10px; display: inline">
       <router-link
         v-if="$store.state.privilege===$consts.privilege.organizer"
@@ -44,33 +44,6 @@
         </el-card>
       </el-col>
     </el-row>
-    <!-- <el-table
-      :data="contests"
-      @row-click="goContestMain"
-      :cell-style="{'cursor': 'pointer'}"
-      v-loading="listLoading"
-    >
-      <el-table-column :label="title">
-        <template slot-scope="scope">
-          <div>
-            <div class="important">名称：</div>
-            <div class="normal">{{scope.row.name}}</div>
-          </div>
-          <div><div class="important">时间：</div><div class="normal">{{scope.row.time}}</div></div>
-          <div><div class="important">说明：</div><div class="normal">{{scope.row.info}}</div></div>
-          <div v-if="scope.row.myRole===$consts.role.moderator">
-            <div class="important">我管理的比赛</div>
-          </div>
-          <div v-else-if="scope.row.myRole===$consts.role.imIn">
-            <div class="important">我参加的比赛</div>
-          </div>
-          <div v-if="scope.row.regOpen">
-            <div class="important">开放报名中</div>
-          </div>
-          <div v-else><div class="normal">不开放报名</div></div>
-        </template>
-      </el-table-column>
-    </el-table> -->
   </div>
 </template>
 
@@ -146,7 +119,7 @@ export default {
   }
   .contest-info{
     font-size: 14px;
-    height: 180px;
+    height: 120px;
   }
   .contest-button{
     font-size: 14px;

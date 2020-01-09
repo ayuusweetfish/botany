@@ -1,103 +1,114 @@
 <template>
-  <el-container class="login-container">
-    <el-header class="login-header">
-      <div style="margin:auto">注册</div>
-    </el-header>
-    <el-main class="login-main">
-      <el-form
-        ref="signupform"
-        :model="signupInfo"
-        label-width="100px"
-        :rules="rules"
-      >
-        <el-row>
-          <el-form-item prop="handle" :error="signupErrUsrnm" label="用户名：">
-            <el-input
-              type="text"
-              v-model="signupInfo.handle"
-              placeholder="输入登录时使用的账户名称"
-              auto-complete="off"
-              prefix-icon="el-icon-user-solid"
-            ></el-input>
-          </el-form-item>
-        </el-row>
+  <div>
+    <el-row :gutter="20">
+      <el-col :span="12">
+        <el-card shadow="none" style="margin-top: 180px; border: none; height: 280px">
+          <div><img :src="sidePic" style="height: 280px"/></div>
+        </el-card>
+      </el-col>
+      <el-col :span="12">
+        <el-card class="login-container" style="border: none">
+          <div slot="header">
+            <div class="login-header">注册</div>
+          </div>
+          <div class="login-main">
+            <el-form
+              ref="signupform"
+              :model="signupInfo"
+              label-width="100px"
+              :rules="rules"
+            >
+              <el-row>
+                <el-form-item prop="handle" :error="signupErrUsrnm" label="用户名：">
+                  <el-input
+                    type="text"
+                    v-model="signupInfo.handle"
+                    placeholder="输入登录时使用的账户名称"
+                    auto-complete="off"
+                    prefix-icon="el-icon-user-solid"
+                  ></el-input>
+                </el-form-item>
+              </el-row>
 
-        <el-row>
-          <el-form-item prop="password" :error="signupErrPswd" label="密码：">
-            <el-input
-              type="password"
-              v-model="signupInfo.password"
-              placeholder="请输入密码"
-              auto-complete="off"
-              prefix-icon="el-icon-lock"
-            ></el-input>
-          </el-form-item>
-        </el-row>
+              <el-row>
+                <el-form-item prop="password" :error="signupErrPswd" label="密码：">
+                  <el-input
+                    type="password"
+                    v-model="signupInfo.password"
+                    placeholder="请输入密码"
+                    auto-complete="off"
+                    prefix-icon="el-icon-lock"
+                  ></el-input>
+                </el-form-item>
+              </el-row>
 
-        <el-row>
-          <el-form-item prop="password2" :error="signupErrPswd2" label="确认密码：">
-            <el-input
-              type="password"
-              v-model="signupInfo.password2"
-              placeholder="再次输入密码"
-              auto-complete="off"
-              prefix-icon="el-icon-lock"
-            ></el-input>
-          </el-form-item>
-        </el-row>
+              <el-row>
+                <el-form-item prop="password2" :error="signupErrPswd2" label="确认密码：">
+                  <el-input
+                    type="password"
+                    v-model="signupInfo.password2"
+                    placeholder="再次输入密码"
+                    auto-complete="off"
+                    prefix-icon="el-icon-lock"
+                  ></el-input>
+                </el-form-item>
+              </el-row>
 
-        <el-row>
-          <el-form-item prop="nickname" :error="signupErrNName" label="昵称：">
-            <el-input
-              type="text"
-              v-model="signupInfo.nickname"
-              placeholder="请输入一个昵称"
-              auto-complete="off"
-              prefix-icon="el-icon-user"
-            ></el-input>
-          </el-form-item>
-        </el-row>
+              <el-row>
+                <el-form-item prop="nickname" :error="signupErrNName" label="昵称：">
+                  <el-input
+                    type="text"
+                    v-model="signupInfo.nickname"
+                    placeholder="请输入一个昵称"
+                    auto-complete="off"
+                    prefix-icon="el-icon-user"
+                  ></el-input>
+                </el-form-item>
+              </el-row>
 
-        <el-row>
-          <el-form-item prop="email" :error="signupErrEml" label="邮箱：">
-            <el-input
-              type="text"
-              v-model="signupInfo.email"
-              placeholder="请输入邮箱"
-              auto-complete="off"
-              prefix-icon="el-icon-message"
-            ></el-input>
-          </el-form-item>
-        </el-row>
+              <el-row>
+                <el-form-item prop="email" :error="signupErrEml" label="邮箱：">
+                  <el-input
+                    type="text"
+                    v-model="signupInfo.email"
+                    placeholder="请输入邮箱"
+                    auto-complete="off"
+                    prefix-icon="el-icon-message"
+                  ></el-input>
+                </el-form-item>
+              </el-row>
 
-        <el-row>
-          <el-col :span="17">
-            <el-form-item prop="captcha" :error="signupErrCpch" label="验证码：">
-            <el-input
-              type="text"
-              v-model="signupInfo.captcha"
-              placeholder="请输入验证码"
-              auto-complete="off"
-              prefix-icon="el-icon-s-claim"
-            ></el-input>
-            </el-form-item>
-          </el-col>
-          <el-col :span="7">
-            <img :src="captcha64" style="width:90%; margin-top: -5px; cursor: pointer" title="点击更换" @click="getCaptcha">
-          </el-col>
-        </el-row>
-      </el-form>
+              <el-row>
+                <el-col :span="17">
+                  <el-form-item prop="captcha" :error="signupErrCpch" label="验证码：">
+                  <el-input
+                    type="text"
+                    v-model="signupInfo.captcha"
+                    placeholder="请输入验证码"
+                    auto-complete="off"
+                    prefix-icon="el-icon-s-claim"
+                  ></el-input>
+                  </el-form-item>
+                </el-col>
+                <el-col :span="7">
+                  <img :src="captcha64" style="width:90%; margin-top: -5px; cursor: pointer" title="点击更换" @click="getCaptcha">
+                </el-col>
+              </el-row>
+            </el-form>
 
-      <el-row>
-        <el-col :span="12">
-          <el-button type="primary" @click="signup" style="width: 80%">注册</el-button>
-        </el-col>
-        <el-col :span="12">
-          <el-button @click="goLogin" style="width: 80%">返回登录</el-button>
-        </el-col>
-      </el-row>
-    </el-main>
-  </el-container>
+            <el-row>
+              <el-col :span="12">
+                <el-button type="primary" @click="signup" style="width: 80%">注册</el-button>
+              </el-col>
+              <el-col :span="12">
+                <el-button @click="goLogin" style="width: 80%">返回登录</el-button>
+              </el-col>
+            </el-row>
+          </div>
+        </el-card>
+      </el-col>
+    </el-row>
+  </div>
 </template>
 
 <script>
@@ -112,7 +123,7 @@ export default {
   },
   data () {
     // eslint-disable-next-line camelcase
-    let password2_validator = (rule, value, callback) => {
+    const password2_validator = (rule, value, callback) => {
       if (!value) {
         callback(new Error('请确认密码'))
       } else if (value !== this.signupInfo.password) {
@@ -122,7 +133,7 @@ export default {
       }
     }
     // eslint-disable-next-line camelcase
-    let email_validator = (rule, value, callback) => {
+    const email_validator = (rule, value, callback) => {
       if (!value) {
         callback(new Error('请输入邮箱'))
       } else if (!/^([a-zA-Z0-9]+[-_.]?)+@([a-zA-Z0-9]+\.)+[a-z]+$/.test(value)) {
@@ -135,6 +146,7 @@ export default {
       nextRoute: {
         path: '/login'
       },
+      sidePic: 'https://cloud.tsinghua.edu.cn/seafhttp/files/98274dc8-c356-410a-881d-2c1b24da29fc/logo.png',
       redirect: false,
       signupInfo: {
         handle: '',
@@ -154,34 +166,34 @@ export default {
       signupErrNName: '',
       rules: {
         handle: [
-          {validator: this.$functions.globalValidator, trigger: 'blur'},
-          {required: true, message: '请输入用户名', trigger: 'blur'},
-          {min: 3, max: 16, message: '用户名应在3-16个字符之间', trigger: 'blur'}
+          { validator: this.$functions.globalValidator, trigger: 'blur' },
+          { required: true, message: '请输入用户名', trigger: 'blur' },
+          { min: 3, max: 16, message: '用户名应在3-16个字符之间', trigger: 'blur' }
         ],
         password: [
-          {validator: this.$functions.globalValidator, trigger: 'blur'},
-          {required: true, message: '请输入密码', trigger: 'blur'},
-          {min: 3, max: 30, message: '密码应在3-30个字符之间', trigger: 'blur'}
+          { validator: this.$functions.globalValidator, trigger: 'blur' },
+          { required: true, message: '请输入密码', trigger: 'blur' },
+          { min: 3, max: 30, message: '密码应在3-30个字符之间', trigger: 'blur' }
         ],
         password2: [
-          {validator: this.$functions.globalValidator, trigger: 'blur'},
-          {required: true, message: '请再次输入密码', trigger: 'blur'},
-          {validator: password2_validator, trigger: 'blur'}
+          { validator: this.$functions.globalValidator, trigger: 'blur' },
+          { required: true, message: '请再次输入密码', trigger: 'blur' },
+          { validator: password2_validator, trigger: 'blur' }
         ],
         email: [
-          {validator: this.$functions.globalValidator, trigger: 'blur'},
-          {required: true, message: '请输入邮箱', trigger: 'blur'},
-          {validator: email_validator, trigger: 'blur'}
+          { validator: this.$functions.globalValidator, trigger: 'blur' },
+          { required: true, message: '请输入邮箱', trigger: 'blur' },
+          { validator: email_validator, trigger: 'blur' }
         ],
         nickname: [
-          {validator: this.$functions.globalValidator, trigger: 'blur'},
-          {required: true, message: '请输入昵称', trigger: 'blur'},
-          {min: 3, max: 16, message: '昵称应在3-16个字符之间', trigger: 'blur'}
+          { validator: this.$functions.globalValidator, trigger: 'blur' },
+          { required: true, message: '请输入昵称', trigger: 'blur' },
+          { min: 3, max: 16, message: '昵称应在3-16个字符之间', trigger: 'blur' }
         ],
         captcha: [
-          {validator: this.$functions.globalValidator, trigger: 'blur'},
-          {required: true, message: '请输入验证码', trigger: 'blur'},
-          {min: 4, max: 4, message: '请输入4个字符', trigger: 'blur'}
+          { validator: this.$functions.globalValidator, trigger: 'blur' },
+          { required: true, message: '请输入验证码', trigger: 'blur' },
+          { min: 4, max: 4, message: '请输入4个字符', trigger: 'blur' }
         ]
       }
     }
@@ -199,7 +211,7 @@ export default {
       })
     },
     signup () {
-      this.$refs['signupform'].validate(valid => {
+      this.$refs.signupform.validate(valid => {
         if (valid) {
           this.signupErrUsrnm = ''
           this.signupErrPswd = ''
@@ -207,14 +219,14 @@ export default {
           this.signupErrEml = ''
           this.signupErrCpch = ''
           this.signupErrNName = ''
-          const loading = this.$loading({lock: true, text: '注册中'})
-          let params = this.$qs.stringify({
-            'handle': this.signupInfo.handle,
-            'password': this.signupInfo.password,
-            'email': this.signupInfo.email,
-            'nickname': this.signupInfo.nickname,
-            'captcha_value': this.signupInfo.captcha,
-            'captcha_key': this.captchaKey
+          const loading = this.$loading({ lock: true, text: '注册中' })
+          const params = this.$qs.stringify({
+            handle: this.signupInfo.handle,
+            password: this.signupInfo.password,
+            email: this.signupInfo.email,
+            nickname: this.signupInfo.nickname,
+            captcha_value: this.signupInfo.captcha,
+            captcha_key: this.captchaKey
           })
           this.$axios.post(
             '/signup',
@@ -271,20 +283,18 @@ export default {
 .login-container {
   border-radius: 5px;
   background-clip: padding-box;
-  margin: 100px auto;
-  padding: 20px;
-  width: 550px;
-  border: 1px solid silver;
+  margin: 20px auto;
+  padding: 0px;
+  padding-bottom: 20px;
+  width: 480px;
   font-weight: 600;
   font-size: 25px;
 }
 .login-header {
-  display: flex;
   text-align: center;
   border-top: none;
   border-left: none;
   border-right: none;
-  border-bottom: 1px solid silver;
 }
 .login-main {
   font-weight: 400;

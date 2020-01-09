@@ -1,75 +1,86 @@
 <template>
-  <el-container class="login-container">
-    <el-header class="login-header">
-      <div style="margin:auto">登录</div>
-    </el-header>
-    <el-main class="login-main">
-      <el-form
-        ref="loginform"
-        :model="loginInfo"
-        label-position="right"
-        label-width="100px"
-        hide-required-asterisk
-        :rules="rules"
-      >
-        <el-row>
-          <el-form-item prop="handle" :error="loginErrHandle" label="用户名：">
-            <el-input
-              type="text"
-              v-model="loginInfo.handle"
-              placeholder="请输入账号"
-              auto-complete="off"
-              prefix-icon="el-icon-user-solid"
-            ></el-input>
-          </el-form-item>
-        </el-row>
+  <div>
+    <el-row :gutter="20">
+      <el-col :span="12">
+        <el-card shadow="none" style="margin-top: 180px; border: none; height: 280px">
+          <div><img :src="sidePic" style="height: 280px"/></div>
+        </el-card>
+      </el-col>
+      <el-col :span="12">
+        <el-card shadow="always" class="login-container" style="margin-top: 180px; border: none">
+          <div slot="header">
+            <div class="login-header">登录BotAny</div>
+          </div>
+          <div class="login-main">
+            <el-form
+              ref="loginform"
+              :model="loginInfo"
+              label-position="right"
+              label-width="100px"
+              hide-required-asterisk
+              :rules="rules"
+            >
+              <el-row>
+                <el-form-item prop="handle" :error="loginErrHandle" label="用户名：">
+                  <el-input
+                    type="text"
+                    v-model="loginInfo.handle"
+                    placeholder="请输入账号"
+                    auto-complete="off"
+                    prefix-icon="el-icon-user-solid"
+                  ></el-input>
+                </el-form-item>
+              </el-row>
 
-        <el-row>
-          <el-form-item prop="password" :error="loginErrPswd" label="密码：">
-            <el-input
-              type="password"
-              v-model="loginInfo.password"
-              placeholder="请输入密码"
-              auto-complete="off"
-              prefix-icon="el-icon-lock"
-            ></el-input>
-          </el-form-item>
-        </el-row>
+              <el-row>
+                <el-form-item prop="password" :error="loginErrPswd" label="密码：">
+                  <el-input
+                    type="password"
+                    v-model="loginInfo.password"
+                    placeholder="请输入密码"
+                    auto-complete="off"
+                    prefix-icon="el-icon-lock"
+                  ></el-input>
+                </el-form-item>
+              </el-row>
 
-        <!-- <el-row>
-          <el-col :span="5">
-            <div align="right" class="login-title">验证码：</div>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item prop="captcha" :error="loginErrCpch">
-            <el-input
-              type="text"
-              v-model="loginInfo.captcha"
-              placeholder="请输入验证码"
-              auto-complete="off"
-              prefix-icon="el-icon-s-claim"
-            ></el-input>
-            </el-form-item>
-          </el-col>
-          <el-col :span="7">
-            <img :src="captcha64" style="width:100%; margin-top: -10px">
-          </el-col>
-        </el-row>-->
-      </el-form>
+              <!-- <el-row>
+                <el-col :span="5">
+                  <div align="right" class="login-title">验证码：</div>
+                </el-col>
+                <el-col :span="12">
+                  <el-form-item prop="captcha" :error="loginErrCpch">
+                  <el-input
+                    type="text"
+                    v-model="loginInfo.captcha"
+                    placeholder="请输入验证码"
+                    auto-complete="off"
+                    prefix-icon="el-icon-s-claim"
+                  ></el-input>
+                  </el-form-item>
+                </el-col>
+                <el-col :span="7">
+                  <img :src="captcha64" style="width:100%; margin-top: -10px">
+                </el-col>
+              </el-row>-->
+            </el-form>
 
-      <el-row>
-        <el-col :span="12">
-          <el-button type="primary" @click="login" style="width: 80%">登录</el-button>
-        </el-col>
-        <el-col :span="12">
-          <el-button @click="goSignup" style="width: 80%">注册</el-button>
-        </el-col>
-      </el-row>
-      <!--<el-row>
-        <el-button type="text">忘记密码？</el-button>
-      </el-row>-->
-    </el-main>
-  </el-container>
+            <el-row>
+              <el-col :span="12">
+                <el-button type="primary" @click="login" style="width: 80%">登录</el-button>
+              </el-col>
+              <el-col :span="12">
+                <el-button @click="goSignup" style="width: 80%">注册</el-button>
+              </el-col>
+            </el-row>
+            <!--<el-row>
+              <el-button type="text">忘记密码？</el-button>
+            </el-row>-->
+          </div>
+        </el-card>
+      </el-col>
+    </el-row>
+  </div>
 </template>
 
 <script>
@@ -88,6 +99,7 @@ export default {
         password: ''
         // captcha: ''
       },
+      sidePic: 'https://cloud.tsinghua.edu.cn/seafhttp/files/98274dc8-c356-410a-881d-2c1b24da29fc/logo.png',
       captcha64: '',
       captchaKey: '',
       loginErrHandle: '',
@@ -99,12 +111,12 @@ export default {
       redirect: false,
       rules: {
         handle: [
-          {required: true, message: '请输入账号', trigger: 'blur'},
-          {max: 30, message: '输入过长', trigger: 'blur'}
+          { required: true, message: '请输入账号', trigger: 'blur' },
+          { max: 30, message: '输入过长', trigger: 'blur' }
         ],
         password: [
-          {required: true, message: '请输入密码', trigger: 'blur'},
-          {max: 30, message: '输入过长', trigger: 'blur'}
+          { required: true, message: '请输入密码', trigger: 'blur' },
+          { max: 30, message: '输入过长', trigger: 'blur' }
         ]
         // captcha: [
         //   {required: true, message: '请输入验证码', trigger: 'blur'},
@@ -126,25 +138,25 @@ export default {
       })
     },
     login () {
-      this.$refs['loginform'].validate(valid => {
+      this.$refs.loginform.validate(valid => {
         if (valid) {
           this.loginErrHandle = ''
           this.loginErrPswd = ''
           this.loginErrCpch = ''
-          const loading = this.$loading({lock: true, text: '登录中'})
-          let params = this.$qs.stringify({
-            'handle': this.loginInfo.handle,
-            'password': this.loginInfo.password
+          const loading = this.$loading({ lock: true, text: '登录中' })
+          const params = this.$qs.stringify({
+            handle: this.loginInfo.handle,
+            password: this.loginInfo.password
           })
           this.$axios.post(
             '/login',
             params
           ).then(res => {
-            let logindata = {
-              'id': res.data.id,
-              'handle': res.data.handle,
-              'privilege': parseInt(res.data.privilege),
-              'nickname': res.data.nickname
+            const logindata = {
+              id: res.data.id,
+              handle: res.data.handle,
+              privilege: parseInt(res.data.privilege),
+              nickname: res.data.nickname
             }
             this.$store.commit('login', logindata)
             loading.close()
@@ -186,20 +198,19 @@ export default {
 .login-container {
   border-radius: 5px;
   background-clip: padding-box;
-  margin: 100px auto;
-  padding: 20px;
-  width: 550px;
-  border: 1px solid silver;
+  margin: auto;
+  padding: 0px;
+  padding-bottom: 20px;
+  width: 480px;
+  height: 280px;
   font-weight: 600;
   font-size: 25px;
 }
 .login-header {
-  display: flex;
   text-align: center;
   border-top: none;
   border-left: none;
   border-right: none;
-  border-bottom: 1px solid silver;
 }
 .login-main {
   font-weight: 400;

@@ -26,9 +26,6 @@
         <el-form-item label="比赛标题" prop="title">
           <el-input v-model="form.title" placeholder="输入标题" size="small"></el-input>
         </el-form-item>
-        <el-form-item label="Banner链接" prop="bannerURL">
-          <el-input v-model="form.bannerURL" placeholder="输入图片url" size="small"></el-input>
-        </el-form-item>
         <el-form-item label="起止时间" prop="dateTimes">
           <el-date-picker
             v-model="form.dateTimes"
@@ -62,6 +59,11 @@
         <el-form-item label="赛制脚本" prop="script">
           <div class="cm-container">
             <codemirror v-model="form.script" :options="cmOptions" align="left"></codemirror>
+          </div>
+        </el-form-item>
+        <el-form-item label="播放器html" prop="playback">
+          <div class="cm-container">
+            <codemirror v-model="form.playback" :options="cmOptions" align="left"></codemirror>
           </div>
         </el-form-item>
         <el-form-item label="是否开放报名" prop="isRegOpen">
@@ -160,11 +162,11 @@ export default {
       menuListener: null,
       form: {
         title: '',
-        bannerURL: '',
         dateTimes: [],
         desc: '',
         details: '',
         script: '',
+        playback: '',
         isRegOpen: false,
         moderators: []
       },
@@ -183,11 +185,7 @@ export default {
         title: [
           { validator: this.$functions.globalValidator, trigger: 'blur' },
           { required: true, message: '请输入比赛名称', trigger: 'blur' },
-          { min: 3, max: 25, message: '名称应在3-25个字符之间', trigger: 'blur' }
-        ],
-        bannerURL: [
-          { required: true, message: '请输入banner链接', trigger: 'blur' },
-          { min: 3, message: '格式错误', trigger: 'blur' }
+          { min: 3, max: 20, message: '名称应在3-20个字符之间', trigger: 'blur' }
         ],
         dateTimes: [
           { required: true, message: '请选择起止时间' },
@@ -267,7 +265,8 @@ export default {
             desc: this.form.desc,
             details: this.form.details,
             is_reg_open: this.form.isRegOpen,
-            script: this.form.script
+            script: this.form.script,
+            playback: this.form.playback
           }
           if (this.form.moderators.length > 0) {
             const idList = []
@@ -303,7 +302,7 @@ export default {
 <style scoped>
 .cm-container {
   border: 1px solid #dcdfe6;
-  max-height: 480px;
+  max-height: 600px;
   font-size: 14px;
   line-height: 18px;
 }

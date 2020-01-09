@@ -48,14 +48,14 @@
       </el-col>
       <el-col :span="7">
         <div style="min-height: 480px; margin-left: 20px;">
-          <div align="left" style="font-size: 18px; font-weight: 600; margin-bottom: 20px">主战代码</div>
+          <div align="left" style="font-size: 18px; font-weight: 600; margin-bottom: 20px">裁判代码</div>
             <div v-if="mainCode.sid!==''">
               <div align="left">编号：{{mainCode.sid}}</div>
               <div align="left">语言：{{mainCode.lang}}</div>
               <el-button type="text" size="small" @click="showCode(mainCode.sid)">导出</el-button>
-              <el-button type="text" size="small" @click="setDelegate(-1)">设为非主战</el-button>
+              <el-button type="text" size="small" @click="setJudge(-1)">撤下</el-button>
             </div>
-            <div v-else style="margin-bottom: 20px; font-size: 14px; color: gray">你还没有设置主战代码</div>
+            <div v-else style="margin-bottom: 20px; font-size: 14px; color: gray">你还没有设置裁判程序</div>
           <div align="left" style="font-size: 18px; font-weight: 600; margin-bottom: 20px">其他历史代码</div>
           <el-timeline align="left">
             <el-timeline-item
@@ -74,14 +74,14 @@
                 v-if="mainCode.sid !== activity.sid"
                 type="text"
                 size="small"
-                @click="setDelegate(activity.sid)"
+                @click="setJudge(activity.sid)"
                 :disabled="activity.stat!=='接受'"
-              >设为主战</el-button>
+              >设为裁判</el-button>
               <el-button
                 v-else
                 type="text" size="small" @click="showCode(activity.sid)"
                 disabled
-              >主战代码</el-button>
+              >裁判代码</el-button>
             </el-timeline-item>
           </el-timeline>
           <el-pagination
@@ -103,7 +103,7 @@
 import { codemirror } from 'vue-codemirror-lite'
 
 export default {
-  name: 'submissions',
+  name: 'judge',
   components: {
     codemirror
   },
@@ -160,34 +160,34 @@ export default {
       const end = start + 3
       this.historyPart = this.history.slice(start, end)
     },
-    compareTime () {
-      this.$axios.get(
-        '/contest/' + this.cid + '/info'
-      ).then(res => {
-        const time1 = res.data.start_time
-        const time2 = res.data.end_time
-        const now = new Date().getTime() / 1000
-        if (time1 < now && now < time2) {
-          this.canSubmit = true
-          this.submitText = '提交(作为新记录)'
-        } else if (time1 > now) {
-          this.canSubmit = false
-          this.submitText = '还不能提交'
-        } else {
-          this.canSubmit = false
-          this.submitText = '已超过提交时间'
-        }
-      }).catch(err => {
-        console.log(err)
-      })
-    },
-    setDelegate (sid) {
+    // compareTime () {
+    //   this.$axios.get(
+    //     '/contest/' + this.cid + '/info'
+    //   ).then(res => {
+    //     const time1 = res.data.start_time
+    //     const time2 = res.data.end_time
+    //     const now = new Date().getTime() / 1000
+    //     if (time1 < now && now < time2) {
+    //       this.canSubmit = true
+    //       this.submitText = '提交(作为新记录)'
+    //     } else if (time1 > now) {
+    //       this.canSubmit = false
+    //       this.submitText = '还不能提交'
+    //     } else {
+    //       this.canSubmit = false
+    //       this.submitText = '已超过提交时间'
+    //     }
+    //   }).catch(err => {
+    //     console.log(err)
+    //   })
+    // },
+    setJudge (sid) {
       const loading = this.$loading({ lock: true, text: '处理中' })
       const params = this.$qs.stringify({
         submission: sid
       })
       this.$axios.post(
-        '/contest/' + this.cid + '/delegate',
+        '/contest/' + this.cid + '/judge',
         params
       ).then(res => {
         loading.close()
@@ -200,7 +200,7 @@ export default {
     },
     getHistory () {
       const loading = this.$loading({ lock: true, text: '加载中' })
-      this.compareTime()
+      // this.compareTime()
       this.mainCode = {
         sid: '',
         time: '',
@@ -214,8 +214,9 @@ export default {
         console.log(res.data)
         this.history = []
         this.$axios.get(
-          '/contest/' + this.cid + '/my_delegate'
+          '/contest/' + this.cid + '/judge_id'
         ).then(result => {
+          console.log(result.data)
           if (result.data.submission === -1) {
             this.mainCode = {
               sid: '',
@@ -234,7 +235,7 @@ export default {
               stat: statcolor.stat,
               lang: item.lang
             }
-            if (historyItem.sid === result.data.submission) {
+            if (historyItem.sid === result.data.judge) {
               this.mainCode = historyItem
             }
             this.history.push(historyItem)
@@ -252,7 +253,7 @@ export default {
       }).catch(err => {
         loading.close()
         if (err.response.status === 403 || err.response.status === 401) {
-          this.topbarText = '尚未登录或未参加比赛'
+          this.topbarText = '没有操作权限'
         } else {
           this.$message.error('查询失败')
         }

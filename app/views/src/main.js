@@ -49,9 +49,8 @@ axios.interceptors.response.use(
 
 Vue.prototype.$qs = qs
 
-
 router.beforeEach((to, from, next) => {
-  let routeList = []
+  const routeList = []
   if (!to.meta.prePage) {
     return next('/notfound')
   }
@@ -62,8 +61,8 @@ router.beforeEach((to, from, next) => {
     }
   }
   to.meta.prePage.forEach(item => {
-    let r = router.resolve(item.path).route
-    let page = {
+    const r = router.resolve(item.path).route
+    const page = {
       title: r.meta.title,
       path: item.path,
       query: {}

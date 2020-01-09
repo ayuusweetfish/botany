@@ -8,7 +8,7 @@
           :style="{backgroundImage: 'url('+bannerUrl+')'}"
           body-style="display: flex; justify-content: space-between; height: 200px; align-items: flex-end"
         >
-          <div style="display: inline-flex">{{title}}</div>
+          <div style="display: inline-flex; max-width: 600px;">{{title}}</div>
           <div>
             <el-button
               v-if="myRole===$consts.role.notIn && isRegOpen"
@@ -18,14 +18,24 @@
             >
               报名参加
             </el-button>
-            <!-- <el-button
+            <el-button
               v-if="myRole===$consts.role.moderator"
               type="primary" size="large"
               style="display: inline-flex;"
-              @click="goScript"
+              @click="changeBanner"
+              v-loading="bannerLoading"
+              :disabled="bannerLoading"
             >
-              脚本操作
-            </el-button> -->
+              修改Banner
+            </el-button>
+            <input
+              ref="banner-upload"
+              type="file"
+              style="display: none"
+              accept="image/gif, image/jpeg, image/png"
+              min="1"
+              max="1"
+              @change="uploadBanner"/>
             <el-button
               v-if="myRole===$consts.role.moderator"
               type="primary" size="large"
@@ -95,7 +105,7 @@ export default {
   name: 'contestmain',
   created () {
     this.cid = this.$route.query.cid
-    this.bannerUrl = 'https://www.csgowallpapers.com/assets/images/original/mossawi_518842827528_20150625022423_816788567695.png'
+    this.bannerUrl = this.$axios.defaults.baseURL + '/contest/' + this.cid + '/banner'
     this.getContestInfo()
   },
   data () {
@@ -109,7 +119,8 @@ export default {
       desc: '',
       myRole: this.$consts.role.notIn,
       owner: '',
-      events: []
+      events: [],
+      bannerLoading: false
     }
   },
   methods: {
@@ -136,13 +147,40 @@ export default {
         }
       })
     },
-    goScript () {
-      this.$router.push({
-        path: '/contest_script',
-        query: {
-          cid: this.cid
-        }
+    uploadBanner () {
+      const files = this.$refs['banner-upload'].files
+      if (!files || files.length !== 1) {
+        this.$message.error('上传数量错误')
+        return
+      }
+      if (files[0].size >= 1024 * 1024) {
+        this.$message.error('上传文件过大')
+        return
+      }
+      const namelist = files[0].name.split('.')
+      const filetype = namelist[namelist.length - 1]
+      if (['jpg', 'jpeg', 'gif', 'png'].indexOf(filetype) === -1) {
+        this.$message.error('上传格式错误')
+        return
+      }
+      this.bannerLoading = true
+      const bannerpckt = new FormData()
+      bannerpckt.append('file', files[0])
+      this.$axios.post(
+        '/contest/' + this.cid + '/banner/upload',
+        bannerpckt
+      ).then(res => {
+        this.bannerLoading = false
+        this.$message.success('Banner修改成功')
+        window.location.reload()
+      }).catch(err => {
+        console.log(err)
+        this.bannerLoading = false
+        this.$message.error('修改失败')
       })
+    },
+    changeBanner () {
+      this.$refs['banner-upload'].click()
     },
     publishContest () {
       const loading = this.$loading({ lock: true, text: '处理中' })

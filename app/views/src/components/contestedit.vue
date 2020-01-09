@@ -11,9 +11,6 @@
         <el-form-item label="比赛标题" prop="title">
           <el-input v-model="form.title" placeholder="输入标题" size="small"></el-input>
         </el-form-item>
-        <el-form-item label="Banner链接" prop="bannerURL">
-          <el-input v-model="form.bannerURL" placeholder="输入图片url" size="small"></el-input>
-        </el-form-item>
         <el-form-item label="起止时间" prop="dateTimes">
           <el-date-picker
             v-model="form.dateTimes"
@@ -47,6 +44,11 @@
         <el-form-item label="赛制脚本" prop="script">
           <div class="cm-container">
             <codemirror v-model="form.script" :options="cmOptions" align="left"></codemirror>
+          </div>
+        </el-form-item>
+        <el-form-item label="播放器html" prop="playback">
+          <div class="cm-container">
+            <codemirror v-loading="htmlLoading" v-model="form.playback" :options="cmOptions" align="left"></codemirror>
           </div>
         </el-form-item>
         <el-form-item label="是否开放报名" prop="isRegOpen">
@@ -115,12 +117,23 @@ export default {
     codemirror
   },
   created () {
+    this.$store.commit('setStallFlag', false)
     this.cid = this.$route.query.cid
     const loading = this.$loading({ lock: true, text: '查询信息' })
     this.$axios.get(
       '/contest/' + this.cid + '/info'
     ).then(res => {
-      console.log(res.data)
+      loading.close()
+      if (res.data.my_role !== this.$consts.role.moderator) {
+        this.$message.error('没有权限进行这项操作')
+        this.$router.push({
+          path: '/contest_main',
+          query: {
+            cid: this.cid
+          }
+        })
+        return
+      }
       this.form.title = res.data.title
       this.form.dateTimes.push(new Date(res.data.start_time * 1000))
       this.form.dateTimes.push(new Date(res.data.end_time * 1000))
@@ -129,12 +142,24 @@ export default {
       this.form.isRegOpen = res.data.is_reg_open
       this.form.moderators = res.data.moderators
       this.form.script = res.data.script
+      this.form.playback = res.data.playback
       this.$store.commit('setStallFlag', true)
-      loading.close()
     }).catch(err => {
       console.log(err)
       loading.close()
       this.$message.error('查询失败，请刷新重试')
+    })
+    this.htmlLoading = true
+    this.$axios.get(
+      '/contest/' + this.cid + '/match/0/playback'
+    ).then(res => {
+      this.form.playback = res.data
+      console.log(res.data)
+      this.htmlLoading = false
+    }).catch(err => {
+      console.log(err)
+      this.htmlLoading = false
+      this.$message.error('查询播放器html失败，请刷新重试')
     })
   },
   data () {
@@ -151,14 +176,15 @@ export default {
       cid: '',
       form: {
         title: '',
-        bannerURL: '',
         dateTimes: [],
         desc: '',
         details: '',
         isRegOpen: false,
         moderators: [],
-        script: ''
+        script: '',
+        playback: ''
       },
+      htmlLoading: false,
       selInput: '',
       selOptions: [],
       selLoading: false,
@@ -174,11 +200,7 @@ export default {
         title: [
           { validator: this.$functions.globalValidator, trigger: 'blur' },
           { required: true, message: '请输入比赛名称', trigger: 'blur' },
-          { min: 3, max: 25, message: '名称应在3-25个字符之间', trigger: 'blur' }
-        ],
-        bannerURL: [
-          { required: true, message: '请输入banner链接', trigger: 'blur' },
-          { min: 3, message: '格式错误', trigger: 'blur' }
+          { min: 3, max: 20, message: '名称应在3-20个字符之间', trigger: 'blur' }
         ],
         dateTimes: [
           { required: true, message: '请选择起止时间' },
@@ -248,7 +270,8 @@ export default {
             desc: this.form.desc,
             details: this.form.details,
             is_reg_open: this.form.isRegOpen,
-            script: this.form.script
+            script: this.form.script,
+            playback: this.form.playback
           }
           if (this.form.moderators.length > 0) {
             const idList = []
@@ -265,7 +288,7 @@ export default {
             loading.close()
             this.$message.success('提交成功')
             this.$store.commit('setStallFlag', false)
-            this.$router.push('/')
+            window.location.reload()
           }).catch(err => {
             loading.close()
             console.log(err)
@@ -276,7 +299,7 @@ export default {
     },
     goBack () {
       this.$router.push({
-        path: '/contest_main',
+        path: '/contest_ops',
         query: {
           cid: this.cid
         }
@@ -289,7 +312,7 @@ export default {
 <style scoped>
 .cm-container {
   border: 1px solid #dcdfe6;
-  max-height: 480px;
+  max-height: 600px;
   font-size: 14px;
   line-height: 18px;
 }

@@ -2,7 +2,7 @@
   "presets": [
     "@vue/app"
   ],
-  "plugins": ["@babel/plugin-transform-runtime"],
+  "plugins": ["@babel/plugin-transform-runtime", "syntax-dynamic-import"],
   "env": {
     "test": {
       "presets": ["@babel/preset-env"]

@@ -45,7 +45,11 @@
         <div v-if="$route.meta.navbarType!=='none'" id="avatar-container">
           <el-dropdown v-if="$store.state.handle" :hide-on-click="true" @command="handleCommand" trigger="click">
             <span class="el-dropdown-link" style="cursor: pointer;">
-              <el-avatar :src="defaultAva" size="medium" style="margin-top: 4px"></el-avatar>
+              <el-avatar
+                :src="$axios.defaults.baseURL + '/user/' + $store.state.handle + '/avatar'"
+                size="medium"
+                style="margin-top: 4px">
+              </el-avatar>
             </span>
             <el-dropdown-menu  slot="dropdown" style="min-width: 120px; padding: 2px 10px 2px 10px;">
               <el-dropdown-item :disabled="true" class="info-dropdown-item" style="color: #505050; font-weight: 600; border-bottom: 1px solid silver">{{$store.state.nickname}}</el-dropdown-item>
@@ -78,6 +82,12 @@
     </div>
     <password-dialog :visible.sync="showPwdDlg" @setVisible="setPasswordDialog"></password-dialog>
     <router-view class="main-view" style="margin-top: 100px"/>
+    <div class="main-footer">
+      <div class="main-footer-content">
+        <p>Copyrights 2020 清华大学软件学院</p>
+        <p>BotAny是开源项目，仓库地址：<a href="https://github.com/kawa-yoiko/botany" style="color: whitesmoke; text-decoration: none">github.com/kawa-yoiko/botany</a></p>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -102,7 +112,6 @@ export default {
       }
     })
     this.$axios.get('/whoami').then(res => {
-      console.log(res.data)
       this.$store.commit('login', {
         id: res.data.id,
         handle: res.data.handle,
@@ -120,8 +129,7 @@ export default {
   },
   data () {
     return {
-      showPwdDlg: false,
-      defaultAva: require('@/assets/logo.png').default
+      showPwdDlg: false
     }
   },
   methods: {
@@ -178,8 +186,10 @@ export default {
     logout () {
       this.$axios.post('/logout').then(res => {
         this.$store.commit('logout')
-        window.location.reload()
+        this.$router.push('/')
       }).catch(err => {
+        this.$store.commit('logout')
+        this.$router.push('/')
         console.log(err)
       })
     },
@@ -218,9 +228,12 @@ export default {
   -moz-osx-font-smoothing: grayscale;
   text-align: center;
   color: #2c3e50;
-  margin: auto;
-  margin-top: 0px;
   font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  min-height: 100%;
 }
 #topbar-background {
   position: fixed;
@@ -250,9 +263,11 @@ export default {
 .contest-title-container{
   font-size: 24px;
   font-weight: 600;
-  display: inline-block;
-  align-self: auto;
-  padding: 0
+  display: inline-flex;
+  width: 320px;
+  max-height: 44px;
+  overflow: hidden;
+  padding: 0;
 }
 #contest-title{
   font-size: 24px;
@@ -261,7 +276,6 @@ export default {
 }
 #router-links-container{
   display: inline-block;
-  margin-left: 20px;
 }
 #avatar-container{
   margin-top: 10px;
@@ -307,12 +321,13 @@ export default {
 .main-view{
   width: 1080px;
   margin: auto;
+  padding-bottom: 200px;
 }
 .main-router-links{
-  font-size: 18px;
+  font-size: 16px;
   text-decoration: none;
   color: gray;
-  margin-right: 20px
+  margin-right: 12px
 }
 .topbar {
   border-bottom: 1px solid silver;
@@ -333,7 +348,7 @@ export default {
   font-weight: 500;
   color:#545454;
   text-decoration: none;
-  margin: 0px 10px 0px 10px;
+  margin: 0px 8px 0px 8px;
 }
 .navbar-block {
   font-weight: 500;
@@ -355,7 +370,7 @@ export default {
 }
 .cm-container .CodeMirror {
   height: auto;
-  max-height: 480px;
+  max-height: 600px;
   font-family: monospace;
   position: relative;
   background: white;
@@ -370,7 +385,22 @@ export default {
   direction: ltr;
 }
 .cm-container .CodeMirror-scroll {
-  min-height: 300px;
-  max-height: 480px;
+  min-height: 480px;
+  max-height: 600px;
+}
+.main-footer{
+  position: absolute;
+  height: 120px;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  min-width: 1080px;
+  background-color: #555555;
+  color: whitesmoke;
+}
+.main-footer-content{
+  margin: auto;
+  margin-top: 20px;
+  text-align: center;
 }
 </style>

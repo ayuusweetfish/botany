@@ -3,7 +3,7 @@
     <password-dialog :visible="password" @setVisible="setPasswordVisible"></password-dialog>
     <el-row :gutter="20">
       <el-col :span="7">
-        <el-card v-if="editing" shadow="hover" body-style="margin-bottom: 20px; margin-top: 20px">
+        <el-card v-if="editing" body-style="margin-bottom: 20px; margin-top: 20px" style="border: none">
           <el-form
             ref="editform"
             :model="editingInfo"
@@ -53,7 +53,7 @@
           </el-row>
         </el-card>
 
-        <el-card v-else shadow="hover" body-style="margin-bottom: 20px; margin-top: 20px">
+        <el-card v-else body-style="margin-bottom: 20px; margin-top: 20px" style="border: none">
           <div class="nickname-box">
             <div style="display: inline">{{nickname}}</div>
             <div style="display: inline">@Botany</div>
@@ -69,18 +69,20 @@
           <el-avatar
             :src="defaultAva"
             :size="size"
+            shape="square"
             style="margin-bottom: 20px; cursor: pointer"
             v-if="mode==='self'"
             @click.native="startAvatarUpload"
             title="点击更换头像"
-            :v-loading="avaLoading">
+            v-loading="avaLoading">
           </el-avatar>
           <el-avatar
             :src="defaultAva"
             :size="size"
+            shape="square"
             style="margin-bottom: 20px"
             v-else
-            :v-loading="avaLoading">
+            v-loading="avaLoading">
           </el-avatar>
           <div style="margin-left: 20px; margin-right: 20px">
             <el-row class="profile-item">
@@ -130,7 +132,7 @@
         </el-card>
       </el-col>
       <el-col :span="17">
-        <el-card  style="margin-bottom: 20px">
+        <el-card  style="margin-bottom: 20px" shadow="never">
           <div align="left">
             <div v-if="mode==='self'">
               <div style="display: inline">共参加了</div><div style="display: inline; font-weight: 600">{{contestTotal}}</div><div style="display: inline">项赛事</div>
@@ -190,7 +192,7 @@
             </el-collapse-item>
           </el-collapse>
         </el-card>
-        <el-card>
+        <el-card shadow="never">
           <div align="left">
             <div v-if="mode==='self'">
               <div style="display: inline">共进行了</div><div style="display: inline; font-weight: 600">{{matchTotal}}</div><div style="display: inline">场对局</div>
@@ -257,7 +259,7 @@
               <template slot-scope="scope">
                 <div v-if="scope.row.status===$consts.codeStat.pending" style="color: gray">等待处理</div>
                 <div v-else-if="scope.row.status===$consts.codeStat.compiling" style="color: orange">处理中</div>
-                <div v-else-if="scope.row.status===$consts.codeStat.compiling" style="color: accepted">已结束</div>
+                <div v-else-if="scope.row.status===$consts.codeStat.accepted" style="color: green">已结束</div>
                 <div v-else style="color: red">系统错误</div>
               </template>
             </el-table-column>
@@ -370,7 +372,7 @@ export default {
       contestTotal: 0,
       major: [],
       minor: [],
-      size: 120
+      size: 180
     }
   },
   methods: {
@@ -476,6 +478,7 @@ export default {
     },
     getInfo () {
       const loading = this.$loading({ lock: true, text: '加载中' })
+      this.defaultAva = this.$axios.defaults.baseURL + '/user/' + this.handle + '/avatar'
       const params = {
         page: this.page - 1,
         count: this.count
@@ -520,22 +523,10 @@ export default {
         this.matchTotal = res.data.total_matches
         this.minor = res.data.matches
         loading.close()
-        this.refreshAvatar()
       }).catch(err => {
         console.log(err)
         loading.close()
         this.$message.error('查询失败')
-      })
-    },
-    refreshAvatar () {
-      this.avaLoading = true
-      this.$axios.get(
-        '/user/' + this.handle + '/avatar'
-      ).then(res => {
-        this.avaLoading = false
-        const file = 'data:' + res.headers['content-type'] + ';base64,' + res.data
-        console.log(file)
-        this.defaultAva = file
       })
     },
     startAvatarUpload () {
@@ -554,7 +545,7 @@ export default {
       const namelist = files[0].name.split('.')
       const filetype = namelist[namelist.length - 1]
 
-      if (['jpg', 'jpeg', 'gif', 'png'].indexOf(filetype) == -1) {
+      if (['jpg', 'jpeg', 'gif', 'png'].indexOf(filetype) === -1) {
         this.$message.error('上传格式错误')
         return
       }
@@ -567,8 +558,9 @@ export default {
       ).then(res => {
         this.avaLoading = false
         this.$message.success('头像修改成功')
-        this.refreshAvatar()
+        window.location.reload()
       }).catch(err => {
+        console.log(err)
         this.avaLoading = false
         this.$message.error('修改失败')
       })
