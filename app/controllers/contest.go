@@ -394,7 +394,7 @@ func contestSubmissionHistoryHandlerCommon(w http.ResponseWriter, r *http.Reques
 			w.WriteHeader(403)
 			fmt.Fprintf(w, "[]")
 			return
-		} else if participation ==  models.ParticipationTypeContestant {
+		} else if participation == models.ParticipationTypeContestant {
 			s, _, err := models.SubmissionHistory(u.Id, c.Id, -1, 0)
 			if err != nil {
 				panic(err)
