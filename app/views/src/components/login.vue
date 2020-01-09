@@ -3,7 +3,7 @@
     <el-row :gutter="20">
       <el-col :span="12">
         <el-card shadow="none" style="margin-top: 180px; border: none; height: 280px">
-          <div><img :src="sidePic" style="height: 280px"/></div>
+          <div><img :src="require('../assets/logo.png').default" style="height: 280px"/></div>
         </el-card>
       </el-col>
       <el-col :span="12">
@@ -99,7 +99,6 @@ export default {
         password: ''
         // captcha: ''
       },
-      sidePic: 'https://cloud.tsinghua.edu.cn/seafhttp/files/98274dc8-c356-410a-881d-2c1b24da29fc/logo.png',
       captcha64: '',
       captchaKey: '',
       loginErrHandle: '',

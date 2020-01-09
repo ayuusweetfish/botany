@@ -238,7 +238,9 @@ export default {
             if (historyItem.sid === result.data.judge) {
               this.mainCode = historyItem
             }
-            this.history.push(historyItem)
+            if (historyItem.sid !== -1) {
+              this.history.push(historyItem)
+            }
           })
           if (this.history.length === 0 && this.mainCode.sid === '') {
             this.topbarText = '尚未提交代码'
@@ -295,7 +297,7 @@ export default {
         this.topbarInfo.msg = res.data.submission.msg
         this.lang = res.data.submission.lang
         this.getHistory()
-        this.compareTime()
+        // this.compareTime()
       }).catch(err => {
         loading.close()
         this.$message.error('提交失败')
@@ -303,7 +305,7 @@ export default {
       })
     },
     showCode (sid) {
-      this.compareTime()
+      // this.compareTime()
       this.codeLoading = true
       this.$axios.get(
         '/contest/' + this.cid + '/submission/' + sid
