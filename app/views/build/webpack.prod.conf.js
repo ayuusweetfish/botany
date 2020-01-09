@@ -27,12 +27,26 @@ const webpackConfig = merge(baseWebpackConfig, {
     filename: utils.assetsPath('js/[name].[chunkhash].js'),
     chunkFilename: utils.assetsPath('js/[id].[chunkhash].js')
   },
+  optimization: {
+    splitChunks:{
+      maxSize: 214000
+    }
+  },
   plugins: [
     // http://vuejs.github.io/vue-loader/en/workflow/production.html
     new webpack.DefinePlugin({
       'process.env': env
     }),
     new UglifyJsPlugin({
+      uglifyOptions: {
+        output: {
+          comments: false
+        },
+        compress: {
+          drop_console: true,
+          pure_funcs: ['console.log']
+        }
+      },
       sourceMap: config.build.productionSourceMap,
       parallel: true
     }),
