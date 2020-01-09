@@ -3,6 +3,7 @@
     <el-row style="margin-bottom: 10px">
       <el-col :span="24">
         <el-card
+          shadow="never"
           class="contest-title"
           :style="{backgroundImage: 'url('+bannerUrl+')'}"
           body-style="display: flex; justify-content: space-between; height: 200px; align-items: flex-end"
@@ -17,21 +18,21 @@
             >
               报名参加
             </el-button>
-            <el-button
+            <!-- <el-button
               v-if="myRole===$consts.role.moderator"
               type="primary" size="large"
               style="display: inline-flex;"
               @click="goScript"
             >
               脚本操作
-            </el-button>
+            </el-button> -->
             <el-button
               v-if="myRole===$consts.role.moderator"
               type="primary" size="large"
               style="display: inline-flex;"
               @click="goEdit"
             >
-              编辑比赛
+              比赛操作
             </el-button>
             <el-button
               v-if="$store.state.privilege===$consts.privilege.superuser && !isVisible"
@@ -55,7 +56,8 @@
     </el-row>
     <el-row :gutter="20">
       <el-col :span="6">
-        <el-card>
+        <div style="margin-top: 40px">
+        <!-- <el-card shadow="never" style="min-length: 280px"> -->
           <el-timeline align="left">
             <el-timeline-item
               v-for="(activity, index) in events"
@@ -67,15 +69,20 @@
             <div align="left">{{activity.event}}</div>
             </el-timeline-item>
           </el-timeline>
-        </el-card>
+        </div>
+        <!-- </el-card> -->
       </el-col>
       <el-col :span="18">
-        <el-card>
+        <el-card shadow="never">
           <div align="left" style="font-size: 24px; font-weight: 600">赛事简介</div>
           <div align="left">
             <p>赛事主办方：{{owner.nickname}}</p>
             <p>{{desc}}</p>
           </div>
+        </el-card>
+        <el-card shadow="never" style="margin-top: 20px">
+          <div align="left" style="font-size: 24px; font-weight: 600">详细介绍</div>
+          <div align="left" style="white-space: pre-wrap;">{{details}}</div>
         </el-card>
       </el-col>
     </el-row>
@@ -95,6 +102,7 @@ export default {
     return {
       cid: '',
       title: '',
+      details: '',
       bannerUrl: '',
       isRegOpen: false,
       isVisible: false,
@@ -106,7 +114,7 @@ export default {
   },
   methods: {
     regIn () {
-      const loading = this.$loading({lock: true, text: '处理中'})
+      const loading = this.$loading({ lock: true, text: '处理中' })
       this.$axios.post(
         '/contest/' + this.cid + '/join'
       ).then(res => {
@@ -122,7 +130,7 @@ export default {
     },
     goEdit () {
       this.$router.push({
-        path: '/contest_edit',
+        path: '/contest_ops',
         query: {
           cid: this.cid
         }
@@ -137,8 +145,8 @@ export default {
       })
     },
     publishContest () {
-      const loading = this.$loading({lock: true, text: '处理中'})
-      let param = this.$qs.stringify({set: true})
+      const loading = this.$loading({ lock: true, text: '处理中' })
+      const param = this.$qs.stringify({ set: true })
       this.$axios.post(
         '/contest/' + this.cid + '/publish',
         param
@@ -153,8 +161,8 @@ export default {
       })
     },
     hideContest () {
-      const loading = this.$loading({lock: true, text: '处理中'})
-      let param = this.$qs.stringify({set: false})
+      const loading = this.$loading({ lock: true, text: '处理中' })
+      const param = this.$qs.stringify({ set: false })
       this.$axios.post(
         '/contest/' + this.cid + '/publish',
         param
@@ -169,7 +177,7 @@ export default {
       })
     },
     getContestInfo () {
-      const loading = this.$loading({lock: true, text: '查询比赛信息'})
+      const loading = this.$loading({ lock: true, text: '查询比赛信息' })
       this.$axios.get(
         '/contest/' + this.cid + '/info'
       ).then(res => {
@@ -191,6 +199,7 @@ export default {
         this.myRole = res.data.my_role
         this.owner = res.data.owner
         this.title = res.data.title
+        this.details = res.data.details
         this.$store.commit('enterSubSite', res.data)
         console.log(this.myRole)
         loading.close()

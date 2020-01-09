@@ -123,7 +123,6 @@
 
 <script>
 import { codemirror } from 'vue-codemirror-lite'
-import velocity from 'velocity-animate'
 
 export default {
   name: 'contest_create',

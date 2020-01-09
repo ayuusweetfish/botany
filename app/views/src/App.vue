@@ -10,7 +10,13 @@
         <div v-else class="contest-title-container">博坛</div>
         <div v-if="$route.meta.navbarType === 'contest'" id="router-links-container">
           <router-link class="main-router-links" :to="{path:'/contest_main', query: {cid: $route.query.cid}}">比赛首页</router-link>
-          <el-dropdown
+          <!-- <router-link class="main-router-links" :to="{path:'/contest_detail', query: {cid: $route.query.cid}}"><i class="el-icon-magic-stick"></i>参赛指南</router-link> -->
+          <router-link v-if="checkRouteValid('moderator')" class="main-router-links" :to="{path: '/contest_ops', query: {cid: $route.query.cid}}"><i class="el-icon-setting"></i>比赛操作</router-link>
+          <router-link v-if="checkRouteValid('imIn')&&checkTimeValid(3)" class="main-router-links" :to="{path: '/submission', query: {cid: $route.query.cid}}"><i class="el-icon-cpu"></i>我的代码</router-link>
+          <router-link v-if="checkRouteValid('moderator')&&checkTimeValid(3)" class="main-router-links" :to="{path: '/submission_list', query: {cid: $route.query.cid}}"><i class="el-icon-document-copy"></i>提交列表</router-link>
+          <router-link v-if="checkTimeValid(3)" class="main-router-links" :to="{path:'/match_list', query: {cid: $route.query.cid}}"><i class="el-icon-video-play"></i>对局列表</router-link>
+          <router-link v-if="checkTimeValid(3)" class="main-router-links" :to="{path:'/ranklist', query: {cid: $route.query.cid}}"><i class="el-icon-trophy"></i>选手排行</router-link>
+          <!-- <el-dropdown
             :hide-on-click="true"
             :show-timeout="0"
             placement="bottom"
@@ -33,8 +39,8 @@
                 <el-dropdown-item style="width: 110px; font-size: 16px"><i class="el-icon-trophy"></i>选手排行</el-dropdown-item>
               </router-link>
             </el-dropdown-menu>
-          </el-dropdown>
-          <router-link class="main-router-links" to="/">返回Botany</router-link>
+          </el-dropdown> -->
+          <!-- <router-link class="main-router-links" to="/">返回Botany</router-link> -->
         </div>
         <div v-if="$route.meta.navbarType!=='none'" id="avatar-container">
           <el-dropdown v-if="$store.state.handle" :hide-on-click="true" @command="handleCommand" trigger="click">

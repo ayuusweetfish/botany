@@ -58,7 +58,30 @@
             <div style="display: inline">{{nickname}}</div>
             <div style="display: inline">@Botany</div>
           </div>
-          <el-avatar :src="defaultAva" :size="size" style="margin-bottom: 20px"></el-avatar>
+          <input
+            ref="avatar-input"
+            type="file"
+            style="display: none"
+            accept="image/gif, image/jpeg, image/png"
+            min="1"
+            max="1"
+            @change="avatarUpload"/>
+          <el-avatar
+            :src="defaultAva"
+            :size="size"
+            style="margin-bottom: 20px; cursor: pointer"
+            v-if="mode==='self'"
+            @click.native="startAvatarUpload"
+            title="点击更换头像"
+            :v-loading="avaLoading">
+          </el-avatar>
+          <el-avatar
+            :src="defaultAva"
+            :size="size"
+            style="margin-bottom: 20px"
+            v-else
+            :v-loading="avaLoading">
+          </el-avatar>
           <div style="margin-left: 20px; margin-right: 20px">
             <el-row class="profile-item">
               <el-col :span="4">
@@ -299,7 +322,8 @@ export default {
       }
     }
     return {
-      defaultAva: require('../assets/logo.png'),
+      avaLoading: false,
+      defaultAva: '',
       tableLoading: false,
       activeContests: [],
       password: false,
@@ -352,7 +376,6 @@ export default {
   methods: {
     handleCurrentChange (val) {
       this.page = val
-      console.log(this.page)
       this.getList()
     },
     setPasswordVisible (val) {
@@ -461,7 +484,6 @@ export default {
         '/user/' + this.handle + '/profile',
         { params: params }
       ).then(res => {
-        console.log(res.data)
         this.nickname = res.data.user.nickname
         this.uid = res.data.user.id
         this.email = res.data.user.email
@@ -498,10 +520,57 @@ export default {
         this.matchTotal = res.data.total_matches
         this.minor = res.data.matches
         loading.close()
+        this.refreshAvatar()
       }).catch(err => {
         console.log(err)
         loading.close()
         this.$message.error('查询失败')
+      })
+    },
+    refreshAvatar () {
+      this.avaLoading = true
+      this.$axios.get(
+        '/user/' + this.handle + '/avatar'
+      ).then(res => {
+        this.avaLoading = false
+        const file = 'data:' + res.headers['content-type'] + ';base64,' + res.data
+        console.log(file)
+        this.defaultAva = file
+      })
+    },
+    startAvatarUpload () {
+      this.$refs['avatar-input'].click()
+    },
+    avatarUpload () {
+      const files = this.$refs['avatar-input'].files
+      if (!files || files.length !== 1) {
+        this.$message.error('上传数量错误')
+        return
+      }
+      if (files[0].size >= 512 * 1024) {
+        this.$message.error('上传文件过大')
+        return
+      }
+      const namelist = files[0].name.split('.')
+      const filetype = namelist[namelist.length - 1]
+
+      if (['jpg', 'jpeg', 'gif', 'png'].indexOf(filetype) == -1) {
+        this.$message.error('上传格式错误')
+        return
+      }
+      this.avaLoading = true
+      const avapckt = new FormData()
+      avapckt.append('file', files[0])
+      this.$axios.post(
+        '/user/' + this.handle + '/avatar/upload',
+        avapckt
+      ).then(res => {
+        this.avaLoading = false
+        this.$message.success('头像修改成功')
+        this.refreshAvatar()
+      }).catch(err => {
+        this.avaLoading = false
+        this.$message.error('修改失败')
       })
     }
   }

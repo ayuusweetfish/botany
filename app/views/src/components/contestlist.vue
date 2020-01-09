@@ -12,12 +12,12 @@
       </router-link>
     </div>
     <el-row :gutter="20">
-      <el-col 
+      <el-col
         :span="12"
         v-for="(item, index) in contests"
         :key="index"
       >
-        <el-card 
+        <el-card
           shadow="never"
           class="contest-card"
           >
@@ -34,10 +34,10 @@
             <div>
               <div class="important">简介：</div>
               <div class="normal">{{item.info}}</div>
-            </div>          
+            </div>
           </div>
           <div align="right">
-            <router-link 
+            <router-link
               :to="{path: '/contest_main', query:{cid: item.id}}"
               class="contest-button">查看详情</router-link>
           </div>

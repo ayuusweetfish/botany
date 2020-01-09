@@ -17,6 +17,7 @@ import notfound from '@/components/404'
 import submissionlist from '@/components/submissionlist'
 import submissioninfo from '@/components/submissioninfo'
 import contestscript from '@/components/scriptview'
+import contestops from '@/components/contestops'
 
 Vue.use(Router)
 
@@ -205,6 +206,17 @@ export default new Router({
       component: contestscript,
       meta: {
         title: '比赛脚本',
+        navbarType: 'contest',
+        prePage: [{path: '/contest_main', query: ['cid']}],
+        stalling: false
+      }
+    },
+    {
+      path: '/contest_ops',
+      name: 'contestops',
+      component: contestops,
+      meta: {
+        title: '比赛操作',
         navbarType: 'contest',
         prePage: [{path: '/contest_main', query: ['cid']}],
         stalling: false
