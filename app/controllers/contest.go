@@ -1,7 +1,9 @@
 package controllers
 
 import (
+	"github.com/kawa-yoiko/botany/app/globals"
 	"github.com/kawa-yoiko/botany/app/models"
+	"mime"
 
 	"database/sql"
 	"encoding/json"
@@ -45,7 +47,7 @@ func contestListHandler(w http.ResponseWriter, r *http.Request) {
 
 func parseRequestContest(r *http.Request) (models.Contest, []int64, bool) {
 	title := r.PostFormValue("title")
-	banner := r.PostFormValue("banner")
+	// banner := r.PostFormValue("banner")
 	startTime, err1 := strconv.ParseInt(r.PostFormValue("start_time"), 10, 64)
 	endTime, err2 := strconv.ParseInt(r.PostFormValue("end_time"), 10, 64)
 	desc := r.PostFormValue("desc")
@@ -72,8 +74,8 @@ func parseRequestContest(r *http.Request) (models.Contest, []int64, bool) {
 	}
 
 	c := models.Contest{
-		Title:     title,
-		Banner:    banner,
+		Title: title,
+		// Banner:    banner,
 		StartTime: startTime,
 		EndTime:   endTime,
 		Desc:      desc,
@@ -778,6 +780,74 @@ func contestScriptLogHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(s))
 }
 
+func contestBannerHandler(w http.ResponseWriter, r *http.Request) {
+	u := middlewareAuthRetrieve(w, r)
+	c := middlewareReferredContest(w, r, u)
+	if c.Id == -1 {
+		w.WriteHeader(404)
+		return
+	}
+	f, err := c.LoadBanner()
+	if err != nil {
+		panic(err)
+	}
+
+	if f.Id == -1 {
+		f = globals.DefaultBanner
+	}
+
+	w.Header().Set("Content-Type", f.Type)
+	w.Write(f.Content)
+}
+
+func contestBannerUploadHandler(w http.ResponseWriter, r *http.Request) {
+	u := middlewareAuthRetrieve(w, r)
+	if u.Id == -1 {
+		return
+	}
+	c := middlewareReferredContest(w, r, u)
+	if c.Id == -1 {
+		return
+	}
+	if c.Owner != u.Id && u.Privilege != models.UserPrivilegeSuperuser {
+		w.WriteHeader(403)
+		return
+	}
+	err, ext, buf := middlewareMultipartFormFile(r)
+	if errors.Is(err, http.ErrMissingFile) {
+		w.WriteHeader(400)
+		return
+	} else if err != nil {
+		panic(err)
+	}
+
+	mimeType := mime.TypeByExtension("." + ext)
+	if !strings.HasPrefix(mimeType, "image/") {
+		w.WriteHeader(400)
+		return
+	}
+	f, err := c.LoadBanner()
+	if err != nil {
+		panic(err)
+	}
+	f.Type = mimeType
+	f.Content = buf.Bytes()
+
+	if f.Id == -1 {
+		err = f.Create()
+		if err == nil {
+			c.Banner = f.Id
+			err = c.UpdateBanner()
+		}
+	} else {
+		err = f.Update()
+	}
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println("EMMM")
+}
+
 func init() {
 	registerRouterFunc("/contest/list", contestListHandler, "GET")
 	registerRouterFunc("/contest/create", contestCreateHandler, "POST")
@@ -799,4 +869,6 @@ func init() {
 	registerRouterFunc("/contest/{cid:[0-9]+}/match/{mid:[0-9]+}", contestMatchDetailsHandler, "GET")
 	registerRouterFunc("/contest/{cid:[0-9]+}/match/{mid:[0-9]+}/playback", contestMatchPlaybackHandler, "GET")
 	registerRouterFunc("/contest/{cid:[0-9]+}/script_log", contestScriptLogHandler, "GET")
+	registerRouterFunc("/contest/{cid:[0-9]+}/banner", contestBannerHandler, "GET")
+	registerRouterFunc("/contest/{cid:[0-9]+}/banner/upload", contestBannerUploadHandler, "POST")
 }

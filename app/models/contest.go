@@ -10,7 +10,7 @@ import (
 type Contest struct {
 	Id     int32
 	Title  string
-	Banner string
+	Banner int32
 
 	Owner     int32
 	StartTime int64
@@ -55,7 +55,8 @@ func init() {
 	registerSchema("contest",
 		"id SERIAL PRIMARY KEY",
 		"title TEXT NOT NULL DEFAULT ''",
-		"banner TEXT NOT NULL DEFAULT ''",
+		// "banner TEXT NOT NULL DEFAULT ''",
+		"banner INTEGER",
 		"owner INTEGER NOT NULL",
 		"start_time BIGINT NOT NULL",
 		"end_time BIGINT NOT NULL",
@@ -148,7 +149,7 @@ func (c *Contest) Create() error {
 
 func (c *Contest) Read() error {
 	err := db.QueryRow("SELECT "+
-		"title, banner, owner, start_time, end_time, descr, details, "+
+		"title, COALESCE(banner, -1), owner, start_time, end_time, descr, details, "+
 		"is_visible, is_reg_open, COALESCE(judge, -1) AS judge, script "+
 		"FROM contest WHERE id = $1",
 		c.Id,
@@ -181,7 +182,7 @@ func (c *Contest) AppendScriptLog(s string) error {
 
 func ContestReadAll() ([]Contest, error) {
 	rows, err := db.Query("SELECT " +
-		"id, title, banner, owner, start_time, end_time, descr, " +
+		"id, title, COALESCE(banner, -1), owner, start_time, end_time, descr, " +
 		"is_visible, is_reg_open, COALESCE(judge, -1) AS judge, script " +
 		"FROM contest ORDER BY id ASC",
 	)
@@ -216,6 +217,28 @@ func ContestReadAll() ([]Contest, error) {
 func (c *Contest) LoadRel() error {
 	c.Rel.Owner.Id = c.Owner
 	return c.Rel.Owner.ReadById()
+}
+
+func (c *Contest) LoadBanner() (File, error) {
+	err := db.QueryRow("SELECT COALESCE(banner, -1) FROM contest WHERE id = $1",
+		c.Id).Scan(&c.Banner)
+	if err != nil {
+		return File{}, err
+	}
+	if c.Banner == -1 {
+		return File{Id: -1, Content: nil}, nil
+	}
+	f := File{Id: c.Banner}
+	if err := f.Read(); err != nil {
+		return File{}, err
+	}
+	return f, nil
+}
+
+func (c *Contest) UpdateBanner() error {
+	_, err := db.Exec("UPDATE contest SET "+
+		"banner = $1 WHERE id = $2", c.Banner, c.Id)
+	return err
 }
 
 func (c *Contest) AllParticipationsRequiresDelegate(d bool) ([]ContestParticipation, error) {

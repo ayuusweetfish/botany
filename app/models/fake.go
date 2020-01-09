@@ -98,7 +98,7 @@ end
 `
 		c := Contest{
 			Title:     "Grand Contest " + strconv.Itoa(i),
-			Banner:    "banner.png",
+			Banner:    -1,
 			Owner:     int32(1 + i),
 			StartTime: t + 3600*24*int64(-3+i),
 			EndTime:   t + 3600*24*int64(-1+i),
@@ -112,7 +112,6 @@ end
 		if err := c.Create(); err != nil {
 			panic(err)
 		}
-
 		// Judge
 		judgeCode, err := ioutil.ReadFile("../ipc/run.c")
 		if err != nil {

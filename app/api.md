@@ -308,7 +308,7 @@
 - 空对象 {}
 - 不是比赛拥有者 —— 前端检查严格时不应出现此项
 
-### :construction: 修改横幅图片 POST /contest/{cid}/banner/upload
+### 修改横幅图片 POST /contest/{cid}/banner/upload
 
 请求
 - Content-Type: multipart/form-data
@@ -323,7 +323,7 @@
 - 文件名后缀不是图像格式
 - 或没有包含 **file** —— 前端处理正确时不应出现此项
 
-### :construction: 获得横幅图片 GET /contest/{cid}/banner
+### ​获得横幅图片 GET /contest/{cid}/banner
 
 响应 200
 - 图像，将会设置 Content-Type，不必再加后缀
@@ -435,7 +435,7 @@
 
 响应 200
 - **submission** (number) 当前出战提交（没有则为 -1）
- 
+
 响应 403 
 - 空响应 Content-Length: 0
 - 比赛未开始或未报名比赛
