@@ -403,12 +403,16 @@ func contestSubmissionHistoryHandlerCommon(w http.ResponseWriter, r *http.Reques
 		} else {
 			mods := c.ReadModerators()
 			for i := range mods {
+				fmt.Println(i, mods[i])
 				s, _, err := models.SubmissionHistory(mods[i], c.Id, -1, 0)
 				if err != nil {
 					panic(err)
 				}
+				fmt.Println(s)
 				ss = append(ss, s...)
 			}
+			s := models.Submission{Id: c.Judge}
+			ss = append(ss, s.ShortRepresentation())
 		}
 		enc := json.NewEncoder(w)
 		enc.SetEscapeHTML(false)
