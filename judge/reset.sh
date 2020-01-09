@@ -1,6 +1,6 @@
 #!/bin/sh
 
 sudo cp compile.sh match.sh $1/var/botany
-sudo cp lib/* $1/var/botany/lib
-sudo rm -rf $1/var/botany/matches/*
-sudo rm -rf $1/var/botany/submissions/*
+sudo cp -r lib $1/var/botany/lib
+find $1/var/botany/matches -type d -name '*' -exec rm -rf {} \;
+find $1/var/botany/submissions -type d -name '*' -exec rm -rf {} \;

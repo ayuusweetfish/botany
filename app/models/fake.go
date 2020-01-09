@@ -90,10 +90,13 @@ end
 
 function update_stats(report, par)
     print('Update with ' .. tostring(#par) .. ' parties')
-	print(report)
-	for i = 1, #par do
-		print(i, par[i].rating, par[i].performance)
-	end
+    print(report)
+    for i = 1, #par do
+        print(i, par[i].rating, par[i].performance)
+        par[i].rating = par[i].rating + 1
+        par[i].performance = 'Took part in ' .. tostring(par[i].rating) .. ' match'
+        if par[i].rating ~= 1 then par[i].performance = par[i].performance .. 'es' end
+    end
 end
 `
 		c := Contest{

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"strconv"
 	"strings"
 	"time"
 
@@ -300,12 +301,12 @@ func (c *Contest) ExecuteMatchScriptOnManual(arg string) error {
 }
 
 func (m *Match) ExecuteStatsUpdateScript() error {
-	if err := m.LoadRel(); err != nil {
+	// TODO: Thread safety!
+	c := Contest{Id: m.Contest}
+	if err := c.Read(); err != nil {
 		return err
 	}
 
-	// TODO: Thread safety!
-	c := m.Rel.Contest
 	L := c.LuaState()
 
 	// Find global function by name
@@ -316,21 +317,49 @@ func (m *Match) ExecuteStatsUpdateScript() error {
 	}
 
 	// Parties list
+	ps, err := m.LoadParticipations()
+	if err != nil {
+		return err
+	}
+
 	t := &lua.LTable{}
-	for _, _ = range m.Rel.Parties {
+	for _, p := range ps {
 		t2 := &lua.LTable{}
-		t2.RawSetString("rating", lua.LNumber(0))
-		t2.RawSetString("performance", lua.LString("'~'"))
+		t2.RawSetString("rating", lua.LNumber(p.Rating))
+		t2.RawSetString("performance", lua.LString(p.Performance))
 		t.Append(t2)
 	}
 
-	err := L.CallByParam(lua.P{
+	err = L.CallByParam(lua.P{
 		Fn:      fn,
 		NRet:    0,
 		Protect: true,
 	}, lua.LString(m.Report), t)
 	if err != nil {
 		return err
+	}
+
+	for i, p := range ps {
+		t2v := t.RawGetInt(i + 1)
+		if t2v.Type() != lua.LTTable {
+			return ErrLuaType{
+				Message: "Updated participant [" + strconv.Itoa(i+1) + "] is not a valid table",
+			}
+		}
+		t2 := t2v.(*lua.LTable)
+		rv, rok := t2.RawGetString("rating").(lua.LNumber)
+		pv, pok := t2.RawGetString("performance").(lua.LString)
+		if !rok || !pok {
+			return ErrLuaType{
+				Message: "Updated participant [" + strconv.Itoa(i+1) + "] does not fully describe rating (number) and performance (string)",
+			}
+		}
+		p.Rating = int64(rv)
+		p.Performance = pv.String()
+		// println(p.User, p.Contest, p.Rating, p.Performance)
+		if err := p.UpdateStats(); err != nil {
+			return err
+		}
 	}
 
 	flushLog(c.Id)

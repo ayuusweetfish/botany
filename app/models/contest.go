@@ -55,8 +55,7 @@ func init() {
 	registerSchema("contest",
 		"id SERIAL PRIMARY KEY",
 		"title TEXT NOT NULL DEFAULT ''",
-		// "banner TEXT NOT NULL DEFAULT ''",
-		"banner INTEGER",
+		"banner INTEGER", // Nullable
 		"owner INTEGER NOT NULL",
 		"start_time BIGINT NOT NULL",
 		"end_time BIGINT NOT NULL",
@@ -68,6 +67,7 @@ func init() {
 		"script TEXT NOT NULL DEFAULT ''",
 		"script_log TEXT NOT NULL DEFAULT ''",
 		"playback TEXT NOT NULL DEFAULT ''",
+		"ADD CONSTRAINT fk_banner FOREIGN KEY (banner) REFERENCES file (id)",
 		"ADD CONSTRAINT fk_users FOREIGN KEY (owner) REFERENCES users (id)",
 		"ADD CONSTRAINT fk_judge FOREIGN KEY (judge) REFERENCES submission (id)",
 	)
@@ -130,10 +130,9 @@ func (c *Contest) ShortRepresentation(u User) map[string]interface{} {
 
 func (c *Contest) Create() error {
 	err := db.QueryRow("INSERT INTO "+
-		"contest(title, banner, owner, start_time, end_time, descr, details, is_visible, is_reg_open, script, playback) "+
-		"VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING id",
+		"contest(title, owner, start_time, end_time, descr, details, is_visible, is_reg_open, script, playback) "+
+		"VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id",
 		c.Title,
-		c.Banner,
 		c.Owner,
 		c.StartTime,
 		c.EndTime,
@@ -319,12 +318,11 @@ func (c *Contest) PartParticipation(limit, offset int) ([]ContestParticipation, 
 
 func (c *Contest) Update() error {
 	_, err := db.Exec("UPDATE contest SET "+
-		"title = $1, banner = $2, owner = $3, "+
-		"start_time = $4, end_time = $5, descr = $6, details = $7, "+
-		"is_visible = $8, is_reg_open = $9, judge = NULLIF($10, -1), script = $11, playback = $12 "+
-		"WHERE id = $13",
+		"title = $1, owner = $2, "+
+		"start_time = $3, end_time = $4, descr = $5, details = $6, "+
+		"is_visible = $7, is_reg_open = $8, judge = NULLIF($9, -1), script = $10, playback = $11 "+
+		"WHERE id = $12",
 		c.Title,
-		c.Banner,
 		c.Owner,
 		c.StartTime,
 		c.EndTime,
@@ -454,6 +452,16 @@ func (p *ContestParticipation) Update() error {
 		p.Performance,
 		p.User,
 		p.Contest,
+	)
+	return err
+}
+
+func (p *ContestParticipation) UpdateStats() error {
+	_, err := db.Exec("UPDATE contest_participation SET "+
+		"rating = $1, performance = $2 "+
+		"WHERE uid = $3 AND contest = $4",
+		p.Rating, p.Performance,
+		p.User, p.Contest,
 	)
 	return err
 }

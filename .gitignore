@@ -1,6 +1,7 @@
 *.swp
 tmp/
 a.out
+nohup.out
 app/config.json
 package-lock.json
 node_modules/
