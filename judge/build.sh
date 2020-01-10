@@ -1,5 +1,9 @@
-#!/bin/sh
+#!/bin/bash
 sudo rm a.out
-gcc *.c /usr/local/lib/libhiredis.a /usr/local/lib/libb2.a -O2
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    gcc *.c /usr/local/lib/libhiredis.a /usr/local/lib/libb2.a -O2
+else
+    gcc *.c -l:libhiredis.a -l:libb2.a -O2
+fi
 sudo chown root a.out
 sudo chmod +s a.out

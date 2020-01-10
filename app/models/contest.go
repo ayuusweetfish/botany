@@ -10,7 +10,7 @@ import (
 type Contest struct {
 	Id     int32
 	Title  string
-	Banner string
+	Banner int32
 
 	Owner     int32
 	StartTime int64
@@ -22,7 +22,9 @@ type Contest struct {
 	IsVisible bool
 	IsRegOpen bool
 
-	Script string
+	Judge    int32
+	Script   string
+	Playback string
 
 	Rel struct {
 		Owner          User
@@ -53,7 +55,7 @@ func init() {
 	registerSchema("contest",
 		"id SERIAL PRIMARY KEY",
 		"title TEXT NOT NULL DEFAULT ''",
-		"banner TEXT NOT NULL DEFAULT ''",
+		"banner INTEGER", // Nullable
 		"owner INTEGER NOT NULL",
 		"start_time BIGINT NOT NULL",
 		"end_time BIGINT NOT NULL",
@@ -61,9 +63,13 @@ func init() {
 		"details TEXT NOT NULL DEFAULT ''",
 		"is_visible BOOLEAN NOT NULL DEFAULT FALSE",
 		"is_reg_open BOOLEAN NOT NULL DEFAULT FALSE",
+		"judge INTEGER", // Nullable
 		"script TEXT NOT NULL DEFAULT ''",
 		"script_log TEXT NOT NULL DEFAULT ''",
+		"playback TEXT NOT NULL DEFAULT ''",
+		"ADD CONSTRAINT fk_banner FOREIGN KEY (banner) REFERENCES file (id)",
 		"ADD CONSTRAINT fk_users FOREIGN KEY (owner) REFERENCES users (id)",
+		"ADD CONSTRAINT fk_judge FOREIGN KEY (judge) REFERENCES submission (id)",
 	)
 	registerSchema("contest_participation",
 		"uid INTEGER NOT NULL",
@@ -101,6 +107,7 @@ func (c *Contest) Representation(u User) map[string]interface{} {
 		"details":     c.Details,
 		"is_visible":  c.IsVisible,
 		"is_reg_open": c.IsRegOpen,
+		"judge":       c.Judge,
 		"script":      c.Script,
 		"owner":       c.Rel.Owner.ShortRepresentation(),
 		"moderators":  mods,
@@ -123,10 +130,9 @@ func (c *Contest) ShortRepresentation(u User) map[string]interface{} {
 
 func (c *Contest) Create() error {
 	err := db.QueryRow("INSERT INTO "+
-		"contest(title, banner, owner, start_time, end_time, descr, details, is_visible, is_reg_open, script) "+
+		"contest(title, owner, start_time, end_time, descr, details, is_visible, is_reg_open, script, playback) "+
 		"VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id",
 		c.Title,
-		c.Banner,
 		c.Owner,
 		c.StartTime,
 		c.EndTime,
@@ -135,13 +141,15 @@ func (c *Contest) Create() error {
 		c.IsVisible,
 		c.IsRegOpen,
 		c.Script,
+		c.Playback,
 	).Scan(&c.Id)
 	return err
 }
 
 func (c *Contest) Read() error {
 	err := db.QueryRow("SELECT "+
-		"title, banner, owner, start_time, end_time, descr, details, is_visible, is_reg_open, script "+
+		"title, COALESCE(banner, -1), owner, start_time, end_time, descr, details, "+
+		"is_visible, is_reg_open, COALESCE(judge, -1) AS judge, script "+
 		"FROM contest WHERE id = $1",
 		c.Id,
 	).Scan(
@@ -154,9 +162,29 @@ func (c *Contest) Read() error {
 		&c.Details,
 		&c.IsVisible,
 		&c.IsRegOpen,
+		&c.Judge,
 		&c.Script,
 	)
 	return err
+}
+
+func (c *Contest) ReadModerators() []int32 {
+	mods := []int32{}
+	var uid int32
+	rows, err := db.Query("SELECT uid FROM contest_participation where contest = $1 AND type = $2", c.Id, ParticipationTypeModerator)
+	if err != nil && err != sql.ErrNoRows {
+		panic(err)
+	}
+	for rows.Next() {
+		_ = rows.Scan(&uid)
+		mods = append(mods, uid)
+	}
+	err = db.QueryRow("SELECT owner FROM contest WHERE id = $1", c.Id).Scan(&c.Owner)
+	if err != nil {
+		panic(err)
+	}
+	mods = append(mods, c.Owner)
+	return mods
 }
 
 func (c *Contest) ReadScriptLog() (error, string) {
@@ -172,7 +200,8 @@ func (c *Contest) AppendScriptLog(s string) error {
 
 func ContestReadAll() ([]Contest, error) {
 	rows, err := db.Query("SELECT " +
-		"id, title, banner, owner, start_time, end_time, descr, is_visible, is_reg_open, script " +
+		"id, title, COALESCE(banner, -1), owner, start_time, end_time, descr, " +
+		"is_visible, is_reg_open, COALESCE(judge, -1) AS judge, script " +
 		"FROM contest ORDER BY id ASC",
 	)
 	if err != nil {
@@ -192,6 +221,7 @@ func ContestReadAll() ([]Contest, error) {
 			&c.Desc,
 			&c.IsVisible,
 			&c.IsRegOpen,
+			&c.Judge,
 			&c.Script,
 		)
 		if err != nil {
@@ -205,6 +235,28 @@ func ContestReadAll() ([]Contest, error) {
 func (c *Contest) LoadRel() error {
 	c.Rel.Owner.Id = c.Owner
 	return c.Rel.Owner.ReadById()
+}
+
+func (c *Contest) LoadBanner() (File, error) {
+	err := db.QueryRow("SELECT COALESCE(banner, -1) FROM contest WHERE id = $1",
+		c.Id).Scan(&c.Banner)
+	if err != nil {
+		return File{}, err
+	}
+	if c.Banner == -1 {
+		return File{Id: -1, Content: nil}, nil
+	}
+	f := File{Id: c.Banner}
+	if err := f.Read(); err != nil {
+		return File{}, err
+	}
+	return f, nil
+}
+
+func (c *Contest) UpdateBanner() error {
+	_, err := db.Exec("UPDATE contest SET "+
+		"banner = $1 WHERE id = $2", c.Banner, c.Id)
+	return err
 }
 
 func (c *Contest) AllParticipationsRequiresDelegate(d bool) ([]ContestParticipation, error) {
@@ -285,12 +337,11 @@ func (c *Contest) PartParticipation(limit, offset int) ([]ContestParticipation, 
 
 func (c *Contest) Update() error {
 	_, err := db.Exec("UPDATE contest SET "+
-		"title = $1, banner = $2, owner = $3, "+
-		"start_time = $4, end_time = $5, descr = $6, details = $7, "+
-		"is_visible = $8, is_reg_open = $9, script = $10 "+
-		"WHERE id = $11",
+		"title = $1, owner = $2, "+
+		"start_time = $3, end_time = $4, descr = $5, details = $6, "+
+		"is_visible = $7, is_reg_open = $8, judge = NULLIF($9, -1), script = $10, playback = $11 "+
+		"WHERE id = $12",
 		c.Title,
-		c.Banner,
 		c.Owner,
 		c.StartTime,
 		c.EndTime,
@@ -298,7 +349,9 @@ func (c *Contest) Update() error {
 		c.Details,
 		c.IsVisible,
 		c.IsRegOpen,
+		c.Judge,
 		c.Script,
+		c.Playback,
 		c.Id,
 	)
 	return err
@@ -331,6 +384,11 @@ func (c *Contest) UpdateModerators(uids []int64) error {
 	}
 
 	return nil
+}
+
+func (c *Contest) LoadPlayback() error {
+	return db.QueryRow("SELECT playback FROM contest WHERE id = $1",
+		c.Id).Scan(&c.Playback)
 }
 
 func (c *Contest) HasStarted() bool {
@@ -413,6 +471,16 @@ func (p *ContestParticipation) Update() error {
 		p.Performance,
 		p.User,
 		p.Contest,
+	)
+	return err
+}
+
+func (p *ContestParticipation) UpdateStats() error {
+	_, err := db.Exec("UPDATE contest_participation SET "+
+		"rating = $1, performance = $2 "+
+		"WHERE uid = $3 AND contest = $4",
+		p.Rating, p.Performance,
+		p.User, p.Contest,
 	)
 	return err
 }

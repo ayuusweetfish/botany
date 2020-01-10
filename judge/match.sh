@@ -1,9 +1,21 @@
-#!/bin/sh
+#!/bin/bash
 
-echo "Running match $1"
 MID=$1
-shift
+JUDGE=$2
+shift 2
 
-sleep 1
+mkdir -p matches/$MID
 
-for s in $@; do submissions/$s/bin; done
+argv=()
+
+for s in $@; do
+    argv+=(submissions/$s/bin)
+done
+
+i=0
+for s in $@; do
+    argv+=(matches/$MID/$i.log)
+    i=$((i + 1))
+done
+
+submissions/$JUDGE/bin ${argv[*]}

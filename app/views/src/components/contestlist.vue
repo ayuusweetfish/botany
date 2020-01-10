@@ -1,6 +1,7 @@
 <template>
-  <el-card>
-    <div align="left" style="margin-left: 10px">
+  <div  align="left">
+    <div style="display: inline; margin-left: 10px;">{{title}}</div>
+    <div style="margin-left: 10px; display: inline">
       <router-link
         v-if="$store.state.privilege===$consts.privilege.organizer"
         to="/contest_create"
@@ -10,29 +11,40 @@
       添加一场比赛
       </router-link>
     </div>
-    <el-table :data="contests" @row-click="goContestMain" :cell-style="{'cursor': 'pointer'}">
-      <el-table-column :label="title">
-        <template slot-scope="scope">
-          <div>
-            <div class="important">名称：</div>
-            <div class="normal">{{scope.row.name}}</div>
+    <el-row :gutter="20">
+      <el-col
+        :span="12"
+        v-for="(item, index) in contests"
+        :key="index"
+      >
+        <el-card
+          shadow="never"
+          class="contest-card"
+          >
+          <div slot="header">
+            <span class="important" @click="goContestMain(item)" style="cursor: pointer">{{item.name}}</span>
+            <div v-if="item.myRole===$consts.role.moderator" style="float: right">我管理的比赛</div>
+            <div v-else-if="item.myRole===$consts.role.imIn" style="float: right">我参加的比赛</div>
           </div>
-          <div><div class="important">时间：</div><div class="normal">{{scope.row.time}}</div></div>
-          <div><div class="important">说明：</div><div class="normal">{{scope.row.info}}</div></div>
-          <div v-if="scope.row.myRole===$consts.role.moderator">
-            <div class="important">我管理的比赛</div>
+          <div class="contest-info">
+            <div>
+              <div class="important">时间：</div>
+              <div class="normal">{{item.time}}</div>
+            </div>
+            <div>
+              <div class="important">简介：</div>
+              <div class="normal">{{item.info}}</div>
+            </div>
           </div>
-          <div v-else-if="scope.row.myRole===$consts.role.imIn">
-            <div class="important">我参加的比赛</div>
+          <div align="right">
+            <router-link
+              :to="{path: '/contest_main', query:{cid: item.id}}"
+              class="contest-button">查看详情</router-link>
           </div>
-          <div v-if="scope.row.regOpen">
-            <div class="important">开放报名中</div>
-          </div>
-          <div v-else><div class="normal">不开放报名</div></div>
-        </template>
-      </el-table-column>
-    </el-table>
-  </el-card>
+        </el-card>
+      </el-col>
+    </el-row>
+  </div>
 </template>
 
 <script>
@@ -44,19 +56,20 @@ export default {
   data () {
     return {
       title: '',
-      contests: []
+      contests: [],
+      listLoading: false
     }
   },
   methods: {
     getContestList () {
-      const loading = this.$loading({lock: true, text: '正在查询比赛列表'})
+      this.listLoading = true
       this.$axios.get(
         '/contest/list'
       ).then(res => {
         this.contests = []
         res.data.forEach(element => {
-          let timeStartStr = this.$functions.dateTimeString(element.start_time)
-          let timeEndStr = this.$functions.dateTimeString(element.end_time)
+          const timeStartStr = this.$functions.dateTimeString(element.start_time)
+          const timeEndStr = this.$functions.dateTimeString(element.end_time)
           this.contests.push({
             id: element.id,
             name: element.title,
@@ -68,10 +81,10 @@ export default {
         })
         this.total = this.contests.length
         this.title = '当前共有' + this.total + '场比赛'
-        loading.close()
+        this.listLoading = false
       // eslint-disable-next-line handle-callback-err
       }).catch(err => {
-        loading.close()
+        this.listLoading = false
         this.$message.error('查询比赛列表失败')
       })
     },
@@ -97,6 +110,19 @@ export default {
     font-weight: 400;
   }
   .addcontest-link{
+    text-decoration: none;
+    color: #409EFF;
+  }
+  .contest-card{
+    text-align: left;
+    margin-top: 30px;
+  }
+  .contest-info{
+    font-size: 14px;
+    height: 120px;
+  }
+  .contest-button{
+    font-size: 14px;
     text-decoration: none;
     color: #409EFF;
   }

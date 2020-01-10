@@ -1,8 +1,8 @@
 <template>
   <div>
-    <el-card style="margin: 10px 0px 20px 0px">
+    <el-card shadow="never" style="margin: 120px 0px 20px 0px">
       <div align="left" style="font-size: 18px; font-weight: 600; margin-bottom: 20px">执行脚本</div>
-      <el-row>
+      <el-row style="margin-bottom: 20px">
         <el-col :span="4">
           <div align="right" style="margin-top: 8px; margin-right: 20px">输入参数</div>
         </el-col>
@@ -13,8 +13,11 @@
         </el-col>
       </el-row>
     </el-card>
-    <el-card v-loading="logLoading">
-      <div align="left" style="font-size: 18px; font-weight: 600; margin-bottom: 20px">脚本日志</div>
+    <el-card shadow="never" v-loading="logLoading">
+      <div align="left" style="font-size: 18px; font-weight: 600; margin-bottom: 10px">脚本日志</div>
+      <div align="left" style="margin-bottom: 10px">
+        <el-link type="primary" :underline="false" icon="el-icon-download" @click="downLoadLog">下载全部日志</el-link>
+      </div>
       <div class="cm-container">
         <codemirror v-model="log" :options="cmOptions" align="left"></codemirror>
       </div>
@@ -52,8 +55,8 @@ export default {
   },
   methods: {
     passArg () {
-      const loading = this.$loading({lock: true, text: '处理中'})
-      let params = this.$qs.stringify({
+      const loading = this.$loading({ lock: true, text: '处理中' })
+      const params = this.$qs.stringify({
         arg: this.input
       })
       this.$axios.post(
@@ -72,7 +75,8 @@ export default {
     getLog () {
       this.logLoading = true
       this.$axios.get(
-        '/contest/' + this.cid + '/script_log'
+        '/contest/' + this.cid + '/script_log',
+        { params: { full: 0 } }
       ).then(res => {
         this.log = res.data
         this.logLoading = false
@@ -80,6 +84,24 @@ export default {
         console.log(err)
         this.$message.error('查询失败')
         this.logLoading = false
+      })
+    },
+    downLoadLog () {
+      const loading = this.$loading({ lock: true, text: '请求中' })
+      this.$axios.get(
+        '/contest/' + this.cid + '/script_log',
+        { params: { full: 1 } }
+      ).then(res => {
+        loading.close()
+        const blob = new Blob([res.data], { type: 'text/txt,charset=UTF-8' })
+        const a = document.createElement('a')
+        a.href = URL.createObjectURL(blob)
+        a.download = 'log.txt'
+        a.click()
+      }).catch(err => {
+        console.log(err)
+        loading.close()
+        this.$message.error('请求失败')
       })
     }
   }

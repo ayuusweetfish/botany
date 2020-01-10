@@ -226,6 +226,7 @@ retry:
         }
         i += j;
     }
+    buf[code_len] = '\0';
     *contents = buf;
 
     pclose(fp);
@@ -253,25 +254,18 @@ void process_compile(redisReply *kv)
     reply = redisCommand(rctx, "RPUSH " COMPILE_RESULT_LIST " %s 1 Compiling", sid);
 
     // Compilation work
-    compile(sid, lang, contents);
+    char *msg;
+    int retcode = compile(sid, lang, contents, &msg);
     free(lang);
     free(contents);
 
     // Done!
-    WLOGF("Done:      %s", sid);
-    int code;
-    const char *msg;
-    static int cnt = 0;
-    if (++cnt % 3 != 0) {
-        // Success
-        code = 9;
-        msg = "Done!";
-    } else {
-        // Failure
-        code = -1;
-        msg = "Compilation error";
-    }
+    WLOGF("Done:      %s (exit code %d)", sid, retcode);
+    // Convert to server's status code
+    // 9: success, -1: compilation error
+    int code = (retcode == 0 ? 9 : -1);
     reply = redisCommand(rctx, "RPUSH " COMPILE_RESULT_LIST " %s %d %s", sid, code, msg);
+    free(msg);
 }
 
 void process_match(redisReply *kv)
@@ -279,18 +273,21 @@ void process_match(redisReply *kv)
     redisReply *reply;
 
     const char *mid = NULL;
+    const char *judge = NULL;
     int num_parties = 0;
     for (int i = 0; i + 1 < kv->elements; i += 2) {
         assert(kv->element[i]->type == REDIS_REPLY_STRING);
         assert(kv->element[i + 1]->type == REDIS_REPLY_STRING);
         if (strcmp(kv->element[i]->str, "mid") == 0) {
             mid = kv->element[i + 1]->str;
+        } else if (strcmp(kv->element[i]->str, "judge") == 0) {
+            judge = kv->element[i + 1]->str;
         } else if (strcmp(kv->element[i]->str, "num_parties") == 0) {
             num_parties = (int)strtol(kv->element[i + 1]->str, NULL, 10);
         }
     }
 
-    assert(mid != NULL && num_parties != 0);
+    assert(mid != NULL && judge != NULL && num_parties != 0);
 
     char *parties[num_parties];
     for (int i = 0; i + 1 < kv->elements; i += 2) {
@@ -308,24 +305,37 @@ void process_match(redisReply *kv)
     }
 
     reply = redisCommand(rctx, "RPUSH " MATCH_RESULT_LIST " %s 1 Compiling", mid);
-    for (int i = 0; i < num_parties; i++) {
-        if (!is_compiled(parties[i])) {
-            const char *sid = parties[i];
+    for (int i = -1; i < num_parties; i++) {
+        const char *sid = (i == -1 ? judge : parties[i]);
+        if (!is_compiled(sid)) {
             char *lang, *contents;
             retrieve_submission(sid, &lang, &contents);
 
             // TODO: Assert that compilation succeeds
-            compile(sid, lang, contents);
+            char *msg;
+            compile(sid, lang, contents, &msg);
             free(lang);
             free(contents);
+            free(msg);
         }
     }
 
     reply = redisCommand(rctx, "RPUSH " MATCH_RESULT_LIST " %s 2 Running", mid);
 
     // Match work
-    match(mid, num_parties, (const char **)parties);
+    char *msg, **logs;
+    int retcode = match(mid, judge, num_parties, (const char **)parties, &msg, &logs);
 
-    WLOGF("Done:      %s", mid);
-    reply = redisCommand(rctx, "RPUSH " MATCH_RESULT_LIST " %s 9 Done", mid);
+    WLOGF("Done:      %s (exit code %d)", mid, retcode);
+    reply = redisCommand(rctx, "RPUSH " MATCH_RESULT_LIST " %s %d %s",
+        mid, retcode == 0 ? 9 : -9, msg);
+
+    // Participant logs
+    if (logs != NULL) for (int i = 0; i < num_parties; i++) {
+        if (retcode == 0)
+            reply = redisCommand(rctx, "RPUSH " MATCH_RESULT_LIST " %s", logs[i]);
+        free(logs[i]);
+    }
+
+    free(msg);
 }

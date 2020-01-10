@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"strconv"
 	"strings"
 	"time"
 
@@ -231,14 +232,21 @@ func luaCreateMatch(L *lua.LState) int {
 	// Create match
 	m := Match{
 		Contest: cid,
-		Report:  "{\"winner\": \"In queue\"}",
+		Report:  "Pending",
 	}
 	m.Rel.Parties = ss
 	if err := m.Create(); err != nil {
 		log.Println(err.Error())
 		return 0
 	}
-	if err := m.SendToQueue(); err != nil {
+
+	// Get judge ID and then add to judge queue
+	c := Contest{Id: cid}
+	if err := c.Read(); err != nil {
+		log.Println(err.Error())
+		return 0
+	}
+	if err := m.SendToQueue(c.Judge); err != nil {
 		log.Println(err.Error())
 		return 0
 	}
@@ -247,10 +255,10 @@ func luaCreateMatch(L *lua.LState) int {
 	return 0
 }
 
-func (c *Contest) ExecuteScriptFunction(fnName string, args ...lua.LValue) error {
+func (c *Contest) ExecuteMatchScriptFunction(fnName string, args ...lua.LValue) error {
 	L := c.LuaState()
 
-	// Find `on_timer` global function
+	// Find global function by name
 	fn := L.GetGlobal(fnName)
 	if fn.Type() != lua.LTFunction {
 		return ErrLuaType{Message: "Lua global `" + fnName + "` should be a function"}
@@ -280,16 +288,82 @@ func (c *Contest) ExecuteScriptFunction(fnName string, args ...lua.LValue) error
 	return nil
 }
 
-func (c *Contest) ExecuteScriptOnSubmission(from int32) error {
-	return c.ExecuteScriptFunction("on_submission", lua.LNumber(from))
+func (c *Contest) ExecuteMatchScriptOnSubmission(from int32) error {
+	return c.ExecuteMatchScriptFunction("on_submission", lua.LNumber(from))
 }
 
-func (c *Contest) ExecuteScriptOnTimer() error {
-	return c.ExecuteScriptFunction("on_timer")
+func (c *Contest) ExecuteMatchScriptOnTimer() error {
+	return c.ExecuteMatchScriptFunction("on_timer")
 }
 
-func (c *Contest) ExecuteScriptOnManual(arg string) error {
-	return c.ExecuteScriptFunction("on_manual", lua.LString(arg))
+func (c *Contest) ExecuteMatchScriptOnManual(arg string) error {
+	return c.ExecuteMatchScriptFunction("on_manual", lua.LString(arg))
+}
+
+func (m *Match) ExecuteStatsUpdateScript() error {
+	// TODO: Thread safety!
+	c := Contest{Id: m.Contest}
+	if err := c.Read(); err != nil {
+		return err
+	}
+
+	L := c.LuaState()
+
+	// Find global function by name
+	fnName := "update_stats"
+	fn := L.GetGlobal(fnName)
+	if fn.Type() != lua.LTFunction {
+		return ErrLuaType{Message: "Lua global `" + fnName + "` should be a function"}
+	}
+
+	// Parties list
+	ps, err := m.LoadParticipations()
+	if err != nil {
+		return err
+	}
+
+	t := &lua.LTable{}
+	for _, p := range ps {
+		t2 := &lua.LTable{}
+		t2.RawSetString("rating", lua.LNumber(p.Rating))
+		t2.RawSetString("performance", lua.LString(p.Performance))
+		t.Append(t2)
+	}
+
+	err = L.CallByParam(lua.P{
+		Fn:      fn,
+		NRet:    0,
+		Protect: true,
+	}, lua.LString(m.Report), t)
+	if err != nil {
+		return err
+	}
+
+	for i, p := range ps {
+		t2v := t.RawGetInt(i + 1)
+		if t2v.Type() != lua.LTTable {
+			return ErrLuaType{
+				Message: "Updated participant [" + strconv.Itoa(i+1) + "] is not a valid table",
+			}
+		}
+		t2 := t2v.(*lua.LTable)
+		rv, rok := t2.RawGetString("rating").(lua.LNumber)
+		pv, pok := t2.RawGetString("performance").(lua.LString)
+		if !rok || !pok {
+			return ErrLuaType{
+				Message: "Updated participant [" + strconv.Itoa(i+1) + "] does not fully describe rating (number) and performance (string)",
+			}
+		}
+		p.Rating = int64(rv)
+		p.Performance = pv.String()
+		// println(p.User, p.Contest, p.Rating, p.Performance)
+		if err := p.UpdateStats(); err != nil {
+			return err
+		}
+	}
+
+	flushLog(c.Id)
+	return nil
 }
 
 func timerForAllContests() {
@@ -302,7 +376,7 @@ func timerForAllContests() {
 		}
 		for _, c := range cs {
 			if c.IsRunning() {
-				if err := c.ExecuteScriptOnTimer(); err != nil {
+				if err := c.ExecuteMatchScriptOnTimer(); err != nil {
 					log.Println(err.Error())
 					continue
 				}

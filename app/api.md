@@ -140,7 +140,7 @@
 - 空对象 {}
 
 响应 403 —— 前端处理正确时不应出现此项
-- 空对象 {}
+- 空响应 Content-Length: 0
 - 除站长外，不能修改其他人的个人信息
 
 响应 400
@@ -162,8 +162,29 @@
 - 原密码错误
 
 响应 403 —— 前端处理正确时不应出现此项
-- 空对象 {}
+- 空响应 Content-Length: 0
 - 除站长外，不能修改其他人的密码
+
+### 修改头像 POST /user/{handle}/avatar/upload
+
+请求
+- Content-Type: multipart/form-data
+- **file** 一个图像文件，保留文件名，其后缀决定图像类型（image/\*\*\*）
+	- 由 Golang 的 mime 包识别，至少支持 .gif, .jpg, .jpeg, .png, .svg, .webp
+
+响应 403 —— 前端处理正确时不应出现此项
+- 空响应 Content-Length: 0
+- 除站长外，不能修改其他人的头像
+
+响应 400
+- 空响应 Content-Length: 0
+- 文件名后缀不是图像格式
+- 或没有包含 **file** —— 前端处理正确时不应出现此项
+
+### 获得头像 GET /user/{handle}/avatar
+
+响应 200
+- 图像，将会设置 Content-Type，不必再加后缀
 
 ### 赋予或撤回主办权限 POST /user/{handle}/promote
 
@@ -191,16 +212,16 @@
 
 - **id** (number) ID
 - **title** (string) 标题
-- **banner** (string) Banner 图片链接（暂不使用）
 - **start_time** (number) 开始时刻的 Unix 时间戳，单位为秒
 - **end_time** (number) 结束时刻的 Unix 时间戳，单位为秒
 - **desc** (string) 简要描述
 - **details** (string) 长篇详细说明
 - **is_visible** (boolean) 是否公开显示
 - **is_reg_open** (boolean) 是否公开接受报名
+- **judge** (number) 裁判程序的提交 ID
 - **script** (string) 赛制脚本
 - **owner** (UserShort) 创建者
-- **moderators** ([number]) 管理员的 ID 列表，用逗号分隔
+- **moderators** ([number]) 管理员的 ID 列表，不包含创建者
 - **my_role** (number) 自己的参加情况
 	- **-1** 未登录或未报名
 	- **0** 拥有管理权限（管理员或创建者）
@@ -208,7 +229,7 @@
 
 ### 比赛数据结构 ContestShort
 
-仅包含 Contest 的 **id**, **title**, **banner**, **start_time**, **end_time**, **desc**, **is_reg_open**
+仅包含 Contest 的 **id**, **title**, **start_time**, **end_time**, **desc**, **is_reg_open**
 
 ### 提交记录数据结构 Submission
 
@@ -249,7 +270,6 @@
 
 请求
 - **title** (string) 标题
-- **banner** (string) Banner 图片链接（暂不使用）
 - **start_time** (number) 开始时刻的 Unix 时间戳，单位为秒
 - **end_time** (number) 结束时刻的 Unix 时间戳，单位为秒
 - **desc** (string) 简要描述
@@ -258,6 +278,7 @@
 - **is_reg_open** (boolean) 是否公开接受报名
 - **moderators** ([number]) 管理员的 ID 列表，用逗号分隔
 - **script** (string) 赛制脚本
+- **playback** (string) 播放器 HTML
 
 响应 200
 - **id** (number) 新比赛的 ID
@@ -285,6 +306,26 @@
 响应 403
 - 空对象 {}
 - 不是比赛拥有者 —— 前端检查严格时不应出现此项
+
+### 修改横幅图片 POST /contest/{cid}/banner/upload
+
+请求
+- Content-Type: multipart/form-data
+- **file** 一个图像文件，保留文件名，其后缀决定图像类型（image/\*\*\*）
+
+响应 403 —— 前端处理正确时不应出现此项
+- 空响应 Content-Length: 0
+- 非管理员
+
+响应 400 —— 前端处理正确时不应出现此项
+- 空响应 Content-Length: 0
+- 文件名后缀不是图像格式
+- 或没有包含 **file** —— 前端处理正确时不应出现此项
+
+### ​获得横幅图片 GET /contest/{cid}/banner
+
+响应 200
+- 图像，将会设置 Content-Type，不必再加后缀
 
 ### 发布或隐藏比赛 POST /contest/{cid}/publish
 
@@ -393,10 +434,35 @@
 
 响应 200
 - **submission** (number) 当前出战提交（没有则为 -1）
- 
+
 响应 403 
 - 空响应 Content-Length: 0
 - 比赛未开始或未报名比赛
+
+### 查询裁判提交号 GET /contest/{cid}/judge_id
+响应 200
+- **judge** 裁判的提交号
+
+响应 403
+- 非管理员
+
+### 选择裁判 POST /contest/{cid}/judge
+
+请求
+- **submission** (number) 提交 ID
+	- 必须是编译通过的提交
+	- 注：管理员可以看到本场所有的提交，所以也可以选择其他人（一般是管理员，但暂且不必刻意限制）的代码作为裁判
+
+响应 200
+- 空响应 Content-Length: 0
+
+响应 400
+- 空响应 Content-Length: 0
+- 格式不正确，或不是本场比赛编译通过的提交 —— 前端检查严格时不应出现此项
+
+响应 403
+- 空响应 Content-Length: 0
+- 非管理员 —— 前端检查严格时不应出现此项
 
 ### 排行榜 GET /contest/{cid}/ranklist
 
@@ -428,6 +494,14 @@
 - 一个 Match
 
 注：比赛不存在、对局不存在或对局不属于比赛均认为 404
+
+### 播放器 GET /contest/{cid}/match/{mid}/playback
+
+响应
+- Content-Type: text/html; charset=utf-8
+- 播放器 HTML，可作为 iframe 嵌入页面
+	- 原文中的 `<% report %>` 被替换为实际对局的 report
+	- 另外，若 mid = 0，则返回原文
 
 ### 手动发起对局 POST /contest/{cid}/match/manual
 

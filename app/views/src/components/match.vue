@@ -1,7 +1,7 @@
 <template>
   <div>
     <el-row style="margin-top: 20px; margin-bottom: 20px">
-      <el-card>
+      <el-card shadow="never">
         <el-row>
           <el-col :span="12">
             <div class="item-title">对局人数:</div>
@@ -19,8 +19,10 @@
     </el-row>
     <el-row style="margin-top: 20px; margin-bottom: 20px" :gutter="10">
       <el-col v-for="(item, index) in parties" :key="index" :span="8">
-        <el-card>
-          <el-avatar :size="80"></el-avatar>
+        <el-card shadow="hover">
+          <el-avatar
+            :src="$axios.defaults.baseURL + '/user/' + item.participant.handle + '/avatar'"
+            :size="80"></el-avatar>
           <div style="font-size: 16px; font-weight: 600">{{item.participant.nickname}}</div>
           <router-link
             style="font-size: 16px; color: #409EFF; text-decoration: none"
@@ -38,18 +40,23 @@
       </el-col>
     </el-row>
     <el-row>
-      <el-card body-style="height: 480px">
+      <el-card shadow="never" body-style="min-height: 480px">
         <div align="left" style="font-size: 24px; font-weight: 600">比赛回放</div>
+        <div>
+          <iframe
+            :src="$axios.defaults.baseURL + '/contest/' + cid + '/match/' + mid + '/playback'"
+            style="min-height: 400px; width: 100%; margin-top: 20px" scrolling="yes"></iframe>
+        </div>
       </el-card>
     </el-row>
-    <el-row>
+    <!-- <el-row>
       <el-card>
         <el-row>
           <el-col :span="6">
             <el-button style="width: 80%">上一回合</el-button>
           </el-col>
           <el-col :span="6">
-            <el-button style="width: 80%" type="primary">暂停/开始</el-button>
+            <el-button style="width: 80%" type="primary" @click="onstage=fake">暂停/开始</el-button>
           </el-col>
           <el-col :span="6">
             <el-button style="width: 80%">下一回合</el-button>
@@ -59,7 +66,7 @@
           </el-col>
         </el-row>
       </el-card>
-    </el-row>
+    </el-row> -->
   </div>
 </template>
 
@@ -77,17 +84,19 @@ export default {
       mid: '',
       cid: '',
       status: 0,
-      myRole: -1
+      myRole: -1,
+      fake: '',
+      onstage: ''
     }
   },
   methods: {
     getInfo () {
       this.parties = []
-      const loading = this.$loading({lock: true, text: '加载中'})
+      const loading = this.$loading({ lock: true, text: '加载中' })
       this.$axios.get(
         '/contest/' + this.cid + '/match/' + this.mid
       ).then(res => {
-        console.log(res.data)
+        console.log(res.data.report)
         this.parties = res.data.parties
         this.status = res.data.status
         this.$axios.get(

@@ -1,7 +1,7 @@
 <template>
   <div>
     <el-row style="margin-bottom: 10px">
-      <el-card>
+      <el-card shadow="never">
         <div align="left">
           <div>提交时间：{{topbarTime}}</div>
           <div>提交编号：{{topbarID}}</div>
@@ -16,7 +16,7 @@
       </el-card>
     </el-row>
     <el-row style="margin-bottom: 10px">
-      <el-card body-style="min-height: 360px" v-loading="codeLoading">
+      <el-card body-style="min-height: 360px" v-loading="codeLoading"  shadow="never">
         <div align="left" style="font-size: 18px; font-weight: 600; margin-bottom: 20px">代码查看</div>
         <div class="cm-container">
           <codemirror v-model="code" :options="cmOptions" align="left"></codemirror>
@@ -77,7 +77,7 @@ export default {
         this.lang = res.data.lang
         this.topbarTime = this.$functions.dateTimeString(res.data.created_at)
         this.topbarID = this.sid
-        let statcolor = this.getStatColor(res.data.status)
+        const statcolor = this.getStatColor(res.data.status)
         this.topbarInfo.status = statcolor.stat
         this.topbarColor.status = statcolor.color
         this.topbarColor.msg = 'gray'

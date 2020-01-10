@@ -3,7 +3,7 @@
     <password-dialog :visible="password" @setVisible="setPasswordVisible"></password-dialog>
     <el-row :gutter="20">
       <el-col :span="7">
-        <el-card v-if="editing" shadow="hover" body-style="margin-bottom: 20px; margin-top: 20px">
+        <el-card v-if="editing" body-style="margin-bottom: 20px; margin-top: 20px" style="border: none">
           <el-form
             ref="editform"
             :model="editingInfo"
@@ -53,12 +53,37 @@
           </el-row>
         </el-card>
 
-        <el-card v-else shadow="hover" body-style="margin-bottom: 20px; margin-top: 20px">
+        <el-card v-else body-style="margin-bottom: 20px; margin-top: 20px" style="border: none">
           <div class="nickname-box">
             <div style="display: inline">{{nickname}}</div>
             <div style="display: inline">@Botany</div>
           </div>
-          <el-avatar :size="size" style="margin-bottom: 20px"></el-avatar>
+          <input
+            ref="avatar-input"
+            type="file"
+            style="display: none"
+            accept="image/gif, image/jpeg, image/png"
+            min="1"
+            max="1"
+            @change="avatarUpload"/>
+          <el-avatar
+            :src="defaultAva"
+            :size="size"
+            shape="square"
+            style="margin-bottom: 20px; cursor: pointer"
+            v-if="mode==='self'"
+            @click.native="startAvatarUpload"
+            title="点击更换头像"
+            v-loading="avaLoading">
+          </el-avatar>
+          <el-avatar
+            :src="defaultAva"
+            :size="size"
+            shape="square"
+            style="margin-bottom: 20px"
+            v-else
+            v-loading="avaLoading">
+          </el-avatar>
           <div style="margin-left: 20px; margin-right: 20px">
             <el-row class="profile-item">
               <el-col :span="4">
@@ -107,7 +132,7 @@
         </el-card>
       </el-col>
       <el-col :span="17">
-        <el-card  style="margin-bottom: 20px">
+        <el-card  style="margin-bottom: 20px" shadow="never">
           <div align="left">
             <div v-if="mode==='self'">
               <div style="display: inline">共参加了</div><div style="display: inline; font-weight: 600">{{contestTotal}}</div><div style="display: inline">项赛事</div>
@@ -167,7 +192,7 @@
             </el-collapse-item>
           </el-collapse>
         </el-card>
-        <el-card>
+        <el-card shadow="never">
           <div align="left">
             <div v-if="mode==='self'">
               <div style="display: inline">共进行了</div><div style="display: inline; font-weight: 600">{{matchTotal}}</div><div style="display: inline">场对局</div>
@@ -234,7 +259,7 @@
               <template slot-scope="scope">
                 <div v-if="scope.row.status===$consts.codeStat.pending" style="color: gray">等待处理</div>
                 <div v-else-if="scope.row.status===$consts.codeStat.compiling" style="color: orange">处理中</div>
-                <div v-else-if="scope.row.status===$consts.codeStat.compiling" style="color: accepted">已结束</div>
+                <div v-else-if="scope.row.status===$consts.codeStat.accepted" style="color: green">已结束</div>
                 <div v-else style="color: red">系统错误</div>
               </template>
             </el-table-column>
@@ -289,7 +314,7 @@ export default {
   },
   data () {
     // eslint-disable-next-line camelcase
-    let email_validator = (rule, value, callback) => {
+    const email_validator = (rule, value, callback) => {
       if (!value) {
         callback(new Error('请输入邮箱'))
       } else if (!/^([a-zA-Z0-9]+[-_.]?)+@([a-zA-Z0-9]+\.)+[a-z]+$/.test(value)) {
@@ -299,6 +324,8 @@ export default {
       }
     }
     return {
+      avaLoading: false,
+      defaultAva: '',
       tableLoading: false,
       activeContests: [],
       password: false,
@@ -320,18 +347,18 @@ export default {
       },
       rules: {
         nickname: [
-          {validator: this.$functions.globalValidator, trigger: 'blur'},
-          {required: true, message: '请输入昵称', trigger: 'blur'},
-          {min: 3, max: 16, message: '昵称应在3-16个字符之间', trigger: 'blur'}
+          { validator: this.$functions.globalValidator, trigger: 'blur' },
+          { required: true, message: '请输入昵称', trigger: 'blur' },
+          { min: 3, max: 16, message: '昵称应在3-16个字符之间', trigger: 'blur' }
         ],
         email: [
-          {validator: this.$functions.globalValidator, trigger: 'blur'},
-          {required: true, message: '请输入邮箱', trigger: 'blur'},
-          {validator: email_validator, trigger: 'blur'}
+          { validator: this.$functions.globalValidator, trigger: 'blur' },
+          { required: true, message: '请输入邮箱', trigger: 'blur' },
+          { validator: email_validator, trigger: 'blur' }
         ],
         bio: [
-          {validator: this.$functions.globalValidator, trigger: 'blur'},
-          {max: 255, message: '输入过长', trigger: 'blur'}
+          { validator: this.$functions.globalValidator, trigger: 'blur' },
+          { max: 255, message: '输入过长', trigger: 'blur' }
         ]
       },
       editingErr: {
@@ -345,13 +372,12 @@ export default {
       contestTotal: 0,
       major: [],
       minor: [],
-      size: 120
+      size: 180
     }
   },
   methods: {
     handleCurrentChange (val) {
       this.page = val
-      console.log(this.page)
       this.getList()
     },
     setPasswordVisible (val) {
@@ -359,13 +385,13 @@ export default {
     },
     getList () {
       this.tableLoading = true
-      let params = {
-        'page': this.page - 1,
-        'count': this.count
+      const params = {
+        page: this.page - 1,
+        count: this.count
       }
       this.$axios.get(
         '/user/' + this.handle + '/profile',
-        {params: params}
+        { params: params }
       ).then(res => {
         console.log(res.data)
         this.nickname = res.data.user.nickname
@@ -392,7 +418,7 @@ export default {
         this.minor = []
         this.major = []
         res.data.contests.forEach(item => {
-          let dateTimeString = this.$functions.dateTimeString(item.start_time) + ' 到 ' + this.$functions.dateTimeString(item.end_time)
+          const dateTimeString = this.$functions.dateTimeString(item.start_time) + ' 到 ' + this.$functions.dateTimeString(item.end_time)
           this.major.push({
             id: item.id,
             title: item.title,
@@ -419,10 +445,10 @@ export default {
       this.editing = true
     },
     submitEdit () {
-      this.$refs['editform'].validate(valid => {
+      this.$refs.editform.validate(valid => {
         if (valid) {
-          const loading = this.$loading({lock: true, text: '处理中'})
-          let params = this.$qs.stringify({
+          const loading = this.$loading({ lock: true, text: '处理中' })
+          const params = this.$qs.stringify({
             nickname: this.editingInfo.nickname,
             email: this.editingInfo.email,
             bio: this.editingInfo.bio
@@ -451,16 +477,16 @@ export default {
       this.major = []
     },
     getInfo () {
-      const loading = this.$loading({lock: true, text: '加载中'})
-      let params = {
-        'page': this.page - 1,
-        'count': this.count
+      const loading = this.$loading({ lock: true, text: '加载中' })
+      this.defaultAva = this.$axios.defaults.baseURL + '/user/' + this.handle + '/avatar'
+      const params = {
+        page: this.page - 1,
+        count: this.count
       }
       this.$axios.get(
         '/user/' + this.handle + '/profile',
-        {params: params}
+        { params: params }
       ).then(res => {
-        console.log(res.data)
         this.nickname = res.data.user.nickname
         this.uid = res.data.user.id
         this.email = res.data.user.email
@@ -484,7 +510,7 @@ export default {
         }
         this.major = []
         res.data.contests.forEach(item => {
-          let dateTimeString = this.$functions.dateTimeString(item.start_time) + ' 到 ' + this.$functions.dateTimeString(item.end_time)
+          const dateTimeString = this.$functions.dateTimeString(item.start_time) + ' 到 ' + this.$functions.dateTimeString(item.end_time)
           this.major.push({
             id: item.id,
             title: item.title,
@@ -501,6 +527,42 @@ export default {
         console.log(err)
         loading.close()
         this.$message.error('查询失败')
+      })
+    },
+    startAvatarUpload () {
+      this.$refs['avatar-input'].click()
+    },
+    avatarUpload () {
+      const files = this.$refs['avatar-input'].files
+      if (!files || files.length !== 1) {
+        this.$message.error('上传数量错误')
+        return
+      }
+      if (files[0].size >= 512 * 1024) {
+        this.$message.error('上传文件过大')
+        return
+      }
+      const namelist = files[0].name.split('.')
+      const filetype = namelist[namelist.length - 1]
+
+      if (['jpg', 'jpeg', 'gif', 'png'].indexOf(filetype) === -1) {
+        this.$message.error('上传格式错误')
+        return
+      }
+      this.avaLoading = true
+      const avapckt = new FormData()
+      avapckt.append('file', files[0])
+      this.$axios.post(
+        '/user/' + this.handle + '/avatar/upload',
+        avapckt
+      ).then(res => {
+        this.avaLoading = false
+        this.$message.success('头像修改成功')
+        window.location.reload()
+      }).catch(err => {
+        console.log(err)
+        this.avaLoading = false
+        this.$message.error('修改失败')
       })
     }
   }

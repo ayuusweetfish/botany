@@ -1,7 +1,9 @@
 package controllers
 
 import (
+	"github.com/kawa-yoiko/botany/app/globals"
 	"github.com/kawa-yoiko/botany/app/models"
+	"mime"
 
 	"database/sql"
 	"encoding/json"
@@ -43,9 +45,8 @@ func contestListHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("]\n"))
 }
 
-func parseRequestContest(r *http.Request) (models.Contest, []int64, bool) {
+func parseRequestContest(r *http.Request, c models.Contest) (models.Contest, []int64, bool) {
 	title := r.PostFormValue("title")
-	banner := r.PostFormValue("banner")
 	startTime, err1 := strconv.ParseInt(r.PostFormValue("start_time"), 10, 64)
 	endTime, err2 := strconv.ParseInt(r.PostFormValue("end_time"), 10, 64)
 	desc := r.PostFormValue("desc")
@@ -53,6 +54,7 @@ func parseRequestContest(r *http.Request) (models.Contest, []int64, bool) {
 	isVisible := (r.PostFormValue("is_visible") == "true")
 	isRegOpen := (r.PostFormValue("is_reg_open") == "true")
 	script := r.PostFormValue("script")
+	playback := r.PostFormValue("playback")
 
 	if err1 != nil || err2 != nil || startTime >= endTime {
 		return models.Contest{}, nil, false
@@ -70,17 +72,15 @@ func parseRequestContest(r *http.Request) (models.Contest, []int64, bool) {
 		}
 	}
 
-	c := models.Contest{
-		Title:     title,
-		Banner:    banner,
-		StartTime: startTime,
-		EndTime:   endTime,
-		Desc:      desc,
-		Details:   details,
-		IsVisible: isVisible,
-		IsRegOpen: isRegOpen,
-		Script:    script,
-	}
+	c.Title = title
+	c.StartTime = startTime
+	c.EndTime = endTime
+	c.Desc = desc
+	c.Details = details
+	c.IsVisible = isVisible
+	c.IsRegOpen = isRegOpen
+	c.Script = script
+	c.Playback = playback
 	return c, mods, true
 }
 
@@ -99,7 +99,7 @@ func contestCreateHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	c, mods, ok := parseRequestContest(r)
+	c, mods, ok := parseRequestContest(r, models.Contest{})
 	if !ok {
 		// Malformed request
 		w.WriteHeader(400)
@@ -159,12 +159,12 @@ func middlewareContestModeratorVerify(w http.ResponseWriter, r *http.Request) (m
 }
 
 func contestEditHandler(w http.ResponseWriter, r *http.Request) {
-	u, c := middlewareContestModeratorVerify(w, r)
+	_, c := middlewareContestModeratorVerify(w, r)
 	if c.Id == -1 {
 		return
 	}
 
-	cNew, mods, ok := parseRequestContest(r)
+	cNew, mods, ok := parseRequestContest(r, c)
 	if !ok {
 		// Malformed request
 		w.WriteHeader(400)
@@ -172,8 +172,6 @@ func contestEditHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	cNew.Id = c.Id
-	cNew.Owner = u.Id
 	if err := cNew.Update(); err != nil {
 		panic(err)
 	}
@@ -311,7 +309,7 @@ func contestSubmitHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Invoke contest script
-	if err := c.ExecuteScriptOnSubmission(u.Id); err != nil {
+	if err := c.ExecuteMatchScriptOnSubmission(u.Id); err != nil {
 		if !errors.Is(err, models.ErrLua) {
 			panic(err)
 		}
@@ -389,15 +387,32 @@ func contestSubmissionHistoryHandlerCommon(w http.ResponseWriter, r *http.Reques
 			"submissions": ss,
 		})
 	} else if subType == 1 {
-		if c.ParticipationOf(u) == -1 {
+		participation := c.ParticipationOf(u)
+		ss := []map[string]interface{}{}
+		if participation == -1 {
 			// Querying own submission history, but did not participate
 			w.WriteHeader(403)
 			fmt.Fprintf(w, "[]")
 			return
-		}
-		ss, _, err := models.SubmissionHistory(u.Id, c.Id, -1, 0)
-		if err != nil {
-			panic(err)
+		} else if participation == models.ParticipationTypeContestant {
+			s, _, err := models.SubmissionHistory(u.Id, c.Id, -1, 0)
+			if err != nil {
+				panic(err)
+			}
+			ss = append(ss, s...)
+		} else {
+			mods := c.ReadModerators()
+			for i := range mods {
+				fmt.Println(i, mods[i])
+				s, _, err := models.SubmissionHistory(mods[i], c.Id, -1, 0)
+				if err != nil {
+					panic(err)
+				}
+				fmt.Println(s)
+				ss = append(ss, s...)
+			}
+			s := models.Submission{Id: c.Judge}
+			ss = append(ss, s.ShortRepresentation())
 		}
 		enc := json.NewEncoder(w)
 		enc.SetEscapeHTML(false)
@@ -512,6 +527,61 @@ func myDelegateHandler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+func contestJudgeSelHandler(w http.ResponseWriter, r *http.Request) {
+	_, c := middlewareContestModeratorVerify(w, r)
+	if c.Id == -1 {
+		return
+	}
+
+	sid, err := strconv.Atoi(r.PostFormValue("submission"))
+	if err != nil {
+		// Malformed request
+		w.WriteHeader(400)
+		return
+	}
+
+	if sid != -1 {
+		s := models.Submission{Id: int32(sid)}
+		if err := s.Read(); err != nil {
+			if err == sql.ErrNoRows {
+				// Non-existent submission
+				w.WriteHeader(400)
+				return
+			} else {
+				panic(err)
+			}
+		}
+		if s.Contest != c.Id || s.Status != models.SubmissionStatusAccepted {
+			// Not an accepted submission in current contest
+			w.WriteHeader(400)
+			return
+		}
+	}
+
+	c.Judge = int32(sid)
+	if err := c.Update(); err != nil {
+		panic(err)
+	}
+
+	w.WriteHeader(200)
+}
+
+func contestJudgeIdHandler(w http.ResponseWriter, r *http.Request) {
+	_, c := middlewareContestModeratorVerify(w, r)
+	if c.Id == -1 {
+		return
+	}
+	if err := c.Read(); err != nil {
+		panic(err)
+	}
+
+	enc := json.NewEncoder(w)
+	enc.SetEscapeHTML(false)
+	enc.Encode(map[string]interface{}{
+		"judge": c.Judge,
+	})
+}
+
 func contestRanklistHandler(w http.ResponseWriter, r *http.Request) {
 	u := middlewareAuthRetrieve(w, r)
 	c := middlewareReferredContest(w, r, u)
@@ -596,7 +666,7 @@ func contestMatchManualHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	sids := strings.Split(r.PostFormValue("submissions"), ",")
-	m := models.Match{Contest: c.Id, Report: "{\"winner\": \"In queue\"}"}
+	m := models.Match{Contest: c.Id, Report: "Pending"}
 	for _, sid := range sids {
 		sidN, err := strconv.Atoi(sid)
 		if err != nil {
@@ -614,7 +684,7 @@ func contestMatchManualHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Send for match
-	if err := m.SendToQueue(); err != nil {
+	if err := m.SendToQueue(c.Judge); err != nil {
 		panic(err)
 	}
 
@@ -630,7 +700,7 @@ func contestMatchManualScriptHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	arg := r.PostFormValue("arg")
-	if err := c.ExecuteScriptOnManual(arg); err != nil {
+	if err := c.ExecuteMatchScriptOnManual(arg); err != nil {
 		if !errors.Is(err, models.ErrLua) {
 			panic(err)
 		}
@@ -639,35 +709,64 @@ func contestMatchManualScriptHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(200)
 }
 
-func contestMatchDetailsHandler(w http.ResponseWriter, r *http.Request) {
+func middlewareMatchDetails(w http.ResponseWriter, r *http.Request) (models.Contest, models.Match) {
 	u := middlewareAuthRetrieve(w, r)
 	c := middlewareReferredContest(w, r, u)
 	if c.Id == -1 {
 		w.WriteHeader(404)
-		return
+		return models.Contest{Id: -1}, models.Match{Id: -1}
 	}
 
 	mid, _ := strconv.Atoi(mux.Vars(r)["mid"])
 	m := models.Match{Id: int32(mid)}
-	if err := m.Read(); err != nil {
-		if err == sql.ErrNoRows {
-			// No such match
+
+	if mid != 0 {
+		if err := m.Read(); err != nil {
+			if err == sql.ErrNoRows {
+				// No such match
+				w.WriteHeader(404)
+				return models.Contest{Id: -1}, models.Match{Id: -1}
+			} else {
+				panic(err)
+			}
+		}
+		if m.Contest != c.Id {
+			// Match not in contest
 			w.WriteHeader(404)
-			return
-		} else {
-			panic(err)
+			return models.Contest{Id: -1}, models.Match{Id: -1}
 		}
 	}
-	if m.Contest != c.Id {
-		// Match not in contest
-		w.WriteHeader(404)
+
+	return c, m
+}
+
+func contestMatchDetailsHandler(w http.ResponseWriter, r *http.Request) {
+	_, m := middlewareMatchDetails(w, r)
+	if m.Id == -1 || m.Id == 0 {
 		return
 	}
-	m.LoadRel()
 
+	m.LoadRel()
 	enc := json.NewEncoder(w)
 	enc.SetEscapeHTML(false)
 	enc.Encode(m.Representation())
+}
+
+func contestMatchPlaybackHandler(w http.ResponseWriter, r *http.Request) {
+	c, m := middlewareMatchDetails(w, r)
+	if m.Id == -1 {
+		return
+	}
+
+	c.LoadPlayback()
+	s := c.Playback
+	if m.Id != 0 {
+		s = strings.Replace(s, "<% report %>", m.Report, -1)
+	}
+
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.WriteHeader(200)
+	w.Write([]byte(s))
 }
 
 func contestScriptLogHandler(w http.ResponseWriter, r *http.Request) {
@@ -708,6 +807,73 @@ func contestScriptLogHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(s))
 }
 
+func contestBannerHandler(w http.ResponseWriter, r *http.Request) {
+	u := middlewareAuthRetrieve(w, r)
+	c := middlewareReferredContest(w, r, u)
+	if c.Id == -1 {
+		w.WriteHeader(404)
+		return
+	}
+	f, err := c.LoadBanner()
+	if err != nil {
+		panic(err)
+	}
+
+	if f.Id == -1 {
+		f = globals.DefaultBanner
+	}
+
+	w.Header().Set("Content-Type", f.Type)
+	w.Write(f.Content)
+}
+
+func contestBannerUploadHandler(w http.ResponseWriter, r *http.Request) {
+	u := middlewareAuthRetrieve(w, r)
+	if u.Id == -1 {
+		return
+	}
+	c := middlewareReferredContest(w, r, u)
+	if c.Id == -1 {
+		return
+	}
+	if c.Owner != u.Id && u.Privilege != models.UserPrivilegeSuperuser {
+		w.WriteHeader(403)
+		return
+	}
+	err, ext, buf := middlewareMultipartFormFile(r)
+	if errors.Is(err, http.ErrMissingFile) {
+		w.WriteHeader(400)
+		return
+	} else if err != nil {
+		panic(err)
+	}
+
+	mimeType := mime.TypeByExtension("." + ext)
+	if !strings.HasPrefix(mimeType, "image/") {
+		w.WriteHeader(400)
+		return
+	}
+	f, err := c.LoadBanner()
+	if err != nil {
+		panic(err)
+	}
+	f.Type = mimeType
+	f.Content = buf.Bytes()
+
+	if f.Id == -1 {
+		err = f.Create()
+		if err == nil {
+			c.Banner = f.Id
+			err = c.UpdateBanner()
+		}
+	} else {
+		err = f.Update()
+	}
+	if err != nil {
+		panic(err)
+	}
+}
+
 func init() {
 	registerRouterFunc("/contest/list", contestListHandler, "GET")
 	registerRouterFunc("/contest/create", contestCreateHandler, "POST")
@@ -721,10 +887,15 @@ func init() {
 	registerRouterFunc("/contest/{cid:[0-9]+}/submission/list", contestSubmissionHistoryHandlerAll, "GET")
 	registerRouterFunc("/contest/{cid:[0-9]+}/delegate", contestDelegateHandler, "POST")
 	registerRouterFunc("/contest/{cid:[0-9]+}/my_delegate", myDelegateHandler, "GET")
+	registerRouterFunc("/contest/{cid:[0-9]+}/judge", contestJudgeSelHandler, "POST")
 	registerRouterFunc("/contest/{cid:[0-9]+}/ranklist", contestRanklistHandler, "GET")
 	registerRouterFunc("/contest/{cid:[0-9]+}/matches", contestMatchesHandler, "GET")
 	registerRouterFunc("/contest/{cid:[0-9]+}/match/manual", contestMatchManualHandler, "POST")
 	registerRouterFunc("/contest/{cid:[0-9]+}/match/manual_script", contestMatchManualScriptHandler, "POST")
 	registerRouterFunc("/contest/{cid:[0-9]+}/match/{mid:[0-9]+}", contestMatchDetailsHandler, "GET")
+	registerRouterFunc("/contest/{cid:[0-9]+}/match/{mid:[0-9]+}/playback", contestMatchPlaybackHandler, "GET")
 	registerRouterFunc("/contest/{cid:[0-9]+}/script_log", contestScriptLogHandler, "GET")
+	registerRouterFunc("/contest/{cid:[0-9]+}/banner", contestBannerHandler, "GET")
+	registerRouterFunc("/contest/{cid:[0-9]+}/banner/upload", contestBannerUploadHandler, "POST")
+	registerRouterFunc("/contest/{cid:[0-9]+}/judge_id", contestJudgeIdHandler, "GET")
 }

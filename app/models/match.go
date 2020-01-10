@@ -27,6 +27,7 @@ type MatchParty struct {
 	Match      int32
 	Index      int32
 	Submission int32
+	Log        string
 
 	Rel struct {
 		Match      Match
@@ -46,6 +47,7 @@ func init() {
 		"match INTEGER NOT NULL",
 		"index INTEGER NOT NULL",
 		"submission INTEGER NOT NULL",
+		"log TEXT NOT NULL DEFAULT ''",
 		"ADD CONSTRAINT fk_match FOREIGN KEY (match) REFERENCES match (id)",
 		"ADD CONSTRAINT fk_submission FOREIGN KEY (submission) REFERENCES submission (id)",
 	)
@@ -121,7 +123,7 @@ func (m *Match) Read() error {
 
 func ReadByContest(cid int32) ([]Match, error) {
 	rows, err := db.Query("SELECT DISTINCT match.id, match.status, match.report, "+
-		"c.id, c.title, c.banner, c.owner, c.start_time, c.end_time, c.descr, c.details, c.is_visible, c.is_reg_open, c.script, "+
+		"c.id, c.title, c.owner, c.start_time, c.end_time, c.descr, c.details, c.is_visible, c.is_reg_open, c.script, "+
 		"submission.id, submission.uid, submission.contest, submission.created_at, submission.status, submission.message, submission.language, submission.contents, "+
 		"u.id, u.handle, u.email, u.password, u.privilege, u.joined_at, u.nickname, u.bio "+
 		"FROM match "+
@@ -139,7 +141,7 @@ func ReadByContest(cid int32) ([]Match, error) {
 		m := Match{Contest: cid}
 		s := Submission{}
 		u := User{}
-		err := rows.Scan(&m.Id, &m.Status, &m.Report, &m.Rel.Contest.Id, &m.Rel.Contest.Title, &m.Rel.Contest.Banner, &m.Rel.Contest.Owner, &m.Rel.Contest.StartTime,
+		err := rows.Scan(&m.Id, &m.Status, &m.Report, &m.Rel.Contest.Id, &m.Rel.Contest.Title, &m.Rel.Contest.Owner, &m.Rel.Contest.StartTime,
 			&m.Rel.Contest.EndTime, &m.Rel.Contest.Desc, &m.Rel.Contest.Details, &m.Rel.Contest.IsVisible, &m.Rel.Contest.IsRegOpen, &m.Rel.Contest.Script,
 			&s.Id, &s.User, &s.Contest, &s.CreatedAt, &s.Status, &s.Message, &s.Language, &s.Contents,
 			&u.Id, &u.Handle, &u.Email, &u.Password, &u.Privilege, &u.JoinedAt, &u.Nickname, &u.Bio)
@@ -167,6 +169,39 @@ func ReadByContest(cid int32) ([]Match, error) {
 	return ms, rows.Err()
 }
 
+func (m *Match) PartiesCount() (int, error) {
+	var num int
+	err := db.QueryRow("SELECT COUNT(*) FROM match_party WHERE match = $1",
+		m.Id).Scan(&num)
+	return num, err
+}
+
+func (m *Match) LoadParticipations() ([]ContestParticipation, error) {
+	rows, err := db.Query("SELECT "+
+		"contest_participation.uid, "+
+		"contest_participation.rating, "+
+		"contest_participation.performance "+
+		"FROM match_party "+
+		"LEFT JOIN submission ON match_party.submission = submission.id "+
+		"LEFT JOIN contest_participation ON (submission.uid, submission.contest) = (contest_participation.uid, contest_participation.contest) "+
+		"WHERE match_party.match = $1 "+
+		"ORDER BY index ASC", m.Id)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	ps := []ContestParticipation{}
+	for rows.Next() {
+		p := ContestParticipation{Contest: m.Contest}
+		err := rows.Scan(&p.User, &p.Rating, &p.Performance)
+		if err != nil {
+			return nil, err
+		}
+		ps = append(ps, p)
+	}
+	return ps, rows.Err()
+}
+
 func (m *Match) LoadRel() error {
 	m.Rel.Contest.Id = m.Contest
 	if err := m.Rel.Contest.Read(); err != nil {
@@ -175,7 +210,7 @@ func (m *Match) LoadRel() error {
 
 	// Find out all parties
 	rows, err := db.Query("SELECT submission FROM match_party "+
-		"WHERE match = $1 ORDER BY submission ASC", m.Id)
+		"WHERE match = $1 ORDER BY index ASC", m.Id)
 	if err != nil {
 		return err
 	}
@@ -202,5 +237,16 @@ func (m *Match) Update() error {
 	_, err := db.Exec("UPDATE match SET "+
 		"status = $1, report = $2 WHERE id = $3",
 		m.Status, m.Report, m.Id)
+	return err
+}
+
+func (p *MatchParty) LoadLog() error {
+	return db.QueryRow("SELECT log FROM match_party WHERE match = $1 AND index = $2",
+		p.Match, p.Index).Scan(&p.Log)
+}
+
+func (p *MatchParty) UpdateLog() error {
+	_, err := db.Exec("UPDATE match_party SET log = $1 WHERE match = $2 AND index = $3",
+		p.Log, p.Match, p.Index)
 	return err
 }

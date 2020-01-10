@@ -1,73 +1,84 @@
 <template>
   <div>
-    <el-card>
-      <div align="left">
-        <div style="display: inline">共进行了{{total}}场对局</div>
-      </div>
-      <el-table :data="matches" v-loading="tableLoading">
-        <el-table-column label="对局编号" width="120" align="center">
-          <template slot-scope="scope">
-            <div>{{scope.row.id}}</div>
-          </template>
-        </el-table-column>
-          <el-table-column label="参赛者" align="center">
-          <template slot-scope="scope">
-            <div>
-              <el-popover v-for="(item, index) in scope.row.parties" :key="index" style="margin: 5px" placement="bottom">
-                <el-tag slot="reference" type="primary" style="cursor: pointer; min-width: 120px; text-align: center">{{item.participant.nickname}}</el-tag>
+    <div align="left">
+      <div style="display: inline">共进行了{{total}}场对局</div>
+    </div>
+    <el-table :data="matches" v-loading="tableLoading">
+      <el-table-column label="对局编号" width="120" align="center">
+        <template slot-scope="scope">
+          <div>{{scope.row.id}}</div>
+        </template>
+      </el-table-column>
+        <el-table-column label="参赛者" align="center">
+        <template slot-scope="scope">
+          <div>
+            <el-popover v-for="(item, index) in scope.row.parties" :key="index" style="margin: 5px" placement="bottom">
+              <div slot="reference" style="display: inline-block; margin-left: 5px; margin-right: 5px; cursor: pointer">
+                <el-avatar
+                  :size="30"
+                  shape="square"
+                  :src="$axios.defaults.baseURL + '/user/' + item.participant.handle + '/avatar'">
+                </el-avatar>
+                <el-tag
+                  style="display: block"
+                  size="mini"
+                  type="info"
+                  effect="dark">
+                  {{item.participant.nickname}}
+                  </el-tag>
+              </div>
+              <div>
                 <div>
-                  <div>
-                    <div class="party-item-title">代码ID:</div>
-                    <div class="party-item-text">{{item.id}}</div>
-                  </div>
-                  <div class="party-item-title" style="display: block">选手:</div>
-                  <div>
-                    <div class="party-item-light">昵称</div>
-                    <div class="party-item-text">{{item.participant.nickname}}</div>
-                  </div>
-                  <div>
-                    <div class="party-item-light">主页</div>
-                    <router-link class="party-item-button" :to="{path: '/profile', query: {handle: item.participant.handle}}">{{item.participant.handle}}</router-link>
-                  </div>
+                  <div class="party-item-title">代码ID:</div>
+                  <div class="party-item-text">{{item.id}}</div>
                 </div>
-              </el-popover>
-            </div>
-          </template>
-        </el-table-column>
-        <el-table-column label="状态" width="160" align="center">
-          <!-- <template slot-scope="scope">
-            <div style="color: green">{{scope.row.res}}</div>
-          </template> -->
-          <template slot-scope="scope">
-            <div v-if="scope.row.status===$consts.codeStat.pending" style="color: gray">等待处理</div>
-            <div v-else-if="scope.row.status===$consts.codeStat.compiling" style="color: orange">处理中</div>
-            <div v-else-if="scope.row.status===$consts.codeStat.accepted" style="color: green">已结束</div>
-            <div v-else style="color: red">系统错误</div>
-          </template>
-        </el-table-column>
-        <el-table-column label="选项" width="160" align="center">
-          <!-- <template slot-scope="scope">
-            <div style="color: green">{{scope.row.res}}</div>
-          </template> -->
-          <template slot-scope="scope">
-            <router-link
-              style="color: #409EFF; text-decoration: none"
-              :to="{path: '/match', query: {cid: scope.row.contest.id, mid: scope.row.id}}"
-            >查看详情
-            </router-link>
-          </template>
-        </el-table-column>
-      </el-table>
-      <el-pagination
-        :total="total"
-        :current-page="page"
-        :page-size="count"
-        @current-change="handleCurrentChange"
-        :pager-count="11"
-        layout="prev, pager, next, jumper, ->, total"
-      >
-      </el-pagination>
-    </el-card>
+                <div class="party-item-title" style="display: block">选手:</div>
+                <div>
+                  <div class="party-item-light">昵称</div>
+                  <div class="party-item-text">{{item.participant.nickname}}</div>
+                </div>
+                <div>
+                  <div class="party-item-light">主页</div>
+                  <router-link class="party-item-button" :to="{path: '/profile', query: {handle: item.participant.handle}}">{{item.participant.handle}}</router-link>
+                </div>
+              </div>
+            </el-popover>
+          </div>
+        </template>
+      </el-table-column>
+      <el-table-column label="状态" width="160" align="center">
+        <!-- <template slot-scope="scope">
+          <div style="color: green">{{scope.row.res}}</div>
+        </template> -->
+        <template slot-scope="scope">
+          <div v-if="scope.row.status===$consts.codeStat.pending" style="color: gray">等待处理</div>
+          <div v-else-if="scope.row.status===$consts.codeStat.compiling" style="color: orange">处理中</div>
+          <div v-else-if="scope.row.status===$consts.codeStat.accepted" style="color: green">已结束</div>
+          <div v-else style="color: red">系统错误</div>
+        </template>
+      </el-table-column>
+      <el-table-column label="选项" width="160" align="center">
+        <!-- <template slot-scope="scope">
+          <div style="color: green">{{scope.row.res}}</div>
+        </template> -->
+        <template slot-scope="scope">
+          <router-link
+            style="color: #409EFF; text-decoration: none"
+            :to="{path: '/match', query: {cid: scope.row.contest.id, mid: scope.row.id}}"
+          >查看详情
+          </router-link>
+        </template>
+      </el-table-column>
+    </el-table>
+    <el-pagination
+      :total="total"
+      :current-page="page"
+      :page-size="count"
+      @current-change="handleCurrentChange"
+      :pager-count="11"
+      layout="prev, pager, next, jumper, ->, total"
+    >
+    </el-pagination>
   </div>
 </template>
 
@@ -95,13 +106,13 @@ export default {
     },
     getList () {
       this.tableLoading = true
-      let params = {
-        'page': this.page - 1,
-        'count': this.count
+      const params = {
+        page: this.page - 1,
+        count: this.count
       }
       this.$axios.get(
         '/contest/' + this.cid + '/matches',
-        {params: params}
+        { params: params }
       ).then(res => {
         console.log(res.data)
         this.matches = res.data.matches

@@ -1,6 +1,7 @@
 package models
 
 import (
+	"io/ioutil"
 	"log"
 	"math/rand"
 	"strconv"
@@ -76,6 +77,7 @@ function on_timer(all)
     count = 0
     print('Superuser has ID ' .. tostring(su_id))
     print('Creating matches for contest #` + strconv.Itoa(i) + `')
+    print('Number of participants with delegates ' .. tostring(#all))
     for i = 1, #all do
         print(string.format('Contestant %s (%d)', get_handle(all[i]), all[i]))
         if i > 1 then create_match(all[i], all[i - 1]) end
@@ -85,10 +87,21 @@ end
 function on_manual(all, arg)
     print('Manual', arg)
 end
+
+function update_stats(report, par)
+    print('Update with ' .. tostring(#par) .. ' parties')
+    print(report)
+    for i = 1, #par do
+        print(i, par[i].rating, par[i].performance)
+        par[i].rating = par[i].rating + 1
+        par[i].performance = 'Took part in ' .. tostring(par[i].rating) .. ' match'
+        if par[i].rating ~= 1 then par[i].performance = par[i].performance .. 'es' end
+    end
+end
 `
 		c := Contest{
 			Title:     "Grand Contest " + strconv.Itoa(i),
-			Banner:    "banner.png",
+			Banner:    -1,
 			Owner:     int32(1 + i),
 			StartTime: t + 3600*24*int64(-3+i),
 			EndTime:   t + 3600*24*int64(-1+i),
@@ -97,8 +110,29 @@ end
 			IsVisible: i != 1,
 			IsRegOpen: i != 5,
 			Script:    script,
+			Playback:  "<html><body><p>Report:</p><pre><% report %></pre></body></html>",
 		}
 		if err := c.Create(); err != nil {
+			panic(err)
+		}
+		// Judge
+		judgeCode, err := ioutil.ReadFile("../ipc/run.c")
+		if err != nil {
+			panic(err)
+		}
+		j := Submission{
+			User:     int32(6 + (1 + i/2)),
+			Contest:  int32(i),
+			Language: "c",
+			Contents: string(judgeCode),
+		}
+		if err := j.Create(); err != nil {
+			panic(err)
+		}
+		j.SendToQueue()
+
+		c.Judge = j.Id
+		if err := c.Update(); err != nil {
 			panic(err)
 		}
 
@@ -119,42 +153,63 @@ end
 				s := Submission{
 					User:     int32(6 + j),
 					Contest:  int32(i),
-					Language: "lua",
-					Contents: "print(" + strconv.Itoa(i+j+k) + ")",
+					Language: "c",
+					Contents: `
+#include "ipc.h"
+
+#include <stdbool.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <time.h>
+
+int main()
+{
+    char *s = ipc_recv_str();
+    int side;
+    sscanf(s, "%d", &side);
+    free(s);
+    fprintf(stderr, "Hello, submission ` + strconv.Itoa(rand.Intn(900000)+100000) + ` from side #%d\n", side);
+
+    srand(((unsigned)time(NULL) << 1) | side);
+    bool board[3][3] = {{ false }};
+
+    while (1) {
+        // Board state change
+        int row, col;
+        s = ipc_recv_str();
+        sscanf(s, "%d%d", &row, &col);
+        free(s);
+        if (row != -1) board[row][col] = true;
+
+        // Pick a random cell
+        int u, v;
+        do {
+            u = rand() % 3;
+            v = rand() % 3;
+        } while (board[u][v]);
+        board[u][v] = true;
+        fprintf(stderr, "Moving at (%d, %d)\n", u, v);
+
+        // Send
+        char t[8];
+        sprintf(t, "%d %d", u, v);
+        ipc_send_str(t);
+    }
+
+    return 0;
+}
+`,
 				}
 				if err := s.Create(); err != nil {
 					panic(err)
 				}
-				if k%2 == 1 {
-					// Mark as accepted
-					r := rand.Intn(5)
-					if r == 0 {
-						s.Status = SubmissionStatusPending
-					} else if r == 1 {
-						s.Status = SubmissionStatusCompiling
-					} else if r == 2 {
-						s.Status = SubmissionStatusAccepted
-					} else if r == 3 {
-						s.Status = SubmissionStatusCompilationFailed
-					} else if r == 4 {
-						s.Status = SubmissionStatusSystemError
-					} else {
-						s.Status = SubmissionStatusAccepted
-					}
-					s.Message = "Automagically compiled"
-					if err := s.Update(); err != nil {
-						panic(err)
-					}
-					if k == 3 {
-						// Set as delegate
-						p.Delegate = s.Id
-						if err := p.Update(); err != nil {
-							panic(err)
-						}
-					}
-				} else {
-					s.SendToQueue()
-				}
+				// TODO: Move delegate & match creation to a separate endpoint
+				p.Delegate = s.Id
+				s.SendToQueue()
+			}
+
+			if err := p.Update(); err != nil {
+				panic(err)
 			}
 		}
 	}

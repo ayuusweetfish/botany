@@ -10,10 +10,20 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
-void compile(const char *sid, const char *lang, const char *contents)
+int compile(const char *sid, const char *lang, const char *contents, char **msg)
 {
+    int fd_pipe[2];
+    if (pipe(fd_pipe) != 0) {
+        *msg = (char *)malloc(64);
+        snprintf(*msg, 64, "pipe() failed: %s\n", strerror(errno));
+        return 1;
+    }
+
     pid_t ch = fork();
     if (ch == 0) {
+        dup2(fd_pipe[1], STDOUT_FILENO);
+        close(fd_pipe[0]);
+
         child_enter_box();
 
         // Create submission folder
@@ -28,12 +38,27 @@ void compile(const char *sid, const char *lang, const char *contents)
         snprintf(path, sizeof path, "submissions/%s/code.%s", sid, lang);
         write_file(path, contents);
 
+        impose_rlimits();
         execl("./compile.sh", "./compile.sh", sid, lang, NULL);
         exit(42);   // Unreachable
     } else {
         int wstatus;
         waitpid(ch, &wstatus, 0);
-        // TODO: Check for failure
+        *msg = (char *)malloc(1024);
+        ssize_t len = read(fd_pipe[0], *msg, 1023);
+        (*msg)[len > 0 ? len : 0] = '\0';
+        close(fd_pipe[0]);
+        close(fd_pipe[1]);
+        if (WIFEXITED(wstatus)) {
+            return WEXITSTATUS(wstatus);
+        } else if (WIFSIGNALED(wstatus)) {
+            snprintf(*msg, 1024, "Compiler terminated by signal %s",
+                strsignal(WTERMSIG(wstatus)));
+            return -1;
+        } else {
+            strcpy(*msg, "Unknown internal anomalies");
+            return -1;
+        }
     }
 }
 
