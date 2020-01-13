@@ -161,6 +161,10 @@ const char *bot_strerr(int code)
     }
 }
 
+#define child_pause(__cp)   kill((__cp).pid, SIGSTOP)
+#define child_resume(__cp)  kill((__cp).pid, SIGCONT)
+#define child_kill(__cp)    kill((__cp).pid, SIGKILL)
+
 childproc child_create(const char *cmd, const char *log)
 {
     childproc ret;
@@ -214,7 +218,7 @@ childproc child_create(const char *cmd, const char *log)
 void child_finish(childproc proc)
 {
     fsync(proc.fd_log);
-    kill(proc.pid, SIGKILL);
+    child_kill(proc);
 }
 
 void child_send(childproc proc, const char *str)

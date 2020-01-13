@@ -20,7 +20,7 @@ static inline char *str_head(char *s, size_t n)
 
 /*
     Usage:
-    - ./run <prog-1> <prog-2> <log-1> <log-2>
+    - ./run <prog-1> <prog-2> [<log-1> [<log-2>]]
 
     Player protocol:
     - Startup: input "<side>"
@@ -28,6 +28,7 @@ static inline char *str_head(char *s, size_t n)
     - Repeat
         - Update: input "<row> <col>"
             row, col - 0..2
+            for the first move, row = col = -1
         - Move: output "<row> <col>"
             row, col - 0..2
 */
@@ -48,7 +49,7 @@ int main(int argc, char *argv[])
 
     char buf[8];
     char *resp;
-    size_t len;
+    size_t err;
 
     int move = 0;
     int win = -1, count = 0;
@@ -59,11 +60,11 @@ int main(int argc, char *argv[])
     for (; win == -1 && count < 9; free(resp), move ^= 1) {
         snprintf(buf, sizeof buf, "%d %d", row, col);
         child_send(par[move], buf);
-        resp = child_recv(par[move], &len, 1000);
+        resp = child_recv(par[move], &err, 1000);
 
         if (resp == NULL) {
             fprintf(stderr, "Side #%d errors with %d (%s), considered resignation\n",
-                move, (int)len, bot_strerr((int)len));
+                move, (int)err, bot_strerr((int)err));
             win = move ^ 1;
             continue;
         }

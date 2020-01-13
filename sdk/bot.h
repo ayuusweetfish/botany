@@ -7,12 +7,12 @@ extern "C" {
 
 #include <unistd.h>
 
-#define BOT_ERR_NONE    0
-#define BOT_ERR_FMT     1
-#define BOT_ERR_SYSCALL 2
-#define BOT_ERR_TOOLONG 3
-#define BOT_ERR_CLOSED  4
-#define BOT_ERR_TIMEOUT 5
+#define BOT_ERR_NONE    0   /* No error */
+#define BOT_ERR_FMT     1   /* Incorrect message format, does not happen if player uses this library */
+#define BOT_ERR_SYSCALL 2   /* Failure during system calls */
+#define BOT_ERR_TOOLONG 3   /* Message too long */
+#define BOT_ERR_CLOSED  4   /* Pipe closed, usually caused by program exiting */
+#define BOT_ERR_TIMEOUT 5   /* Time out */
 
 /* General interfaces; usually not needed */
 
@@ -28,7 +28,6 @@ char *bot_recv_blob(int pipe, size_t *o_len, int timeout);
 
 const char *bot_strerr(int code);
 
-/* Note: all strings returned by *_recv() need to be free()'d */
 /* Judge side interfaces */
 
 typedef struct _childproc {
@@ -39,24 +38,30 @@ typedef struct _childproc {
     int fd_log;
 } childproc;
 
-/* Creates the child and pauses it */
+/*
+  Creates the child.
+  Child processes are normally paused, but during `child_recv()`
+  the process is resumed, and paused again after its response arrives.
+ */
 childproc child_create(const char *cmd, const char *log);
 /* Terminates the child and flushes all output */
 void child_finish(childproc proc);
-/* Pauses the child */
-#define child_pause(__cp)   kill((__cp).pid, SIGSTOP)
-/* Resumes the child */
-#define child_resume(__cp)  kill((__cp).pid, SIGCONT)
-
 /* Sends to and receives from a child */
 void child_send(childproc proc, const char *str);
+/*
+  Returns a string on success, and NULL on failure.
+  The returned string, if non-null, should be free()'d.
+  `o_len` holds the length on success, or an error code on failure.
+  See constant definitions at top of the file, or use `bot_strerr()`
+  to get the error description.
+ */
 char *child_recv(childproc proc, size_t *o_len, int timeout);
 
 /* Player side interfaces */
 
 /* Sends to stdout and receives from stdin */
 void bot_send(const char *s);
-char *bot_recv();
+char *bot_recv();   /* Returned string should be free()'d */
 
 #ifdef __cplusplus
 }
