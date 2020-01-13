@@ -192,9 +192,11 @@ childproc child_create(const char *cmd, const char *log)
         dup2(fd_log, STDERR_FILENO);
         close(fd_send[1]);
         close(fd_recv[0]);
-        if (execl("/bin/sh", "/bin/sh", "-c", cmd, NULL) != 0) {
-            fprintf(stderr, "exec(%s) failed with errno %d\n", cmd, errno);
-            exit(1);
+        if (execl(cmd, cmd, NULL) != 0) {
+            if (execl("/bin/sh", "/bin/sh", "-c", cmd, NULL) != 0) {
+                fprintf(stderr, "exec(%s) failed with errno %d\n", cmd, errno);
+                exit(1);
+            }
         }
     } else {
         /* Parent process */
