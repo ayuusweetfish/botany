@@ -1,7 +1,9 @@
 #include "bot.h"
 
 #include <errno.h>
+#include <fcntl.h>
 #include <poll.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -157,6 +159,73 @@ const char *bot_strerr(int code)
         case BOT_ERR_TIMEOUT: return "timeout";
         default:              return "unknown error";
     }
+}
+
+childproc child_create(const char *cmd, const char *log)
+{
+    childproc ret;
+    ret.pid = -1;
+
+    int fd_send[2], fd_recv[2];
+    if (pipe(fd_send) != 0 || pipe(fd_recv) != 0) {
+        fprintf(stderr, "pipe() failed with errno %d\n", errno);
+        exit(1);    /* Non-zero exit status by the judge will be
+                       reported as "System Error" */
+    }
+
+    int fd_log = open(log, O_WRONLY | O_CREAT, 0644);
+    if (fd_log == -1) {
+        fprintf(stderr, "open(%s) failed with errno %d\n", log, errno);
+        exit(1);
+    }
+
+    pid_t pid = fork();
+    if (pid == -1) {
+        fprintf(stderr, "fork() failed with errno %d\n", errno);
+        exit(1);
+    }
+
+    if (pid == 0) {
+        /* Child process */
+        dup2(fd_send[0], STDIN_FILENO);
+        dup2(fd_recv[1], STDOUT_FILENO);
+        dup2(fd_log, STDERR_FILENO);
+        close(fd_send[1]);
+        close(fd_recv[0]);
+        if (execl("/bin/sh", "/bin/sh", "-c", cmd, NULL) != 0) {
+            fprintf(stderr, "exec(%s) failed with errno %d\n", cmd, errno);
+            exit(1);
+        }
+    } else {
+        /* Parent process */
+        close(fd_send[0]);
+        close(fd_recv[1]);
+        ret.pid = pid;
+        ret.fd_send = fd_send[1];
+        ret.fd_recv = fd_recv[0];
+        child_pause(ret);
+    }
+
+    return ret;
+}
+
+void child_finish(childproc proc)
+{
+    fsync(proc.fd_log);
+    kill(proc.pid, SIGKILL);
+}
+
+void child_send(childproc proc, const char *str)
+{
+    bot_send_blob(proc.fd_send, 0, str);
+}
+
+char *child_recv(childproc proc, size_t *o_len, int timeout)
+{
+    child_resume(proc);
+    char *resp = bot_recv_blob(proc.fd_recv, o_len, timeout);
+    child_pause(proc);
+    return resp;
 }
 
 void bot_send(const char *s)
