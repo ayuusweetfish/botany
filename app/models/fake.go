@@ -5,6 +5,7 @@ import (
 	"log"
 	"math/rand"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -116,7 +117,7 @@ end
 			panic(err)
 		}
 		// Judge
-		judgeCode, err := ioutil.ReadFile("../ipc/run.c")
+		judgeCode, err := ioutil.ReadFile("../sdk/judge.c")
 		if err != nil {
 			panic(err)
 		}
@@ -137,6 +138,10 @@ end
 		}
 
 		// Participants
+		playerCode, err := ioutil.ReadFile("../sdk/player.c")
+		if err != nil {
+			panic(err)
+		}
 		for j := 1 + i/2; j <= 20; j += i {
 			log.Printf("User %d joins contest %d\n", j, i)
 			p := ContestParticipation{
@@ -154,51 +159,11 @@ end
 					User:     int32(6 + j),
 					Contest:  int32(i),
 					Language: "c",
-					Contents: `
-#include "ipc.h"
-
-#include <stdbool.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <time.h>
-
-int main()
-{
-    char *s = ipc_recv_str();
-    int side;
-    sscanf(s, "%d", &side);
-    free(s);
-    fprintf(stderr, "Hello, submission ` + strconv.Itoa(rand.Intn(900000)+100000) + ` from side #%d\n", side);
-
-    srand(((unsigned)time(NULL) << 1) | side);
-    bool board[3][3] = {{ false }};
-
-    while (1) {
-        // Board state change
-        int row, col;
-        s = ipc_recv_str();
-        sscanf(s, "%d%d", &row, &col);
-        free(s);
-        if (row != -1) board[row][col] = true;
-
-        // Pick a random cell
-        int u, v;
-        do {
-            u = rand() % 3;
-            v = rand() % 3;
-        } while (board[u][v]);
-        board[u][v] = true;
-        fprintf(stderr, "Moving at (%d, %d)\n", u, v);
-
-        // Send
-        char t[8];
-        sprintf(t, "%d %d", u, v);
-        ipc_send_str(t);
-    }
-
-    return 0;
-}
-`,
+					Contents: strings.Replace(
+						string(playerCode), "Hello",
+						"Hello, submission "+strconv.Itoa(rand.Intn(900000)+100000),
+						-1,
+					),
 				}
 				if err := s.Create(); err != nil {
 					panic(err)
