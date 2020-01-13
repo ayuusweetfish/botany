@@ -1,4 +1,4 @@
-#include "ipc.h"
+#include "bot.h"
 
 #include <stdbool.h>
 #include <stdlib.h>
@@ -7,7 +7,7 @@
 
 int main()
 {
-    char *s = ipc_recv_str();
+    char *s = bot_recv();
     int side;
     sscanf(s, "%d", &side);
     free(s);
@@ -19,7 +19,7 @@ int main()
     while (1) {
         // Board state change
         int row, col;
-        s = ipc_recv_str();
+        s = bot_recv();
         sscanf(s, "%d%d", &row, &col);
         free(s);
         if (row != -1) board[row][col] = true;
@@ -36,7 +36,7 @@ int main()
         // Send
         char t[8];
         sprintf(t, "%d %d", u, v);
-        ipc_send_str(t);
+        bot_send(t);
     }
 
     return 0;

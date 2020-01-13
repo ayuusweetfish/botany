@@ -1,4 +1,4 @@
-#include "ipc.h"
+#include "bot.h"
 
 #include <errno.h>
 #include <fcntl.h>
@@ -75,14 +75,14 @@ void child_finish(childproc proc)
 
 void child_send(childproc proc, const char *str)
 {
-    ipc_send(proc.fd_send, 0, str);
+    bot_send_blob(proc.fd_send, 0, str);
 }
 
 /* Returned value should be free()'d */
 char *child_recv(childproc proc, size_t *o_len, int timeout)
 {
     child_resume(proc);
-    char *resp = ipc_recv(proc.fd_recv, o_len, timeout);
+    char *resp = bot_recv_blob(proc.fd_recv, o_len, timeout);
     child_pause(proc);
     return resp;
 }
@@ -137,8 +137,8 @@ int main(int argc, char *argv[])
         resp = child_recv(par[move], &len, 1000);
 
         if (resp == NULL) {
-            fprintf(stderr, "Side #%d errors with %d, considered resignation\n",
-                move, (int)len);
+            fprintf(stderr, "Side #%d errors with %d (%s), considered resignation\n",
+                move, (int)len, bot_strerr((int)len));
             win = move ^ 1;
             continue;
         }
