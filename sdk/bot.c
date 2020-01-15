@@ -1,7 +1,9 @@
-#include "ipc.h"
+#include "bot.h"
 
 #include <errno.h>
+#include <fcntl.h>
 #include <poll.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -36,10 +38,10 @@ static inline char tenacious_write(int fd, const char *buf, size_t len)
     return 0;
 }
 
-int ipc_send(int pipe, size_t len, const char *payload)
+int bot_send_blob(int pipe, size_t len, const char *payload)
 {
     if (len == 0) len = strlen(payload);
-    if (len > 0xffffff) return IPC_ERR_TOOLONG;
+    if (len > 0xffffff) return BOT_ERR_TOOLONG;
     char len_buf[3] = {
         len & 0xff,
         (len >> 8) & 0xff,
@@ -49,12 +51,12 @@ int ipc_send(int pipe, size_t len, const char *payload)
         tenacious_write(pipe, payload, len) < 0)
     {
         fprintf(stderr, "write() failed with errno %d\n", errno);
-        return IPC_ERR_SYSCALL;
+        return BOT_ERR_SYSCALL;
     }
-    return IPC_ERR_NONE;
+    return BOT_ERR_NONE;
 }
 
-char *ipc_recv(int pipe, size_t *o_len, int timeout)
+char *bot_recv_blob(int pipe, size_t *o_len, int timeout)
 {
     struct pollfd pfd = (struct pollfd){pipe, POLLIN, 0};
     char *ret = NULL;
@@ -69,7 +71,7 @@ char *ipc_recv(int pipe, size_t *o_len, int timeout)
         if ((timeout <= 0 || ++loops >= 1000000) && timeout != -1) {
             fprintf(stderr, "Unidentifiable exception with errno %d\n", errno);
             if (ret) free(ret);
-            *o_len = IPC_ERR_SYSCALL;
+            *o_len = BOT_ERR_SYSCALL;
             return NULL;
         }
 
@@ -81,7 +83,7 @@ char *ipc_recv(int pipe, size_t *o_len, int timeout)
         if (poll_ret == -1) {
             fprintf(stderr, "poll() failed with errno %d\n", errno);
             if (ret) free(ret);
-            *o_len = IPC_ERR_SYSCALL;
+            *o_len = BOT_ERR_SYSCALL;
             return NULL;
         }
         /* Calculate remaining time */
@@ -91,7 +93,7 @@ char *ipc_recv(int pipe, size_t *o_len, int timeout)
         /* Is the pipe still open on the other side? */
         if (pfd.revents & POLLHUP) {
             if (ret) free(ret);
-            *o_len = IPC_ERR_CLOSED;
+            *o_len = BOT_ERR_CLOSED;
             return NULL;
         }
 
@@ -108,7 +110,7 @@ char *ipc_recv(int pipe, size_t *o_len, int timeout)
             if (read_len == -1) {
                 fprintf(stderr, "read() failed with errno %d\n", errno);
                 if (ret) free(ret);
-                *o_len = IPC_ERR_SYSCALL;
+                *o_len = BOT_ERR_SYSCALL;
                 return NULL;
             }
 
@@ -116,7 +118,7 @@ char *ipc_recv(int pipe, size_t *o_len, int timeout)
                 if (read_len < 3) {
                     /* Invalid */
                     if (ret) free(ret);
-                    *o_len = IPC_ERR_FMT;
+                    *o_len = BOT_ERR_FMT;
                     return NULL;
                 }
                 /* Parse the length */
@@ -132,10 +134,10 @@ char *ipc_recv(int pipe, size_t *o_len, int timeout)
         } else {
             if (ret) free(ret);
             if (timeout <= 0) {
-                *o_len = IPC_ERR_TIMEOUT;
+                *o_len = BOT_ERR_TIMEOUT;
             } else {
                 fprintf(stderr, "poll() returns unexpected events %d\n", pfd.revents);
-                *o_len = IPC_ERR_SYSCALL;
+                *o_len = BOT_ERR_SYSCALL;
             }
             return NULL;
         }
@@ -146,14 +148,100 @@ char *ipc_recv(int pipe, size_t *o_len, int timeout)
     return ret;
 }
 
-void ipc_send_str(const char *s)
+const char *bot_strerr(int code)
 {
-    ipc_send(STDOUT_FILENO, 0, s);
+    switch (code) {
+        case BOT_ERR_NONE:    return "ok";
+        case BOT_ERR_FMT:     return "incorrect message format";
+        case BOT_ERR_SYSCALL: return "failure during system calls";
+        case BOT_ERR_TOOLONG: return "message too long";
+        case BOT_ERR_CLOSED:  return "pipe closed";
+        case BOT_ERR_TIMEOUT: return "timeout";
+        default:              return "unknown error";
+    }
 }
 
-char *ipc_recv_str()
+#define child_pause(__cp)   kill((__cp).pid, SIGSTOP)
+#define child_resume(__cp)  kill((__cp).pid, SIGCONT)
+#define child_kill(__cp)    kill((__cp).pid, SIGKILL)
+
+childproc child_create(const char *cmd, const char *log)
+{
+    childproc ret;
+    ret.pid = -1;
+
+    int fd_send[2], fd_recv[2];
+    if (pipe(fd_send) != 0 || pipe(fd_recv) != 0) {
+        fprintf(stderr, "pipe() failed with errno %d\n", errno);
+        exit(1);    /* Non-zero exit status by the judge will be
+                       reported as "System Error" */
+    }
+
+    int fd_log = open(log, O_WRONLY | O_CREAT, 0644);
+    if (fd_log == -1) {
+        fprintf(stderr, "open(%s) failed with errno %d\n", log, errno);
+        exit(1);
+    }
+
+    pid_t pid = fork();
+    if (pid == -1) {
+        fprintf(stderr, "fork() failed with errno %d\n", errno);
+        exit(1);
+    }
+
+    if (pid == 0) {
+        /* Child process */
+        dup2(fd_send[0], STDIN_FILENO);
+        dup2(fd_recv[1], STDOUT_FILENO);
+        dup2(fd_log, STDERR_FILENO);
+        close(fd_send[1]);
+        close(fd_recv[0]);
+        if (execl(cmd, cmd, NULL) != 0) {
+            if (execl("/bin/sh", "/bin/sh", "-c", cmd, NULL) != 0) {
+                fprintf(stderr, "exec(%s) failed with errno %d\n", cmd, errno);
+                exit(1);
+            }
+        }
+    } else {
+        /* Parent process */
+        close(fd_send[0]);
+        close(fd_recv[1]);
+        ret.pid = pid;
+        ret.fd_send = fd_send[1];
+        ret.fd_recv = fd_recv[0];
+        child_pause(ret);
+    }
+
+    return ret;
+}
+
+void child_finish(childproc proc)
+{
+    fsync(proc.fd_log);
+    child_kill(proc);
+}
+
+void child_send(childproc proc, const char *str)
+{
+    bot_send_blob(proc.fd_send, 0, str);
+}
+
+char *child_recv(childproc proc, size_t *o_len, int timeout)
+{
+    child_resume(proc);
+    char *resp = bot_recv_blob(proc.fd_recv, o_len, timeout);
+    child_pause(proc);
+    return resp;
+}
+
+void bot_send(const char *s)
+{
+    bot_send_blob(STDOUT_FILENO, 0, s);
+}
+
+char *bot_recv()
 {
     size_t len;
-    char *ret = ipc_recv(STDIN_FILENO, &len, -1);
+    char *ret = bot_recv_blob(STDIN_FILENO, &len, -1);
     return ret;
 }
