@@ -762,6 +762,10 @@ func contestMatchPlaybackHandler(w http.ResponseWriter, r *http.Request) {
 	s := c.Playback
 	if m.Id != 0 {
 		s = strings.Replace(s, "<% report %>", m.Report, -1)
+		jsStr, err := json.Marshal(m.Report)
+		if err == nil {
+			s = strings.Replace(s, "<% report js str %>", string(jsStr), -1)
+		}
 	}
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")

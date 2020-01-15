@@ -111,7 +111,12 @@ end
 			IsVisible: i != 1,
 			IsRegOpen: i != 5,
 			Script:    script,
-			Playback:  "<html><body><p>Report:</p><pre><% report %></pre></body></html>",
+			Playback: "<html><body>" +
+				"<p>Report:</p><pre>" +
+				"<% report %></pre>" +
+				"<p>Report string, encoded for JavaScript:</p>" +
+				"<pre><% report js str %></pre>" +
+				"</body></html>",
 		}
 		if err := c.Create(); err != nil {
 			panic(err)
