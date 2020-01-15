@@ -1,0 +1,3 @@
+[submodule "tools/script_test/inspect"]
+	path = tools/script_test/inspect
+	url = https://github.com/kikito/inspect.lua

@@ -1,5 +1,7 @@
 # Botany: Contest Scripting
 
+Test the script with [the contest script tool](../tools/script_test).
+
 需求：
 - 在每次提交时触发
 - 定时触发，约 10 秒执行一次
