@@ -45,7 +45,7 @@
         <div>
           <iframe
             :src="$axios.defaults.baseURL + '/contest/' + cid + '/match/' + mid + '/playback'"
-            style="min-height: 400px; width: 100%; margin-top: 20px" scrolling="yes"></iframe>
+            style="min-height: 1000px; width: 100%; margin-top: 20px" scrolling="yes"></iframe>
         </div>
       </el-card>
     </el-row>
