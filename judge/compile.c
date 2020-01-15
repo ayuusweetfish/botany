@@ -28,7 +28,6 @@ int compile(const char *sid, const char *lang, const char *contents, char **msg)
 
     pid_t ch = fork();
     if (ch == 0) {
-        puts("child");
         dup2(fd_pipe[1], STDOUT_FILENO);
         close(fd_pipe[0]);
 
@@ -50,20 +49,17 @@ int compile(const char *sid, const char *lang, const char *contents, char **msg)
         execl("./compile.sh", "./compile.sh", sid, lang, NULL);
         exit(42);   // Unreachable
     } else {
-        puts("parent waiting");
         int wstatus;
         waitpid(ch, &wstatus, 0);
-        puts("parent wait done");
-        *msg = (char *)malloc(1024);
-        ssize_t len = read(fd_pipe[0], *msg, 1023);
-        puts("parent read done");
+        *msg = (char *)malloc(COMPILE_MSG_LEN);
+        ssize_t len = read(fd_pipe[0], *msg, COMPILE_MSG_LEN - 1);
         (*msg)[len > 0 ? len : 0] = '\0';
         close(fd_pipe[0]);
         close(fd_pipe[1]);
         if (WIFEXITED(wstatus)) {
             return WEXITSTATUS(wstatus);
         } else if (WIFSIGNALED(wstatus)) {
-            snprintf(*msg, 1024, "Compiler terminated by signal %s",
+            snprintf(*msg, COMPILE_MSG_LEN, "Compiler terminated by signal %s",
                 strsignal(WTERMSIG(wstatus)));
             return -1;
         } else {

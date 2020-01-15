@@ -35,8 +35,8 @@ int match(const char *mid, const char *judge, int num_parties, const char *parti
     } else {
         int wstatus;
         waitpid(ch, &wstatus, 0);
-        *msg = (char *)malloc(1024);
-        ssize_t len = read(pipe_stdout[0], *msg, 1023);
+        *msg = (char *)malloc(MATCH_REPORT_LEN);
+        ssize_t len = read(pipe_stdout[0], *msg, MATCH_REPORT_LEN - 1);
         (*msg)[len > 0 ? len : 0] = '\0';
         close(pipe_stdout[0]);
         close(pipe_stdout[1]);
@@ -45,14 +45,14 @@ int match(const char *mid, const char *judge, int num_parties, const char *parti
             *logs = (char **)malloc(sizeof(char *) * num_parties);
             char log_path[1024];
             for (int i = 0; i < num_parties; i++) {
-                (*logs)[i] = (char *)malloc(65536);
+                (*logs)[i] = (char *)malloc(MATCH_LOG_LEN);
                 size_t len = 0;
 
                 snprintf(log_path, sizeof log_path, "%s/var/botany/matches/%s/%d.log",
                     judge_chroot, mid, i);
                 FILE *f = fopen(log_path, "r");
                 if (f != NULL) {
-                    len = fread((*logs)[i], 1, 65535, f);
+                    len = fread((*logs)[i], 1, MATCH_LOG_LEN - 1, f);
                     fclose(f);
                 }
                 (*logs)[i][len] = '\0';
@@ -60,7 +60,7 @@ int match(const char *mid, const char *judge, int num_parties, const char *parti
 
             return WEXITSTATUS(wstatus);
         } else if (WIFSIGNALED(wstatus)) {
-            snprintf(*msg, 1024, "Match terminated by signal %s",
+            snprintf(*msg, MATCH_REPORT_LEN, "Match terminated by signal %s",
                 strsignal(WTERMSIG(wstatus)));
             *logs = NULL;
             return -1;
