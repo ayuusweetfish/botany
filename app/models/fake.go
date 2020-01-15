@@ -155,10 +155,14 @@ end
 
 			// Submissions
 			for k := 1; k <= 2+(i+j)%3; k++ {
+				lang := "c"
+				if k%3 == 0 {
+					lang = "cpp"
+				}
 				s := Submission{
 					User:     int32(6 + j),
 					Contest:  int32(i),
-					Language: "c",
+					Language: lang,
 					Contents: strings.Replace(
 						string(playerCode), "Hello",
 						"Hello, submission "+strconv.Itoa(rand.Intn(900000)+100000),
