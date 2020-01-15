@@ -7,9 +7,9 @@ CODE=submissions/$SID/code.$LANG
 BIN=submissions/$SID/bin
 
 if [[ "$LANG" == "c" ]]; then
-    gcc $CODE -O2 -I/var/botany/lib /var/botany/lib/ipc.c -o $BIN 2>&1
+    gcc $CODE -O2 -I/var/botany/lib /var/botany/lib/bot.c -o $BIN 2>&1
 elif [[ "$LANG" == "cpp" ]]; then
-    g++ $CODE -O2 -I/var/botany/lib /var/botany/lib/ipc.c -o $BIN 2>&1
+    g++ $CODE -O2 -I/var/botany/lib /var/botany/lib/bot.c -o $BIN 2>&1
 elif [[ "$LANG" == "lua" ]]; then
     echo "#!/bin/sh" > $BIN
     echo "echo \"====== Submission $SID ($LANG) ======\"" >> $BIN
