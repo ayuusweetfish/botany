@@ -45,18 +45,51 @@ func contestListHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("]\n"))
 }
 
-func parseRequestContest(r *http.Request, c models.Contest) (models.Contest, []int64, bool) {
-	title := r.PostFormValue("title")
-	startTime, err1 := strconv.ParseInt(r.PostFormValue("start_time"), 10, 64)
-	endTime, err2 := strconv.ParseInt(r.PostFormValue("end_time"), 10, 64)
-	desc := r.PostFormValue("desc")
-	details := r.PostFormValue("details")
-	isVisible := (r.PostFormValue("is_visible") == "true")
-	isRegOpen := (r.PostFormValue("is_reg_open") == "true")
-	script := r.PostFormValue("script")
-	playback := r.PostFormValue("playback")
+// Call r.ParseMultipartForm() beforehand
+func maybePostFormValue(r *http.Request, key string) (string, bool) {
+	if vs := r.PostForm[key]; len(vs) > 0 {
+		return vs[0], true
+	}
+	return "", false
+}
 
-	if err1 != nil || err2 != nil || startTime >= endTime {
+func parseRequestContest(r *http.Request, c models.Contest) (models.Contest, []int64, bool) {
+	// 32 MB, in accordance with standard library's implementation
+	// https://golang.org/src/net/http/request.go - PostFormValue
+	r.ParseMultipartForm(32 << 20)
+
+	if s, has := maybePostFormValue(r, "title"); has {
+		c.Title = s
+	}
+	if s, has := maybePostFormValue(r, "start_time"); has {
+		if startTime, err := strconv.ParseInt(s, 10, 64); err == nil {
+			c.StartTime = startTime
+		}
+	}
+	if s, has := maybePostFormValue(r, "end_time"); has {
+		if endTime, err := strconv.ParseInt(s, 10, 64); err == nil {
+			c.EndTime = endTime
+		}
+	}
+	if s, has := maybePostFormValue(r, "desc"); has {
+		c.Desc = s
+	}
+	if s, has := maybePostFormValue(r, "details"); has {
+		c.Details = s
+	}
+	if s, has := maybePostFormValue(r, "is_visible"); has {
+		c.IsVisible = (s == "true")
+	}
+	if s, has := maybePostFormValue(r, "is_reg_open"); has {
+		c.IsRegOpen = (s == "true")
+	}
+	if s, has := maybePostFormValue(r, "script"); has {
+		c.Script = s
+	}
+	if s, has := maybePostFormValue(r, "playback"); has {
+		c.Playback = s
+	}
+	if c.StartTime >= c.EndTime {
 		return models.Contest{}, nil, false
 	}
 	// TODO: Check validity of other parameters
@@ -72,15 +105,6 @@ func parseRequestContest(r *http.Request, c models.Contest) (models.Contest, []i
 		}
 	}
 
-	c.Title = title
-	c.StartTime = startTime
-	c.EndTime = endTime
-	c.Desc = desc
-	c.Details = details
-	c.IsVisible = isVisible
-	c.IsRegOpen = isRegOpen
-	c.Script = script
-	c.Playback = playback
 	return c, mods, true
 }
 
