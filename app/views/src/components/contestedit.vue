@@ -142,7 +142,6 @@ export default {
       this.form.isRegOpen = res.data.is_reg_open
       this.form.moderators = res.data.moderators
       this.form.script = res.data.script
-      this.form.playback = res.data.playback
       this.$store.commit('setStallFlag', true)
     }).catch(err => {
       console.log(err)
