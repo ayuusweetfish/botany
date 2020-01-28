@@ -502,6 +502,9 @@
 - Content-Type: text/html; charset=utf-8
 - 播放器 HTML，可作为 iframe 嵌入页面
 	- 原文中的 `<% report %>` 被替换为实际对局的 report
+	- 原文中的 `<% report js str %>` 被替换为 report 的 JavaScript 表示
+	- 原文中的 `<% num parties %>` 被替换为对局的参与者数量
+	- 原文中的 `<% party [0-9]{1,3} %>` 被替换为第（给定数）个参与者的昵称，从 0 开始编号
 	- 另外，若 mid = 0，则返回原文
 
 ### 手动发起对局 POST /contest/{cid}/match/manual

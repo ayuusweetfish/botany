@@ -816,7 +816,7 @@ func contestMatchPlaybackHandler(w http.ResponseWriter, r *http.Request) {
 			if n < 0 || n >= len(m.Rel.Parties) {
 				return ""
 			} else {
-				return m.Rel.Parties[n].Rel.User.Handle
+				return m.Rel.Parties[n].Rel.User.Nickname
 			}
 		})
 	}
