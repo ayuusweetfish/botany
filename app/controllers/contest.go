@@ -426,7 +426,10 @@ func contestSubmissionHistoryHandlerCommon(w http.ResponseWriter, r *http.Reques
 			}
 			ss = append(ss, s...)
 		} else {
-			mods := c.ReadModerators()
+			mods, err := c.ReadModerators()
+			if err != nil {
+				panic(err)
+			}
 			sus, err := models.AllSuperusers()
 			if err != nil {
 				panic(err)
@@ -438,16 +441,7 @@ func contestSubmissionHistoryHandlerCommon(w http.ResponseWriter, r *http.Reques
 					panic(err)
 				}
 				ss = append(ss, s...)
-				println(mods[i], len(s))
 			}
-			s := models.Submission{Id: c.Judge}
-			if err := s.Read(); err != nil {
-				panic(err)
-			}
-			if err := s.LoadRel(); err != nil {
-				panic(err)
-			}
-			ss = append(ss, s.ShortRepresentation())
 		}
 		enc := json.NewEncoder(w)
 		enc.SetEscapeHTML(false)
