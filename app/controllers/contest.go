@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"net/http"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -443,6 +444,9 @@ func contestSubmissionHistoryHandlerCommon(w http.ResponseWriter, r *http.Reques
 				ss = append(ss, s...)
 			}
 		}
+		sort.Slice(ss, func(i, j int) bool {
+			return ss[i]["id"].(int32) > ss[j]["id"].(int32)
+		})
 		enc := json.NewEncoder(w)
 		enc.SetEscapeHTML(false)
 		enc.Encode(ss)
