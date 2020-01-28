@@ -116,6 +116,10 @@ end
 				"<% report %></pre>" +
 				"<p>Report string, encoded for JavaScript:</p>" +
 				"<pre><% report js str %></pre>" +
+				"<p>Number of parties:</p>" +
+				"<pre><% num parties %></pre>" +
+				"<p>Names:</p>" +
+				"<pre>0: <% party 0 %>\n1: <% party 1 %>\n999: <% party 999 %></pre>" +
 				"</body></html>",
 		}
 		if err := c.Create(); err != nil {

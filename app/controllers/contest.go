@@ -10,6 +10,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -786,10 +787,38 @@ func contestMatchPlaybackHandler(w http.ResponseWriter, r *http.Request) {
 	s := c.Playback
 	if m.Id != 0 {
 		s = strings.Replace(s, "<% report %>", m.Report, -1)
-		jsStr, err := json.Marshal(m.Report)
-		if err == nil {
+		if strings.Contains(s, "<% report js str %>") {
+			jsStr, err := json.Marshal(m.Report)
+			if err != nil {
+				panic(err)
+			}
 			s = strings.Replace(s, "<% report js str %>", string(jsStr), -1)
 		}
+		if strings.Contains(s, "<% num parties %>") {
+			partiesCount, err := m.PartiesCount()
+			if err != nil {
+				panic(err)
+			}
+			s = strings.Replace(s, "<% num parties %>", strconv.Itoa(partiesCount), -1)
+		}
+		r := regexp.MustCompile("<% party [0-9]{1,3} %>")
+		loaded := false
+		s = r.ReplaceAllStringFunc(s, func(t string) string {
+			if !loaded {
+				if err := m.LoadRel(); err != nil {
+					panic(err)
+				}
+				loaded = true
+			}
+			t = strings.TrimPrefix(t, "<% party ")
+			t = strings.TrimSuffix(t, " %>")
+			n, _ := strconv.Atoi(t)
+			if n < 0 || n >= len(m.Rel.Parties) {
+				return ""
+			} else {
+				return m.Rel.Parties[n].Rel.User.Handle
+			}
+		})
 	}
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
