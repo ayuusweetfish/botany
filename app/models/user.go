@@ -260,6 +260,21 @@ func UserSearchByHandle(handle string) ([]User, error) {
 	return us, rows.Err()
 }
 
+func AllSuperusers() ([]int32, error) {
+	uids := []int32{}
+	var uid int32
+	rows, err := db.Query("SELECT id FROM users WHERE privilege = " +
+		strconv.Itoa(UserPrivilegeSuperuser))
+	if err != nil {
+		return nil, err
+	}
+	for rows.Next() {
+		_ = rows.Scan(&uid)
+		uids = append(uids, uid)
+	}
+	return uids, nil
+}
+
 // Returns extension, contents, error
 func (u *User) LoadAvatar() (File, error) {
 	// XXX: Right join possible?
