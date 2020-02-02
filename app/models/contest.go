@@ -339,8 +339,8 @@ func (c *Contest) Update() error {
 	_, err := db.Exec("UPDATE contest SET "+
 		"title = $1, owner = $2, "+
 		"start_time = $3, end_time = $4, descr = $5, details = $6, "+
-		"is_visible = $7, is_reg_open = $8, judge = NULLIF($9, -1), script = $10, playback = $11 "+
-		"WHERE id = $12",
+		"is_visible = $7, is_reg_open = $8, judge = NULLIF($9, -1), script = $10 "+
+		"WHERE id = $11",
 		c.Title,
 		c.Owner,
 		c.StartTime,
@@ -351,9 +351,14 @@ func (c *Contest) Update() error {
 		c.IsRegOpen,
 		c.Judge,
 		c.Script,
-		c.Playback,
 		c.Id,
 	)
+	return err
+}
+
+func (c *Contest) UpdatePlayback() error {
+	_, err := db.Exec("UPDATE contest SET playback = $1 WHERE id = $2",
+		c.Playback, c.Id)
 	return err
 }
 

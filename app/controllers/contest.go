@@ -56,6 +56,8 @@ func maybePostFormValue(r *http.Request, key string) (string, bool) {
 }
 
 func parseRequestContest(r *http.Request, c models.Contest) (models.Contest, []int64, bool) {
+	c.LoadPlayback()
+
 	// 32 MB, in accordance with standard library's implementation
 	// https://golang.org/src/net/http/request.go - PostFormValue
 	r.ParseMultipartForm(32 << 20)
@@ -199,6 +201,9 @@ func contestEditHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := cNew.Update(); err != nil {
+		panic(err)
+	}
+	if err := cNew.UpdatePlayback(); err != nil {
 		panic(err)
 	}
 	if err := c.UpdateModerators(mods); err != nil {
