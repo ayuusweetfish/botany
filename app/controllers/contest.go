@@ -665,26 +665,13 @@ func contestMatchesHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ms, err := models.ReadByContest(c.Id)
+	ms, total, err := c.Matches(limit, offset)
 	if err != nil {
 		panic(err)
 	}
 
-	total := len(ms)
 	msr := []map[string]interface{}{}
-	var begin int
-	var end int
-	if offset > total {
-		begin = total
-	} else {
-		begin = offset
-	}
-	if offset+limit > total {
-		end = total
-	} else {
-		end = offset + limit
-	}
-	for _, m := range ms[begin:end] {
+	for _, m := range ms {
 		msr = append(msr, m.ShortRepresentation())
 	}
 
