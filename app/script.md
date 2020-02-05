@@ -16,7 +16,7 @@ Test the script with [the contest script tool](../tools/script_test).
 `get_id()` 接收一个登录名，返回对应的用户 ID。若登录名不存在，则返回 0。  
 `get_handle()` 接收一个用户 ID，返回对应的登录名。若不存在，返回空字符串。
 
-- 以下函数的 **all** (table) 参数包含如下元素
+- 以下函数的 **all** (table) 参数包含若干元素，每个元素包含如下字段
 	- **id** (number)
 	- **handle** (string)
 	- **rating** (number)
