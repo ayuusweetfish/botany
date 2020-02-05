@@ -271,7 +271,12 @@ func (c *Contest) ExecuteMatchScriptFunction(fnName string, args ...lua.LValue) 
 	}
 	t := &lua.LTable{}
 	for _, p := range ps {
-		t.Append(lua.LNumber(p.Rel.User.Id))
+		part := &lua.LTable{}
+		part.RawSetString("id", lua.LNumber(p.Rel.User.Id))
+		part.RawSetString("handle", lua.LString(p.Rel.User.Handle))
+		part.RawSetString("rating", lua.LNumber(p.Rating))
+		part.RawSetString("performance", lua.LString(p.Performance))
+		t.Append(part)
 	}
 
 	// Call Lua function

@@ -80,8 +80,9 @@ function on_timer(all)
     print('Creating matches for contest #` + strconv.Itoa(i) + `')
     print('Number of participants with delegates ' .. tostring(#all))
     for i = 1, #all do
-        print(string.format('Contestant %s (%d)', get_handle(all[i]), all[i]))
-        if i > 1 then create_match(all[i], all[i - 1]) end
+        print(string.format('Contestant %s (%d), rating %d, performance "%s"',
+            all[i].handle, all[i].id, all[i].rating, all[i].performance))
+        if i > 1 then create_match(all[i].id, all[i - 1].id) end
     end
 end
 
@@ -154,9 +155,11 @@ end
 		for j := 1 + i/2; j <= 20; j += i {
 			log.Printf("User %d joins contest %d\n", j, i)
 			p := ContestParticipation{
-				User:    int32(6 + j),
-				Contest: int32(i),
-				Type:    ParticipationTypeContestant,
+				User:        int32(6 + j),
+				Contest:     int32(i),
+				Type:        ParticipationTypeContestant,
+				Rating:      1500,
+				Performance: "win rate 50%",
 			}
 			if err := p.Create(); err != nil {
 				panic(err)

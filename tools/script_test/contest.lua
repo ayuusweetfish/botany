@@ -1,4 +1,4 @@
-local count = 9
+local count = 2
 local su_id = get_id('su')
 
 function on_submission(all, from)
@@ -7,14 +7,15 @@ end
 
 function on_timer(all)
     count = count + 1
-    if count < 10 then return end
+    if count < 3 then return end
     count = 0
     print('Superuser has ID ' .. tostring(su_id))
     print('Creating matches for contest #0')
     print('Number of participants with delegates ' .. tostring(#all))
     for i = 1, #all do
-        print(string.format('Contestant %s (%d)', get_handle(all[i]), all[i]))
-        if i > 1 then create_match(all[i], all[i - 1]) end
+        print(string.format('Contestant %s (%d), rating %d, performance "%s"',
+            all[i].handle, all[i].id, all[i].rating, all[i].performance))
+        if i > 1 then create_match(all[i].id, all[i - 1].id) end
     end
 end
 

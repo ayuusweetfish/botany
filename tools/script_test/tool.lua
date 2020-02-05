@@ -6,8 +6,8 @@ local map_to_handle = {}
 
 local stats = {}
 
-get_id = function (handle) return map_to_id[handle] end
-get_handle = function (id) return map_to_handle[id] end
+get_id = function (handle) return map_to_id[handle] or 0 end
+get_handle = function (id) return map_to_handle[id] or '' end
 
 set_participants = function (...)
     local a = { ... }
@@ -31,7 +31,17 @@ end
 
 local test = function (fn_name, fn, arg)
     print('==== Running on_' .. fn_name .. '(' .. (arg and tostring(arg) or '') .. ') ====')
-    fn(ids, arg)
+    local all = {}
+    for _, id in pairs(ids) do
+        local st = stats[id]
+        all[#all + 1] = {
+            id = id,
+            handle = get_handle(id),
+            rating = st.rating,
+            performance = st.performance
+        }
+    end
+    fn(all, arg)
     print('==== ' .. tostring(#matches) .. ' match' ..
         (#matches == 1 and '' or 'es') .. ' created ====')
     for i, m in ipairs(matches) do
