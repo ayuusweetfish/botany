@@ -28,14 +28,20 @@
             style="font-size: 16px; color: #409EFF; text-decoration: none"
             :to="{path: '/profile', query: {handle: item.participant.handle}}"
           >{{item.participant.handle}}</router-link>
-          <div v-if="myRole===$consts.role.moderator">
-            <div style="font-size: 14px; display: inline">提交ID: {{item.id}} |</div>
+          <div>
+            <div style="font-size: 14px; display: inline">提交ID:
             <router-link
-            style="font-size: 16px; color: #409EFF; text-decoration: none"
-            :to="{path: '/submission_info', query: {cid: cid, sid: item.id}}"
-          >查看</router-link>
+              v-if="myRole===$consts.role.moderator"
+              style="color: #409EFF; text-decoration: none"
+              :to="{path: '/submission_info', query: {cid: cid, sid: item.id}}"
+            >{{item.id}}</router-link>
+            <span v-else>{{item.id}}</span>
+            |</div>
+            <el-link
+              style="color: #409EFF; text-decoration: none"
+              :href="$axios.defaults.baseURL + '/contest/' + cid + '/match/' + mid + '/log/' + index"
+            >对局日志</el-link>
           </div>
-          <div v-else style="font-size: 14px">代码ID: {{item.id}}</div>
         </el-card>
       </el-col>
     </el-row>

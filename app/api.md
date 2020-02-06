@@ -496,6 +496,14 @@
 
 注：比赛不存在、对局不存在或对局不属于比赛均认为 404
 
+### 选手日志 GET /contest/{cid}/match/{mid}/log/{party}
+
+请求
+- **party** (number) Party 的编号，从 0 开始
+
+响应
+- Content-Type: text/plain; charset=utf-8
+
 ### 播放器 GET /contest/{cid}/match/{mid}/playback
 
 响应

@@ -777,6 +777,28 @@ func contestMatchDetailsHandler(w http.ResponseWriter, r *http.Request) {
 	enc.Encode(m.Representation())
 }
 
+func contestMatchLogHandler(w http.ResponseWriter, r *http.Request) {
+	_, m := middlewareMatchDetails(w, r)
+	if m.Id == -1 || m.Id == 0 {
+		return
+	}
+
+	party, _ := strconv.Atoi(mux.Vars(r)["party"])
+	p := models.MatchParty{Match: m.Id, Index: int32(party)}
+	if err := p.LoadLog(); err != nil {
+		if err == sql.ErrNoRows {
+			w.WriteHeader(404)
+			return
+		} else {
+			panic(err)
+		}
+	}
+
+	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+	w.WriteHeader(200)
+	w.Write([]byte(p.Log))
+}
+
 func contestMatchPlaybackHandler(w http.ResponseWriter, r *http.Request) {
 	c, m := middlewareMatchDetails(w, r)
 	if m.Id == -1 {
@@ -950,6 +972,7 @@ func init() {
 	registerRouterFunc("/contest/{cid:[0-9]+}/match/manual", contestMatchManualHandler, "POST")
 	registerRouterFunc("/contest/{cid:[0-9]+}/match/manual_script", contestMatchManualScriptHandler, "POST")
 	registerRouterFunc("/contest/{cid:[0-9]+}/match/{mid:[0-9]+}", contestMatchDetailsHandler, "GET")
+	registerRouterFunc("/contest/{cid:[0-9]+}/match/{mid:[0-9]+}/log/{party:[0-9]+}", contestMatchLogHandler, "GET")
 	registerRouterFunc("/contest/{cid:[0-9]+}/match/{mid:[0-9]+}/playback", contestMatchPlaybackHandler, "GET")
 	registerRouterFunc("/contest/{cid:[0-9]+}/script_log", contestScriptLogHandler, "GET")
 	registerRouterFunc("/contest/{cid:[0-9]+}/banner", contestBannerHandler, "GET")
