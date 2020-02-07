@@ -4,7 +4,10 @@
       <div style="display: inline">本比赛共有{{total}}位选手</div>
     </div>
     <el-table :data="players" v-loading="tableLoading">
-      <el-table-column label="排名" type="index" :index="val=>{return val + 1}" width="80" align="center"></el-table-column>
+      <el-table-column label="排名" type="index"
+        :index="val=>{return (this.page - 1) * 20 + val + 1}"
+        width="80" align="center">
+      </el-table-column>
       <el-table-column  width="80" align="right">
         <template slot-scope="scope">
           <div style="margin-top: 6px">
@@ -17,14 +20,12 @@
           </div>
         </template>
       </el-table-column>
-      <el-table-column label="选手" prop="participant.nickname" min-width="100" align="left">
-      </el-table-column>
-      <el-table-column label="账号" min-width="100" align="center">
+      <el-table-column label="选手" min-width="100" align="left">
         <template slot-scope="scope">
           <router-link
             style="display: inline; text-decoration: none; color: #409EFF"
             :to="{path: '/profile', query: {handle: scope.row.participant.handle}}"
-          >{{scope.row.participant.handle}}
+          >{{scope.row.participant.nickname}}
           </router-link>
         </template>
       </el-table-column>
@@ -41,7 +42,7 @@
           </div>
         </template>
       </el-table-column>
-      <el-table-column label="评分" prop="rating" width="80" align="center">
+      <el-table-column label="积分" prop="rating" width="80" align="center">
       </el-table-column>
       <el-table-column label="表现" prop="performance" min-width="200" align="center">
       </el-table-column>
