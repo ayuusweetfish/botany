@@ -10,7 +10,7 @@ See [README in sdk/ directory](sdk/README.md).
 
 ## Running the server
 
-Tested Go version: 1.13.1
+Tested Go version: 1.13.1, 1.13.7
 
 Clone repository into `$GOPATH/src/github.com/kawa-yoiko/botany`, or create a symlink, whichever works.
 
@@ -20,7 +20,7 @@ Set up PostgresQL and Redis server (refer to documentations for the target platf
 cd app
 go get -d .
 
-cp config_example.json config.json
+cp config_sample.json config.json
 vim config.json     # Edit in any convenient way
 
 go run .
@@ -34,6 +34,16 @@ cd $GOPATH/src/golang.org/x/
 git clone https://github.com/golang/crypto
 git clone https://github.com/golang/image
 git clone https://github.com/golang/sys
+```
+
+## Run the frontend
+
+Install No	de.js first.
+
+```sh
+cd app/views
+npm install
+npm run dev
 ```
 
 ## Running the judge
