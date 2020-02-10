@@ -36,9 +36,9 @@ git clone https://github.com/golang/image
 git clone https://github.com/golang/sys
 ```
 
-## Run the frontend
+## Running the frontend
 
-Install No	de.js first.
+Install Node.js first.
 
 ```sh
 cd app/views
