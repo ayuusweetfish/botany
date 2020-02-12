@@ -11,12 +11,4 @@ if [[ "$LANG" == "c" ]]; then
 elif [[ "$LANG" == "cpp" ]]; then
     g++ $CODE -O2 -I/var/botany/lib /var/botany/lib/bot.c -o $BIN 2>&1
 elif [[ "$LANG" == "lua" ]]; then
-    echo "#!/bin/sh" > $BIN
-    echo "echo \"====== Submission $SID ($LANG) ======\"" >> $BIN
-    echo "echo \"This is log from $SID\" >&2" >> $BIN
-    echo "cat <<EOF" >> $BIN
-    cat $CODE >> $BIN
-    echo "" >> $BIN
-    echo "EOF" >> $BIN
-    chmod +x $BIN
 fi

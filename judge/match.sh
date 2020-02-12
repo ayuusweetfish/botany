@@ -10,7 +10,13 @@ argv=()
 
 i=0
 for s in $@; do
-    argv+=("isolate --run -b $i --dir=box=/var/botany/submissions/$s --dir=tmp= --dir=proc= --silent -- bin")
+    CODE=`find submissions/$s/code.*`
+    LANG=${CODE##*.}
+    exec="bin"
+    if [[ "$LANG" == "lua" ]]; then
+        exec="/usr/bin/lua code.lua"
+    fi
+    argv+=("isolate --run -b $i --dir=box=/var/botany/submissions/$s --dir=tmp= --dir=proc= --silent -- $exec")
     i=$((i + 1))
 done
 
