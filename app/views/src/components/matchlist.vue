@@ -52,7 +52,8 @@
         </template> -->
         <template slot-scope="scope">
           <div v-if="scope.row.status===$consts.codeStat.pending" style="color: gray">等待处理</div>
-          <div v-else-if="scope.row.status===$consts.codeStat.compiling" style="color: orange">处理中</div>
+          <div v-else-if="scope.row.status===$consts.codeStat.compiling" style="color: orange">编译中</div>
+          <div v-else-if="scope.row.status===$consts.codeStat.running" style="color: orange">运行中</div>
           <div v-else-if="scope.row.status===$consts.codeStat.accepted" style="color: green">已结束</div>
           <div v-else style="color: red">系统错误</div>
         </template>

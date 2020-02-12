@@ -66,6 +66,7 @@ export default {
       codeStat: {
         pending: 0,
         compiling: 1,
+        running: 2,
         accepted: 9,
         complErr: -1,
         systmErr: -9
