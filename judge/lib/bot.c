@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/wait.h>
 #include <time.h>
 
 #define quq(__syscall, ...) _quq(#__syscall, __syscall(__VA_ARGS__))
@@ -161,9 +162,8 @@ const char *bot_strerr(int code)
     }
 }
 
-#define child_pause(__cp)   kill((__cp).pid, SIGSTOP)
-#define child_resume(__cp)  kill((__cp).pid, SIGCONT)
-#define child_kill(__cp)    kill((__cp).pid, SIGKILL)
+#define child_pause(__cp)   //kill(-(__cp).pid, SIGSTOP)
+#define child_resume(__cp)  //kill(-(__cp).pid, SIGCONT)
 
 childproc child_create(const char *cmd, const char *log)
 {
@@ -212,15 +212,14 @@ childproc child_create(const char *cmd, const char *log)
         child_pause(ret);
     }
 
-    printf("create %d\n", (int)ret.pid);
     return ret;
 }
 
 void child_finish(childproc proc)
 {
     fsync(proc.fd_log);
-    printf("finish %d\n", (int)proc.pid);
-    child_kill(proc);
+    kill(proc.pid, SIGTERM);
+    while (waitpid(proc.pid, 0, 0) > 0) { }
 }
 
 void child_send(childproc proc, const char *str)
