@@ -212,12 +212,14 @@ childproc child_create(const char *cmd, const char *log)
         child_pause(ret);
     }
 
+    printf("create %d\n", (int)ret.pid);
     return ret;
 }
 
 void child_finish(childproc proc)
 {
     fsync(proc.fd_log);
+    printf("finish %d\n", (int)proc.pid);
     child_kill(proc);
 }
 

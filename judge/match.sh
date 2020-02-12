@@ -8,8 +8,10 @@ mkdir -p matches/$MID
 
 argv=()
 
+i=0
 for s in $@; do
-    argv+=(submissions/$s/bin)
+    argv+=("isolate --run -b $i --dir=box=/var/botany/submissions/$s --dir=tmp= --dir=proc= --silent -- bin")
+    i=$((i + 1))
 done
 
 i=0
@@ -18,4 +20,4 @@ for s in $@; do
     i=$((i + 1))
 done
 
-submissions/$JUDGE/bin ${argv[*]}
+submissions/$JUDGE/bin "${argv[@]}"

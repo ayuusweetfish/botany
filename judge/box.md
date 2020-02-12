@@ -49,8 +49,8 @@ git -C alpine/home/isolate checkout botany
 
 # Create mount points
 sudo mount -B alpine alpine
-# NOTE: In case where /proc and /dev are needed, use
-# sudo mount -t proc none alpine/proc
+sudo mount -t proc none alpine/proc
+# NOTE: In case where /dev is needed, use
 # sudo mount -B /dev alpine/dev
 
 # Set up network
