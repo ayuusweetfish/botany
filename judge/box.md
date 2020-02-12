@@ -40,38 +40,18 @@ stdout is the report while stderr is the log.
 
 Non-zero return codes denote internal system errors.
 
-## Steps to build
-
-Set up a chroot jail and log in with `root`.
-
-```sh
-mkdir -p /var/botany/submissions
-chown 1000 /var/botany/submissions
-chgrp 1000 /var/botany/submissions
-mkdir -p /var/botany/matches
-chown 1000 /var/botany/matches
-chgrp 1000 /var/botany/matches
-cd /var/botany
-chown <outside_user> -R .
-cp /path/to/compile.sh .
-cp /path/to/match.sh .
-```
-
-Install: isolate, gcc, lua
-
-Requires the host environment to have the cURL binary in $PATH.
-
 ### Alpine mini-rootfs
 
 ```sh
 # Move projects inside
-mkdir -p alpine/var/botany
-cp botany/judge/compile.sh botany/judge/match.sh alpine/var/botany
-git clone https://github.com/ioi/isolate.git alpine/home/isolate
+git clone https://github.com/kawa-yoiko/isolate.git alpine/home/isolate
+git -C alpine/home/isolate checkout botany
 
 # Create mount points
-sudo mount --bind alpine alpine
-sudo mount --bind /proc alpine/proc # TODO: Do not mount /proc entirely
+sudo mount -B alpine alpine
+# NOTE: In case where /proc and /dev are needed, use
+# sudo mount -t proc none alpine/proc
+# sudo mount -B /dev alpine/dev
 
 # Set up network
 sudo cp /etc/resolv.conf alpine/etc
@@ -81,16 +61,18 @@ sudo chroot alpine sh
 
 # Install packages
 sed -i 's/dl-cdn.alpinelinux.org/mirrors.tuna.tsinghua.edu.cn/g' /etc/apk/repositories
-apk add gcc make libc-dev libcap-dev bash g++ lua
+apk add gcc make libc-dev libcap-dev bash g++ lua python3
 
 # Build isolate
 cd /home/isolate
-make
+make isolate
 make install
 
 # Test isolate
 isolate --init
-isolate --run -- /bin/echo hi
+isolate --run --dir=box=./box --dir=tmp= --dir=proc= -- /bin/echo hi
+isolate --run --dir=box=./box --dir=tmp= --dir=proc= -- /usr/bin/lua -e "print('hi')"
+isolate --run --dir=box=./box --dir=tmp= --dir=proc= -- /usr/bin/lua -e "io.open('1.txt', 'w'):write('hi')" # Should fail
 isolate --cleanup
 ```
 
@@ -102,4 +84,14 @@ sudo apt-get install libhiredis-dev libb2-dev
 cd botany/judge
 sudo ./build.sh
 ./a.out -i 1 -d /path/to/alpine
+```
+
+#### Cleanup
+
+Use `sudo` if necessary.
+
+```sh
+# umount -l alpine/proc alpine/dev alpine
+umount -l alpine
+rm -rf alpine
 ```
