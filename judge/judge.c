@@ -31,6 +31,7 @@ const char *judge_chroot;
 static redisContext *rctx;
 static char wid[32];
 
+static const char *api_root = NULL;
 static const char *sig_key = NULL;
 static size_t sig_key_len;
 
@@ -46,11 +47,11 @@ int main(int argc, char *argv[])
 
     // Parse command line
     int c;
-    while ((c = getopt(argc, argv, "ha:p:i:d:k:")) != -1) {
+    while ((c = getopt(argc, argv, "ha:p:i:d:s:k:")) != -1) {
         switch (c) {
         case 'h':
             printf("Usage: %s [-h] [-a redis_addr] [-p redis_port] "
-                "[-i worker_id] [-d chroot_path] [-k sig_key]\n", argv[0]);
+                "[-i worker_id] [-d chroot_path] [-s api_root] [-k sig_key]\n", argv[0]);
             exit(0);
         case 'a':
             redis_addr = optarg;
@@ -64,6 +65,9 @@ int main(int argc, char *argv[])
         case 'd':
             judge_chroot = optarg;
             break;
+        case 's':
+            api_root = optarg;
+            break;
         case 'k':
             sig_key = optarg;
             break;
@@ -73,6 +77,7 @@ int main(int argc, char *argv[])
     if (redis_port == 0) redis_port = 6379;
     if (worker_id == 0) worker_id = (int)getpid();
     if (judge_chroot == NULL) judge_chroot = "/";
+    if (api_root == NULL) api_root = "http://localhost:3434/api";
     if (sig_key == NULL) sig_key = "aha";
     sig_key_len = strlen(sig_key);
 
@@ -188,7 +193,7 @@ retry:
 
     // Run HTTP request through the cURL binary
     snprintf(cmd, sizeof cmd,
-        "curl \"http://localhost:3434/api/judge/%s?ts=%s&sig=%s\" 2>/dev/null", sid, ts, sig);
+        "curl \"%s/judge/%s?ts=%s&sig=%s\" 2>/dev/null", api_root, sid, ts, sig);
 
     FILE *fp = popen(cmd, "r");
     if (fp == NULL) {

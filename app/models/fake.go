@@ -148,7 +148,11 @@ end
 		}
 
 		// Participants
-		playerCode, err := ioutil.ReadFile("../sdk/player.c")
+		playerCodeC, err := ioutil.ReadFile("../sdk/player.c")
+		if err != nil {
+			panic(err)
+		}
+		playerCodeLua, err := ioutil.ReadFile("../sdk/player.lua")
 		if err != nil {
 			panic(err)
 		}
@@ -168,15 +172,19 @@ end
 			// Submissions
 			for k := 1; k <= 2+(i+j)%3; k++ {
 				lang := "c"
+				code := string(playerCodeC)
 				if k%3 == 0 {
 					lang = "cpp"
+				} else if k%3 == 1 {
+					lang = "lua"
+					code = string(playerCodeLua)
 				}
 				s := Submission{
 					User:     int32(6 + j),
 					Contest:  int32(i),
 					Language: lang,
 					Contents: strings.Replace(
-						string(playerCode), "Hello",
+						code, "Hello",
 						"Hello, submission "+strconv.Itoa(rand.Intn(900000)+100000),
 						-1,
 					),

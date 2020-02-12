@@ -11,4 +11,5 @@ if [[ "$LANG" == "c" ]]; then
 elif [[ "$LANG" == "cpp" ]]; then
     g++ $CODE -O2 -I/var/botany/lib /var/botany/lib/bot.c -o $BIN 2>&1
 elif [[ "$LANG" == "lua" ]]; then
+    :
 fi
