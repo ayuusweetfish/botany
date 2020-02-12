@@ -162,8 +162,8 @@ const char *bot_strerr(int code)
     }
 }
 
-#define child_pause(__cp)   //kill(-(__cp).pid, SIGSTOP)
-#define child_resume(__cp)  //kill(-(__cp).pid, SIGCONT)
+#define child_pause(__cp)   kill(-(__cp).pid, SIGUSR1)
+#define child_resume(__cp)  kill(-(__cp).pid, SIGUSR2)
 
 childproc child_create(const char *cmd, const char *log)
 {
