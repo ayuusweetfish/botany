@@ -177,7 +177,7 @@ childproc child_create(const char *cmd, const char *log)
                        reported as "System Error" */
     }
 
-    int fd_log = open(log, O_WRONLY | O_CREAT, 0644);
+    int fd_log = open(log, O_WRONLY | O_CREAT | O_TRUNC, 0644);
     if (fd_log == -1) {
         fprintf(stderr, "open(%s) failed with errno %d\n", log, errno);
         exit(1);
