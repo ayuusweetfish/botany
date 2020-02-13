@@ -13,12 +13,17 @@ for s in $@; do
     CODE=`find submissions/$s/code.*`
     LANG=${CODE#*.}
     exec="bin"
+    env=""
     if [[ "$LANG" == "5.1.lua" ]]; then
         exec="/usr/bin/lua code.5.1.lua"
+        env="--env=LUA_PATH=/botlib/?.lua"
     elif [[ "$LANG" == "3.py" ]]; then
         exec="/usr/bin/python3 code.3.py"
+        env="--env=PYTHONPATH=/botlib"
+    elif [[ "$LANG" == "node.js" ]]; then
+        exec="/usr/bin/node code.node.js"
     fi
-    argv+=("isolate --run -b $i --dir=box=/var/botany/submissions/$s --dir=tmp= --dir=proc= --silent -- $exec")
+    argv+=("isolate --run -b $i --dir=box=/var/botany/submissions/$s --dir=botlib=/var/botany/lib --dir=tmp= --dir=proc= $env --silent -- $exec")
     i=$((i + 1))
 done
 
