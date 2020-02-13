@@ -46,6 +46,11 @@
           </div>
         </template>
       </el-table-column>
+      <el-table-column label="创建时间" width="200" align="center">
+        <template slot-scope="scope">
+          <div>{{scope.row.timeStr}}</div>
+        </template>
+      </el-table-column>
       <el-table-column label="状态" width="160" align="center">
         <!-- <template slot-scope="scope">
           <div style="color: green">{{scope.row.res}}</div>
@@ -118,6 +123,9 @@ export default {
         console.log(res.data)
         this.matches = res.data.matches
         this.total = res.data.total
+        res.data.matches.forEach(item => {
+          item.timeStr = this.$functions.dateTimeString(item.created_at)
+        })
         this.tableLoading = false
       }).catch(err => {
         console.log(err)

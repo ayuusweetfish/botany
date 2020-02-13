@@ -2,6 +2,7 @@ package models
 
 import (
 	"strconv"
+	"time"
 )
 
 const (
@@ -12,10 +13,11 @@ const (
 )
 
 type Match struct {
-	Id      int32
-	Contest int32
-	Status  int8
-	Report  string
+	Id        int32
+	Contest   int32
+	CreatedAt int64
+	Status    int8
+	Report    string
 
 	Rel struct {
 		Contest Contest
@@ -39,6 +41,7 @@ func init() {
 	registerSchema("match",
 		"id SERIAL PRIMARY KEY",
 		"contest INTEGER NOT NULL",
+		"created_at BIGINT NOT NULL DEFAULT 0",
 		"status SMALLINT NOT NULL DEFAULT "+strconv.Itoa(MatchStatusPending),
 		"report TEXT NOT NULL DEFAULT ''",
 		"ADD CONSTRAINT fk_contest FOREIGN KEY (contest) REFERENCES contest (id)",
@@ -54,11 +57,13 @@ func init() {
 }
 
 func (m *Match) Create() error {
-	// TODO: Combine into an transaction
+	// TODO: Combine into a transaction
+	m.CreatedAt = time.Now().Unix()
 	err := db.QueryRow("INSERT INTO "+
-		"match(contest, report) "+
-		"VALUES ($1, $2) RETURNING id",
+		"match(contest, created_at, report) "+
+		"VALUES ($1, $2, $3) RETURNING id",
 		m.Contest,
+		m.CreatedAt,
 		m.Report,
 	).Scan(&m.Id)
 	if err != nil {
@@ -93,9 +98,10 @@ func (m *Match) ShortRepresentation() map[string]interface{} {
 		parties = append(parties, p.ShortRepresentation())
 	}
 	return map[string]interface{}{
-		"id":      m.Id,
-		"parties": parties,
-		"status":  m.Status,
+		"id":         m.Id,
+		"created_at": m.CreatedAt,
+		"parties":    parties,
+		"status":     m.Status,
 		"contest": map[string]interface{}{
 			"id":    m.Rel.Contest.Id,
 			"title": m.Rel.Contest.Title,
@@ -111,10 +117,11 @@ func (m *Match) Representation() map[string]interface{} {
 
 func (m *Match) Read() error {
 	err := db.QueryRow("SELECT "+
-		"contest, status, report "+
+		"contest, created_at, status, report "+
 		"FROM match WHERE id = $1", m.Id,
 	).Scan(
 		&m.Contest,
+		&m.CreatedAt,
 		&m.Status,
 		&m.Report,
 	)
@@ -122,7 +129,7 @@ func (m *Match) Read() error {
 }
 
 func (c *Contest) Matches(limit, offset int) ([]Match, int, error) {
-	rows, err := db.Query("SELECT match.id, match.status FROM match "+
+	rows, err := db.Query("SELECT match.id, match.created_at, match.status FROM match "+
 		"WHERE contest = $1 ORDER BY id DESC LIMIT $2 OFFSET $3",
 		c.Id, limit, offset)
 	if err != nil {
@@ -132,7 +139,7 @@ func (c *Contest) Matches(limit, offset int) ([]Match, int, error) {
 	ms := []Match{}
 	for rows.Next() {
 		m := Match{Contest: c.Id}
-		if err := rows.Scan(&m.Id, &m.Status); err != nil {
+		if err := rows.Scan(&m.Id, &m.CreatedAt, &m.Status); err != nil {
 			return nil, 0, err
 		}
 		if err := m.LoadRel(); err != nil {

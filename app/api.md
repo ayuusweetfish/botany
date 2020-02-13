@@ -253,6 +253,7 @@
 ### 对局数据结构 Match
 
 - **id** (number) ID
+- **created_at** (number) 创建时刻的 Unix 时间戳，单位为秒
 - **parties** ([SubmissionShort]) 参与对局的各方，每个元素为一个提交记录
 - **status** (number) 状态
 	- **0** 等待处理
