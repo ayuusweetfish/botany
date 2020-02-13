@@ -134,7 +134,7 @@ end
 		j := Submission{
 			User:     int32(6 + (1 + i/2)),
 			Contest:  int32(i),
-			Language: "c",
+			Language: "gcc.c",
 			Contents: string(judgeCode),
 		}
 		if err := j.Create(); err != nil {
@@ -148,13 +148,24 @@ end
 		}
 
 		// Participants
-		playerCodeC, err := ioutil.ReadFile("../sdk/player.c")
-		if err != nil {
-			panic(err)
+		playerCode := []string{
+			"../sdk/player.c",
+			"../sdk/player.c",
+			"../sdk/player.lua",
+			"../sdk/player.py",
 		}
-		playerCodeLua, err := ioutil.ReadFile("../sdk/player.lua")
-		if err != nil {
-			panic(err)
+		playerLang := []string{
+			"gcc.c",
+			"gcc.cpp",
+			"5.1.lua",
+			"3.py",
+		}
+		for i, path := range playerCode {
+			contents, err := ioutil.ReadFile(path)
+			if err != nil {
+				panic(err)
+			}
+			playerCode[i] = string(contents)
 		}
 		for j := 1 + i/2; j <= 20; j += i {
 			log.Printf("User %d joins contest %d\n", j, i)
@@ -171,14 +182,8 @@ end
 
 			// Submissions
 			for k := 1; k <= 2+(i+j)%3; k++ {
-				lang := "c"
-				code := string(playerCodeC)
-				if k%3 == 0 {
-					lang = "cpp"
-				} else if k%3 == 1 {
-					lang = "lua"
-					code = string(playerCodeLua)
-				}
+				lang := playerLang[k%len(playerCode)]
+				code := playerCode[k%len(playerCode)]
 				s := Submission{
 					User:     int32(6 + j),
 					Contest:  int32(i),

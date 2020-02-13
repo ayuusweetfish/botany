@@ -21,6 +21,7 @@ bot = {
 
     log = function (s)
         io.stderr:write(s)
+        io.stderr:flush()
     end
 }
 

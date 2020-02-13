@@ -139,7 +139,7 @@ export default {
         status: '',
         msg: ''
       },
-      langSel: ['c', 'cpp', 'lua'],
+      langSel: ['gcc.c', 'gcc.cpp', '5.1.lua', '3.py'],
       cid: '',
       cmOptions: {
         lineNumbers: true,
