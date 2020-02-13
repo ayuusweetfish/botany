@@ -10,7 +10,8 @@
           <el-col :span="12">
             <div class="item-title">对局状态:</div>
             <div v-if="status === $consts.codeStat.pending" class="item-text" style="color: gray">等待中</div>
-            <div v-else-if="status === $consts.codeStat.compiling" class="item-text" style="color: orange">进行中</div>
+            <div v-else-if="status === $consts.codeStat.compiling" class="item-text" style="color: orange">编译中</div>
+            <div v-else-if="status === $consts.codeStat.running" class="item-text" style="color: orange">运行中</div>
             <div v-else-if="status === $consts.codeStat.accepted" class="item-text" style="color: green">已结束</div>
             <div v-else class="item-text" style="color: red">系统错误</div>
           </el-col>
