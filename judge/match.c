@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <sys/wait.h>
+#include <unistd.h>
 
 int match(const char *mid, const char *judge, int num_parties, const char *parties[], char **msg, char ***logs)
 {
@@ -56,7 +57,15 @@ int match(const char *mid, const char *judge, int num_parties, const char *parti
                     fclose(f);
                 }
                 (*logs)[i][len] = '\0';
+
+                if (unlink(log_path) != 0)
+                    printf("unlink(%s) failed: %s\n", log_path, strerror(errno));
             }
+
+            snprintf(log_path, sizeof log_path,
+                "%s/var/botany/matches/%s", judge_chroot, mid);
+            if (rmdir(log_path) != 0)
+                printf("rmdir(%s) failed: %s\n", log_path, strerror(errno));
 
             return WEXITSTATUS(wstatus);
         } else if (WIFSIGNALED(wstatus)) {
