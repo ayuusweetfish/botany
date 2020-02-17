@@ -1,5 +1,5 @@
 <template>
-  <el-container>
+  <el-container v-loading="loading">
     <!-- <el-aside width="200px" style="border-right: 1px solid silver">
       <div style="position: absolute; top: 120px" id="side-menu">
         <div>title</div>
@@ -157,6 +157,7 @@ export default {
       }
     }
     return {
+      loading: false,
       sideBarTop: 120,
       listenerCount: 0,
       menuListener: null,
@@ -257,7 +258,7 @@ export default {
     submitContest () {
       this.$refs.form.validate(valid => {
         if (valid) {
-          const loading = this.$loading({ lock: true, text: '处理中' })
+          this.loading = true
           let params = {
             title: this.form.title,
             start_time: Math.round(this.form.dateTimes[0].getTime() / 1000),
@@ -280,12 +281,12 @@ export default {
             '/contest/create',
             params
           ).then(res => {
-            loading.close()
+            this.loading = false
             this.$message.success('提交成功')
             this.$store.commit('setStallFlag', false)
             this.$router.push('/')
           }).catch(err => {
-            loading.close()
+            this.loading = false
             console.log(err)
             this.$message.error('提交失败，请重试')
           })

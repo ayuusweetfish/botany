@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div v-loading="loading">
     <el-collapse @change="handleCollapse">
       <el-collapse-item :name="1">
         <template slot="title">
@@ -108,6 +108,7 @@ export default {
   },
   data () {
     return {
+      loading: false,
       cid: 0,
       submissions: [],
       total: 0,
@@ -131,7 +132,7 @@ export default {
         this.$message.warning('你需要选择至少2条记录')
         return
       }
-      const loading = this.$loading({ lock: true, text: '处理中' })
+      this.loading = true
       const idList = []
       this.selectedSubs.forEach(item => {
         idList.push(item.id)
@@ -144,7 +145,7 @@ export default {
         params
       ).then(res => {
         const mid = res.data.id
-        loading.close()
+        this.loading = false
         this.$confirm(
           '对局生成成功',
           '提示',
@@ -164,7 +165,7 @@ export default {
         }).catch(() => {})
       }).catch(err => {
         this.$message.error('生成失败')
-        loading.close()
+        this.loading = false
         console.log(err)
       })
     },

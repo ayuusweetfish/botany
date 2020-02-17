@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div v-loading="loading">
     <password-dialog :visible="password" @setVisible="setPasswordVisible"></password-dialog>
     <el-row :gutter="20">
       <el-col :span="7">
@@ -324,6 +324,7 @@ export default {
       }
     }
     return {
+      loading: false,
       avaLoading: false,
       defaultAva: '',
       tableLoading: false,
@@ -447,7 +448,7 @@ export default {
     submitEdit () {
       this.$refs.editform.validate(valid => {
         if (valid) {
-          const loading = this.$loading({ lock: true, text: '处理中' })
+          this.loading = true
           const params = this.$qs.stringify({
             nickname: this.editingInfo.nickname,
             email: this.editingInfo.email,
@@ -457,13 +458,13 @@ export default {
             '/user/' + this.handle + '/profile/edit',
             params
           ).then(res => {
-            loading.close()
+            this.loading = false
             this.editing = false
             this.$message.success('修改成功')
             this.getInfo()
           }).catch(err => {
             console.log(err)
-            loading.close()
+            this.loading = false
             this.$message.error('修改失败')
           })
         }
@@ -477,7 +478,7 @@ export default {
       this.major = []
     },
     getInfo () {
-      const loading = this.$loading({ lock: true, text: '加载中' })
+      this.loading = true
       this.defaultAva = this.$axios.defaults.baseURL + '/user/' + this.handle + '/avatar'
       const params = {
         page: this.page - 1,
@@ -522,10 +523,10 @@ export default {
         this.contestTotal = this.major.length
         this.matchTotal = res.data.total_matches
         this.minor = res.data.matches
-        loading.close()
+        this.loading = false
       }).catch(err => {
         console.log(err)
-        loading.close()
+        this.loading = false
         this.$message.error('查询失败')
       })
     },

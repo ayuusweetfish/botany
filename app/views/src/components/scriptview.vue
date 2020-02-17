@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div v-loading="loading">
     <el-card shadow="never" style="margin: 120px 0px 20px 0px">
       <div align="left" style="font-size: 18px; font-weight: 600; margin-bottom: 20px">执行脚本</div>
       <el-row style="margin-bottom: 20px">
@@ -39,6 +39,7 @@ export default {
   },
   data () {
     return {
+      loading: false,
       input: '',
       log: '',
       cid: '',
@@ -55,7 +56,7 @@ export default {
   },
   methods: {
     passArg () {
-      const loading = this.$loading({ lock: true, text: '处理中' })
+      this.loading = true
       const params = this.$qs.stringify({
         arg: this.input
       })
@@ -63,12 +64,12 @@ export default {
         '/contest/' + this.cid + '/manual_script',
         params
       ).then(res => {
-        loading.close()
+        this.loading = false
         this.$message.success('操作成功')
         this.getLog()
       }).catch(err => {
         console.log(err)
-        loading.close()
+        this.loading = false
         this.$message.error('操作失败')
       })
     },
@@ -87,12 +88,12 @@ export default {
       })
     },
     downLoadLog () {
-      const loading = this.$loading({ lock: true, text: '请求中' })
+      this.loading = true
       this.$axios.get(
         '/contest/' + this.cid + '/script_log',
         { params: { full: 1 } }
       ).then(res => {
-        loading.close()
+        this.loading = false
         const blob = new Blob([res.data], { type: 'text/txt,charset=UTF-8' })
         const a = document.createElement('a')
         a.href = URL.createObjectURL(blob)
@@ -100,7 +101,7 @@ export default {
         a.click()
       }).catch(err => {
         console.log(err)
-        loading.close()
+        this.loading = false
         this.$message.error('请求失败')
       })
     }

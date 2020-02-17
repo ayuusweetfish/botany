@@ -1,5 +1,5 @@
 <template>
-  <el-dialog title="修改密码" :visible.sync="show">
+  <el-dialog v-loading="loading" title="修改密码" :visible.sync="show">
     <el-form ref="passwords" :model="passwords" :rules="rules" label-position="right" label-width="100px">
       <el-form-item prop="old" :error="errors.old" label="旧密码">
         <el-input type="password" v-model="passwords.old" placeholder="请输入原密码">
@@ -47,6 +47,7 @@ export default {
       }
     }
     return {
+      loading: false,
       passwords: {
         old: '',
         new: '',
@@ -78,7 +79,7 @@ export default {
   },
   methods: {
     confirmChange () {
-      const loading = this.$loading({ lock: true, text: '处理中' })
+      this.loading = true
       const params = this.$qs.stringify({
         old: this.passwords.old,
         new: this.passwords.new
@@ -87,11 +88,11 @@ export default {
         '/user/' + this.$store.state.handle + '/password',
         params
       ).then(res => {
-        loading.close()
+        this.loading = false
         this.$message.success('修改成功')
         this.show = false
       }).catch(err => {
-        loading.close()
+        this.loading = false
         if (err.response.status === 400) {
           this.errors.old = '密码错误'
           this.$message.error('密码错误')

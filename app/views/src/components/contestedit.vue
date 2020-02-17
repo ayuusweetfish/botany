@@ -1,5 +1,5 @@
 <template>
-  <el-container>
+  <el-container v-loading="loading">
     <el-main>
       <div align="left" style="margin-bottom: 10px">当前比赛ID：{{cid}}</div>
       <el-form
@@ -119,11 +119,11 @@ export default {
   created () {
     this.$store.commit('setStallFlag', false)
     this.cid = this.$route.query.cid
-    const loading = this.$loading({ lock: true, text: '查询信息' })
+    this.loading = true
     this.$axios.get(
       '/contest/' + this.cid + '/info'
     ).then(res => {
-      loading.close()
+      this.loading = false
       if (res.data.my_role !== this.$consts.role.moderator) {
         this.$message.error('没有权限进行这项操作')
         this.$router.push({
@@ -145,7 +145,7 @@ export default {
       this.$store.commit('setStallFlag', true)
     }).catch(err => {
       console.log(err)
-      loading.close()
+      this.loading = false
       this.$message.error('查询失败，请刷新重试')
     })
     this.htmlLoading = true
@@ -172,6 +172,7 @@ export default {
       }
     }
     return {
+      loading: false,
       cid: '',
       form: {
         title: '',
@@ -261,7 +262,7 @@ export default {
     submitContest () {
       this.$refs.form.validate(valid => {
         if (valid) {
-          const loading = this.$loading({ lock: true, text: '处理中' })
+          this.loading = true
           let params = {
             title: this.form.title,
             start_time: Math.round(this.form.dateTimes[0].getTime() / 1000),
@@ -284,12 +285,12 @@ export default {
             '/contest/' + this.cid + '/edit',
             params
           ).then(res => {
-            loading.close()
+            this.loading = false
             this.$message.success('提交成功')
             this.$store.commit('setStallFlag', false)
             window.location.reload()
           }).catch(err => {
-            loading.close()
+            this.loading = false
             console.log(err)
             this.$message.error('提交失败，请重试')
           })

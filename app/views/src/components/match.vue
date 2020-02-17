@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div v-loading="loading">
     <el-row style="margin-top: 20px; margin-bottom: 20px">
       <el-card shadow="never">
         <el-row>
@@ -52,7 +52,7 @@
         <div>
           <iframe
             :src="$axios.defaults.baseURL + '/contest/' + cid + '/match/' + mid + '/playback'"
-            style="min-height: 1000px; width: 100%; margin-top: 20px" scrolling="yes"></iframe>
+            style="height: 1000px; width: 100%; margin-top: 20px" scrolling="yes"></iframe>
         </div>
       </el-card>
     </el-row>
@@ -87,6 +87,7 @@ export default {
   },
   data () {
     return {
+      loading: false,
       parties: [],
       mid: '',
       cid: '',
@@ -99,7 +100,7 @@ export default {
   methods: {
     getInfo () {
       this.parties = []
-      const loading = this.$loading({ lock: true, text: '加载中' })
+      this.loading = true
       this.$axios.get(
         '/contest/' + this.cid + '/match/' + this.mid
       ).then(res => {
@@ -109,12 +110,12 @@ export default {
         this.$axios.get(
           '/contest/' + this.cid + '/info'
         ).then(info => {
-          loading.close()
+          this.loading = false
           this.myRole = info.data.my_role
         })
       }).catch(err => {
         console.log(err)
-        loading.close()
+        this.loading = false
         this.$message.error('加载失败')
       })
     }

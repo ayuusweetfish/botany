@@ -1,6 +1,6 @@
 <template>
   <div>
-    <el-row :gutter="20">
+    <el-row v-loading="loading" :gutter="20">
       <el-col :span="12">
         <el-card shadow="none" style="margin-top: 180px; border: none; height: 280px">
           <div><img :src="require('../assets/logo.png').default" style="height: 280px"/></div>
@@ -94,6 +94,7 @@ export default {
   },
   data () {
     return {
+      loading: false,
       loginInfo: {
         handle: '',
         password: ''
@@ -142,7 +143,7 @@ export default {
           this.loginErrHandle = ''
           this.loginErrPswd = ''
           this.loginErrCpch = ''
-          const loading = this.$loading({ lock: true, text: '登录中' })
+          this.loading = true
           const params = this.$qs.stringify({
             handle: this.loginInfo.handle,
             password: this.loginInfo.password
@@ -158,11 +159,11 @@ export default {
               nickname: res.data.nickname
             }
             this.$store.commit('login', logindata)
-            loading.close()
+            this.loading = false
             console.log(this.nextRoute)
             this.$router.push(this.nextRoute)
           }).catch(err => {
-            loading.close()
+            this.loading = false
             console.log(err)
             this.$message.error('登录失败')
             this.loginErrUsrnm = '用户名或密码错误'

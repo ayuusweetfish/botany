@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div v-loading="loading">
     <el-row style="margin-bottom: 10px">
       <el-card shadow="never">
         <div align="left">
@@ -113,6 +113,7 @@ export default {
   },
   data () {
     return {
+      loading: false,
       code: '',
       lang: '',
       page: 1,
@@ -182,7 +183,7 @@ export default {
       })
     },
     setDelegate (sid) {
-      const loading = this.$loading({ lock: true, text: '处理中' })
+      this.loading = true
       const params = this.$qs.stringify({
         submission: sid
       })
@@ -190,16 +191,16 @@ export default {
         '/contest/' + this.cid + '/delegate',
         params
       ).then(res => {
-        loading.close()
+        this.loading = false
         this.$message.success('设置成功')
         this.getHistory()
       }).catch(err => {
-        loading.close()
+        this.loading = false
         console.log(err)
       })
     },
     getHistory () {
-      const loading = this.$loading({ lock: true, text: '加载中' })
+      this.loading = true
       this.compareTime()
       this.mainCode = {
         sid: '',
@@ -244,13 +245,13 @@ export default {
           }
           this.page = 1
           this.updateHistoryPart()
-          loading.close()
+          this.loading = false
         }).catch(err => {
           console.log(err)
-          loading.close()
+          this.loading = false
         })
       }).catch(err => {
-        loading.close()
+        this.loading = false
         if (err.response.status === 403 || err.response.status === 401) {
           this.topbarText = '尚未登录或未参加比赛'
         } else {
@@ -273,7 +274,7 @@ export default {
         this.$message.warning('请输入代码')
         return
       }
-      const loading = this.$loading({ lock: true, text: '上传中' })
+      this.loading = true
       const params = this.$qs.stringify({
         code: this.code,
         lang: this.lang
@@ -283,7 +284,7 @@ export default {
         '/contest/' + this.cid + '/submit',
         params
       ).then(res => {
-        loading.close()
+        this.loading = false
         this.$message.success('提交成功')
         this.topbarTime = this.$functions.dateTimeString(res.data.submission.created_at)
         this.topbarID = res.data.submission.id
@@ -296,7 +297,7 @@ export default {
         this.getHistory()
         this.compareTime()
       }).catch(err => {
-        loading.close()
+        this.loading = false
         this.$message.error('提交失败')
         console.log(err)
       })

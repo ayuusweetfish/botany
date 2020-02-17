@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div v-loading="loading">
     <el-row :gutter="20">
       <el-col :span="12">
         <el-card shadow="none" style="margin-top: 180px; border: none; height: 280px">
@@ -143,6 +143,7 @@ export default {
       }
     }
     return {
+      loading: false,
       nextRoute: {
         path: '/login'
       },
@@ -218,7 +219,7 @@ export default {
           this.signupErrEml = ''
           this.signupErrCpch = ''
           this.signupErrNName = ''
-          const loading = this.$loading({ lock: true, text: '注册中' })
+          this.loading = true
           const params = this.$qs.stringify({
             handle: this.signupInfo.handle,
             password: this.signupInfo.password,
@@ -231,7 +232,7 @@ export default {
             '/signup',
             params
           ).then(res => {
-            loading.close()
+            this.loading = false
             this.$alert('注册成功，请登录', '成功', {
               confirmButtonText: '确定',
               callback: action => {
@@ -244,7 +245,7 @@ export default {
               }
             })
           }).catch(err => {
-            loading.close()
+            this.loading = false
             this.$message.error('注册失败，请检查表单')
             this.getCaptcha()
             err.response.data.err.forEach(item => {

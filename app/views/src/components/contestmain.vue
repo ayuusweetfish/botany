@@ -1,6 +1,6 @@
 <template>
   <div>
-    <el-row style="margin-bottom: 10px">
+    <el-row v-loading="loading" style="margin-bottom: 10px">
       <el-col :span="24">
         <el-card
           shadow="never"
@@ -120,20 +120,21 @@ export default {
       myRole: this.$consts.role.notIn,
       owner: '',
       events: [],
-      bannerLoading: false
+      bannerLoading: false,
+      loading: false
     }
   },
   methods: {
     regIn () {
-      const loading = this.$loading({ lock: true, text: '处理中' })
+      this.loading = true
       this.$axios.post(
         '/contest/' + this.cid + '/join'
       ).then(res => {
-        loading.close()
+        this.loading = false
         this.$message.success('报名成功')
         window.location.reload()
       }).catch(err => {
-        loading.close()
+        this.loading = false
         if (err.response.status !== 401) {
           this.$message('报名失败，请重试')
         }
@@ -183,42 +184,43 @@ export default {
       this.$refs['banner-upload'].click()
     },
     publishContest () {
-      const loading = this.$loading({ lock: true, text: '处理中' })
+      this.loading = true
       const param = this.$qs.stringify({ set: true })
       this.$axios.post(
         '/contest/' + this.cid + '/publish',
         param
       ).then(res => {
-        loading.close()
+        this.loading = false
         this.$message.success('发布成功')
         this.getContestInfo()
       }).catch(err => {
         console.log(err)
-        loading.close()
+        this.loading = false
         this.$message.error('发布失败，请重试')
       })
     },
     hideContest () {
-      const loading = this.$loading({ lock: true, text: '处理中' })
+      this.loading = true
       const param = this.$qs.stringify({ set: false })
       this.$axios.post(
         '/contest/' + this.cid + '/publish',
         param
       ).then(res => {
-        loading.close()
+        this.loading = false
         this.$message.success('隐藏成功')
         this.getContestInfo()
       }).catch(err => {
         console.log(err)
-        loading.close()
+        this.loading = false
         this.$message.error('隐藏失败，请重试')
       })
     },
     getContestInfo () {
-      const loading = this.$loading({ lock: true, text: '查询比赛信息' })
+      this.loading = true
       this.$axios.get(
         '/contest/' + this.cid + '/info'
       ).then(res => {
+        this.loading = false
         this.events = []
         this.events.push({
           time: this.$functions.dateTimeString(res.data.end_time),
@@ -240,10 +242,9 @@ export default {
         this.details = res.data.details
         this.$store.commit('enterSubSite', res.data)
         console.log(this.myRole)
-        loading.close()
       }).catch(err => {
+        this.loading = false
         console.log(err)
-        loading.close()
         this.$message.error('查询失败，请刷新')
       })
     }
