@@ -1,15 +1,15 @@
 <template>
   <div>
     <v-container>
-      <v-row>
-        <div class="ml-4">当前共有{{total}}场比赛</div>
-      </v-row>
+      <h1>欢迎来到BotAny</h1>
+      <div>当前共有{{total}}场赛事</div>
       <v-row>
         <v-col
           :cols="12" :md="6"
           v-for="(item, index) in contests" :key="index"
         >
-          <v-card>
+          <v-card :to="{path: '/contest', query: {cid: item.id}}">
+            <v-img :src="$axios.defaults.baseURL + '/contest/' + item.id + '/banner'" :height="180" contain></v-img>
             <v-card-title>{{item.title}}</v-card-title>
             <v-card-subtitle>{{item.time}}</v-card-subtitle>
             <v-card-text>

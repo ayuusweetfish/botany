@@ -7,7 +7,7 @@
     >
       <div class="d-flex align-center">
         <v-img
-          alt="Vuetify Logo"
+          alt="BotAny Logo"
           class="shrink mr-2"
           src="./assets/logo.png"
           transition="scale-transition"
