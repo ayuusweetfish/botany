@@ -60,6 +60,11 @@ export default {
       listLoading: false
     }
   },
+  watch: {
+    '$store.state.id' () {
+      this.getContestList()
+    }
+  },
   methods: {
     getContestList () {
       this.listLoading = true
