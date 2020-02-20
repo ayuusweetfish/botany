@@ -1,6 +1,9 @@
 <template>
   <div>
-    <v-container>
+    <v-snackbar v-model="showErr" color="error" :timeout="3000">
+      {{errMessage}}
+    </v-snackbar>
+    <v-container fluid>
       <h1>欢迎来到BotAny</h1>
       <div>当前共有{{total}}场赛事</div>
       <v-row>
@@ -27,7 +30,9 @@ export default {
   name: 'ContestList',
   data: () => ({
     total: 0,
-    contests: []
+    contests: [],
+    errMessage: '无法连接服务器，请检查网络',
+    showErr: false
   }),
   mounted () {
     this.getContestList()
@@ -42,6 +47,10 @@ export default {
           const end = this.$functions.dateTimeString(item.end_time)
           item.time = start + ' TO ' + end
         })
+      }).catch(err => {
+        if (err.response.state >= 400) {
+          this.showErr = true
+        }
       })
     }
   }

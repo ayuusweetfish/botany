@@ -16,6 +16,13 @@ Vue.prototype.$qs = qs
 Vue.use(utils)
 Vue.component('v-loading-overlay', LoadingOverlay)
 
+router.beforeEach((to, from, next) => {
+  if (to.query.redirect === true && from.meta.type !== 'login') {
+    store.commit('setRedirect', { path: from.path, query: from.query })
+  }
+  next()
+})
+
 new Vue({
   router,
   store,

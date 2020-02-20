@@ -6,7 +6,7 @@
     </v-snackbar>
     <v-img :src="bannerUrl" max-height="300" contain transition="fade-transition"></v-img>
     <div class="display-2 mb-2 d-flex justify-center">{{title}}</div>
-    <v-container>
+    <v-container fluid>
       <v-row justify="center">
         <v-btn color="primary" class="ml-1 mr-1">报名参加</v-btn>
         <v-btn color="primary" class="ml-1 mr-1">公开赛事</v-btn>
