@@ -1,13 +1,21 @@
 run: judge player
-	./judge ./player ./player
+	@./judge ./player ./player
 
-judge: bot.h bot.c judge.c
-	$(CC) bot.c judge.c -O2 -o judge
+run-lua: CMD = "LUA_PATH=lib/?.lua lua player.lua"
+run-lua: judge
+	@./judge $(CMD) $(CMD)
 
-player: bot.h bot.c player.c
-	$(CC) bot.c player.c -O2 -o player
+run-py: CMD = "PYTHONPATH=lib python player.py"
+run-py: judge
+	@./judge $(CMD) $(CMD)
+
+judge: lib/bot.h lib/bot.c judge.c
+	$(CC) lib/bot.c judge.c -Ilib -O2 -o judge
+
+player: lib/bot.h lib/bot.c player.c
+	$(CC) lib/bot.c player.c -Ilib -O2 -o player
 
 clean:
 	$(RM) judge player
 
-.PHONY: run
+.PHONY: run run-py run-lua

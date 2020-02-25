@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/wait.h>
 #include <time.h>
 
 #define quq(__syscall, ...) _quq(#__syscall, __syscall(__VA_ARGS__))
@@ -43,9 +44,9 @@ int bot_send_blob(int pipe, size_t len, const char *payload)
     if (len == 0) len = strlen(payload);
     if (len > 0xffffff) return BOT_ERR_TOOLONG;
     char len_buf[3] = {
-        len & 0xff,
-        (len >> 8) & 0xff,
-        (len >> 16) & 0xff
+        (char)(len & 0xff),
+        (char)((len >> 8) & 0xff),
+        (char)((len >> 16) & 0xff)
     };
     if (tenacious_write(pipe, len_buf, 3) < 0 ||
         tenacious_write(pipe, payload, len) < 0)
@@ -161,9 +162,8 @@ const char *bot_strerr(int code)
     }
 }
 
-#define child_pause(__cp)   kill((__cp).pid, SIGSTOP)
-#define child_resume(__cp)  kill((__cp).pid, SIGCONT)
-#define child_kill(__cp)    kill((__cp).pid, SIGKILL)
+#define child_pause(__cp)   kill(-(__cp).pid, SIGUSR1)
+#define child_resume(__cp)  kill(-(__cp).pid, SIGUSR2)
 
 childproc child_create(const char *cmd, const char *log)
 {
@@ -177,7 +177,7 @@ childproc child_create(const char *cmd, const char *log)
                        reported as "System Error" */
     }
 
-    int fd_log = open(log, O_WRONLY | O_CREAT, 0644);
+    int fd_log = open(log, O_WRONLY | O_CREAT | O_TRUNC, 0644);
     if (fd_log == -1) {
         fprintf(stderr, "open(%s) failed with errno %d\n", log, errno);
         exit(1);
@@ -196,8 +196,8 @@ childproc child_create(const char *cmd, const char *log)
         dup2(fd_log, STDERR_FILENO);
         close(fd_send[1]);
         close(fd_recv[0]);
-        if (execl(cmd, cmd, NULL) != 0) {
-            if (execl("/bin/sh", "/bin/sh", "-c", cmd, NULL) != 0) {
+        if (execl(cmd, cmd, (char *)NULL) != 0) {
+            if (execl("/bin/sh", "/bin/sh", "-c", cmd, (char *)NULL) != 0) {
                 fprintf(stderr, "exec(%s) failed with errno %d\n", cmd, errno);
                 exit(1);
             }
@@ -218,7 +218,8 @@ childproc child_create(const char *cmd, const char *log)
 void child_finish(childproc proc)
 {
     fsync(proc.fd_log);
-    child_kill(proc);
+    kill(proc.pid, SIGTERM);
+    while (waitpid(proc.pid, 0, 0) > 0) { }
 }
 
 void child_send(childproc proc, const char *str)
