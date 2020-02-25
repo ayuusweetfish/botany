@@ -16,6 +16,7 @@ const CmVue = () => import('codemirror/mode/vue/vue')
 const CmCss = () => import('codemirror/mode/css/css')
 const CmMd = () => import('codemirror/mode/markdown/markdown')
 const CmSh = () => import('codemirror/mode/shell/shell')
+const CmLua = () => import('codemirror/mode/lua/lua')
 
 const tmMaterial = () => import('codemirror/theme/material.css')
 const tmMaterialDark = () => import('codemirror/theme/material-darker.css')
@@ -85,6 +86,10 @@ export default {
         value: 'x-sh',
         alias: 'Shell',
         script: CmSh
+      }, {
+        value: 'x-lua',
+        alias: 'lua',
+        script: CmLua
       }
     ],
     themes: [
@@ -116,7 +121,7 @@ export default {
   },
   watch: {
     value: function (newval, oldval) {
-      if (oldval !== newval) {
+      if (this.cminstance.getValue() !== newval) {
         this.cminstance.setValue(newval)
       }
     },
@@ -150,8 +155,11 @@ export default {
       this.cminstance.setValue(this.value)
       this.cminstance.setSize(null, this.height)
       this.cminstance.on('change', (cminstance) => {
-        if (this.$emit) {
-          this.$emit('input', cminstance.getValue())
+        const value = cminstance.getValue()
+        if (this.$emit && this.value !== value) {
+          this.$emit('input', value)
+          // cconsole.log(cminstance.getValue())
+          this.$emit('change')
         }
       })
       this.loadMode()

@@ -23,7 +23,7 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
-    <v-snackbar top v-model="showErr" color="error" :timeout="3000">
+    <v-snackbar top style="margin-top: 60px" v-model="showErr" color="error" :timeout="3000">
       {{errMessage}}<v-btn text @click="showErr=false">确定</v-btn>
     </v-snackbar>
     <v-card-title><div class="headline pl-6 pr-6 pb-4 pt-4">加入BotAny</div></v-card-title>
@@ -136,12 +136,12 @@ export default {
       email: v => (/^([a-zA-Z0-9]+[-_.]?)+@([a-zA-Z0-9]+\.)+[a-z]+$/.test(v)) || '请输入格式合法的邮箱',
       captcha: v => v.length === 4 || '验证码格式错误'
     },
-    considerP2: (v => {
+    considerP2: v => {
       if (el.password2) {
         el.$refs.password2.validate()
       }
       return true
-    }) || '',
+    },
     showPassword: false,
     showPassword2: false,
     handle: '',

@@ -1,44 +1,93 @@
 <template>
   <v-container fluid>
+    <v-loading-overlay :value="loading"></v-loading-overlay>
+    <v-snackbar top
+      style="margin-top: 60px"
+      v-model="showMsg"
+      :color="msgType"
+    >{{message}}
+    </v-snackbar>
     <v-row justify="center">
       <v-col :cols="12" :md="4" :lg="3">
-        <v-card outlined style="border: none">
-          <div class="d-flex align-end">
-            <v-avatar tile size="140">
-              <v-img :src="defaultAva"></v-img>
-            </v-avatar>
-            <div class="ml-4">
-              <v-card-title class="headline font-weight-bold">
-                {{nickname}}
-              </v-card-title>
-              <v-card-subtitle class="title">
-                @{{handle}}
-              </v-card-subtitle>
+        <v-scroll-y-transition hide-on-leave>
+          <user-editor
+            v-if="editing && mode==='self'"
+            :info="{handle: handle, bio: bio, email: email, nickname: nickname}"
+            v-model="editing"
+            @success="editSuccessful"
+            @fail="editFailed"
+          ></user-editor>
+        </v-scroll-y-transition>
+        <v-scroll-y-transition hide-on-leave>
+          <password-editor
+            v-if="password && mode==='self'"
+            :handle="handle"
+            v-model="password"
+            @success="editSuccessful"
+            @fail="editFailed"
+          ></password-editor>
+        </v-scroll-y-transition>
+        <v-scroll-y-transition hide-on-leave>
+          <v-card outlined style="border: none" v-if="!(editing||password)||mode!=='self'">
+            <v-card-title class="headline font-weight-bold justify-center">
+              {{nickname}}
+            </v-card-title>
+            <div class="d-flex justify-center mt-2">
+              <v-avatar tile size="240">
+                <v-img
+                  v-if="mode==='self'"
+                  :src="$axios.defaults.baseURL + '/user/' + handle + '/avatar'"
+                  style="cursor: pointer; border-radius: 5px"
+                  title="点击更换头像"
+                  @click="startAvatarUpload"
+                ></v-img>
+                <v-img v-else
+                  :src="$axios.defaults.baseURL + '/user/' + handle + '/avatar'"
+                  style="border-radius: 5px"
+                ></v-img>
+                <v-loading-overlay :value="avaLoading"></v-loading-overlay>
+                <input
+                  v-if="mode==='self'"
+                  ref="avatar-input"
+                  type="file"
+                  style="display: none"
+                  accept="image/gif, image/jpeg, image/png"
+                  min="1"
+                  max="1"
+                  @change="avatarUpload"/>
+              </v-avatar>
             </div>
-          </div>
-          <v-divider></v-divider>
-          <v-card-text>
-            <div class="body-1 mb-2"><v-icon class="mr-2">mdi-fingerprint</v-icon>UID: {{uid}}</div>
-            <div class="body-1 mb-2"><v-icon class="mr-2">mdi-email-outline</v-icon>{{email}}</div>
-            <div class="body-1 mb-2" v-if="privilege===$consts.privilege.common">
-              <v-icon class="mr-2">mdi-account-check-outline</v-icon>Common User
+            <v-card-text class="pl-4">
+              <div class="body-1 mb-2"><v-icon class="mr-2">mdi-at</v-icon>{{handle}}</div>
+              <div class="body-1 mb-2"><v-icon class="mr-2">mdi-fingerprint</v-icon>UID: {{uid}}</div>
+              <div class="body-1 mb-2"><v-icon class="mr-2">mdi-email-outline</v-icon>{{email}}</div>
+              <div class="body-1 mb-2" v-if="privilege===$consts.privilege.common">
+                <v-icon class="mr-2">mdi-account-check-outline</v-icon>Common User
+              </div>
+              <div class="body-1 mb-2 primary--text" v-if="privilege===$consts.privilege.organizer">
+                <v-icon class="mr-2">mdi-account-edit-outline</v-icon>Organizer
+              </div>
+              <div class="body-1 mb-2 green--text" v-if="privilege===$consts.privilege.superuser">
+                <v-icon class="mr-2">mdi-account-key-outline</v-icon>Super User
+              </div>
+              <div class="body-1 mb-2 mt-6">
+                <v-icon class="mr-2">mdi-comment-text-outline</v-icon>
+                <div v-if="bio!==''">{{bio}}</div>
+                <div v-else>暂时还没有签名:)</div>
+              </div>
+            </v-card-text>
+            <div v-if="mode==='self'">
+              <v-divider></v-divider>
+              <v-card-actions>
+                <v-btn text color="primary" @click="startUserEdit">修改个人信息</v-btn>
+                <v-btn text color="primary" @click="startPasswordEdit">修改密码</v-btn>
+              </v-card-actions>
             </div>
-            <div class="body-1 mb-2 primary--text" v-if="privilege===$consts.privilege.organizer">
-              <v-icon class="mr-2">mdi-account-edit-outline</v-icon>Organizer
-            </div>
-            <div class="body-1 mb-2 green--text" v-if="privilege===$consts.privilege.superuser">
-              <v-icon class="mr-2">mdi-account-key-outline</v-icon>Super User
-            </div>
-            <div class="body-1 mb-2 mt-6">
-              <v-icon class="mr-2">mdi-pencil</v-icon>
-              <div v-if="bio!==''">{{bio}}</div>
-              <div v-else>暂时还没有签名:)</div>
-            </div>
-          </v-card-text>
-        </v-card>
+          </v-card>
+        </v-scroll-y-transition>
       </v-col>
       <v-col :cols="12" :md="8">
-        <div v-if="mode==='self'" class="headline mb-4">共参加了{{contestTotal}}项赛事</div>
+        <div class="headline mb-4">共参加了{{contestTotal}}项赛事</div>
         <div class="subtitle-1" v-if="major.length===0">暂无记录</div>
         <v-expansion-panels accordion multiple>
           <v-expansion-panel v-for="(item, index) in major" :key="index">
@@ -52,14 +101,18 @@
                     </v-icon>
                   </div>
                 </v-col>
-                <v-col :cols="6" v-if="!open && $vuetify.breakpoint.mdAndUp">
-                  <div><v-icon class="mb-1 mr-1">mdi-calendar</v-icon>{{item.timeShort}}</div>
-                </v-col>
-                <v-col :cols="2" v-if="$vuetify.breakpoint.mdAndUp && !open">
-                  <div v-if="item.role===$consts.role.moderator">
-                    <v-icon class="mb-1 mr-1">mdi-account-cog-outline</v-icon>管理员
-                  </div>
-                </v-col>
+                <v-fade-transition>
+                  <v-col :cols="6" v-if="!open && $vuetify.breakpoint.mdAndUp">
+                    <div><v-icon class="mb-1 mr-1">mdi-calendar</v-icon>{{item.timeShort}}</div>
+                  </v-col>
+                </v-fade-transition>
+                <v-fade-transition>
+                  <v-col :cols="2" v-if="$vuetify.breakpoint.mdAndUp && !open">
+                    <div v-if="item.role===$consts.role.moderator">
+                      <v-icon class="mb-1 mr-1">mdi-account-cog-outline</v-icon>管理员
+                    </div>
+                  </v-col>
+                </v-fade-transition>
               </v-row>
             </v-expansion-panel-header>
             <v-expansion-panel-content>
@@ -73,16 +126,16 @@
                   </div>
                   <div><v-icon class="mb-1 mr-1">mdi-calendar</v-icon>{{item.timeStr}}</div>
                   <div>{{item.desc}}</div>
-                  <v-btn text class="pa-0" color="primary">查看赛事详情</v-btn>
+                  <v-btn text class="pa-0" color="primary" :to="`/contest/${item.cid}/main`">查看赛事详情</v-btn>
                 </v-col>
                 <v-col :cols="0" :md="6" v-if="$vuetify.breakpoint.mdAndUp">
-                  <v-img contain max-height="120px" :src="$axios.defaults.baseURL + '/contest/' + item.cid + '/banner'"></v-img>
+                  <v-img contain max-height="120px" :src="`${$axios.defaults.baseURL}/contest/${item.cid}/banner`"></v-img>
                 </v-col>
               </v-row>
             </v-expansion-panel-content>
           </v-expansion-panel>
         </v-expansion-panels>
-        <div v-if="mode==='self'" class="headline mt-8 mb-4">共有{{matchTotal}}条对局记录</div>
+        <div class="headline mt-8 mb-4">共有{{matchTotal}}条对局记录</div>
         <v-card>
           <v-data-table
             no-data-text="暂无数据"
@@ -97,7 +150,7 @@
           >
             <template v-slot:item.contest="{ item }">
               <router-link
-                :to="{path: '/'}"
+                :to="`/contest/${item.contest.id}/main`"
                 style="text-decoration: none; font-size: 600; color: #555555"
               >{{item.contest.title}}</router-link>
             </template>
@@ -119,6 +172,12 @@
                     :style="party.participant.handle===handle? 'border-left: 5px solid silver' : 'border-left: 5px solid white'"
                   >
                     <div class="d-flex justify-start align-center">
+                      <!-- <router-link
+                        class="mr-2"
+                        v-if="item.contest.my_role===$consts.role.moderator"
+                        style="text-decorator: none"
+                        :to="{path: '/'}"
+                      >submission {{party.id}} by</router-link> -->
                       <div class="mr-2">submission {{party.id}} by</div>
                       <user-tag :user="party.participant" size="small" identify></user-tag>
                     </div>
@@ -127,10 +186,7 @@
               </v-menu>
             </template>
             <template v-slot:item.status="{ item }">
-              <div class="success--text" v-if="item.status===$consts.codeStat.accepted">已结束</div>
-              <div class="warning--text" v-else-if="item.status===$consts.codeStat.compiling">处理中</div>
-              <div class="secondary--text" v-else-if="item.status===$consts.codeStat.pending">等待处理</div>
-              <div class="error--text" v-else>系统错误</div>
+              <status-display mode="match" :status="item.status"></status-display>
             </template>
             <template v-slot:item.detail>
               <v-btn text color="primary" class="mb-1">查看详情</v-btn>
@@ -142,6 +198,7 @@
                 :total="matchTotal"
                 :count="count"
                 @input="changePage"
+                :disabled="tableLoading"
               ></table-pagination>
             </template>
           </v-data-table>
@@ -154,24 +211,28 @@
 <script>
 import Pagination from '../components/TablePagination.vue'
 import Usertag from '../components/UserTag.vue'
+import Usereditor from '../components/UserEditor.vue'
+import Passwordeditor from '../components/PasswordEditor.vue'
+import StatusDisplay from '../components/StatusDisplay.vue'
 export default {
   name: 'Profile',
   components: {
     'table-pagination': Pagination,
-    'user-tag': Usertag
+    'user-tag': Usertag,
+    'user-editor': Usereditor,
+    'password-editor': Passwordeditor,
+    'status-display': StatusDisplay
   },
   mounted () {
-    this.handle = this.$route.query.handle
-    if (this.handle === this.$store.state.handle) {
-      this.mode = 'self'
-    } else {
-      this.mode = 'else'
-    }
     this.getInfo()
+  },
+  watch: {
+    '$route.params.handle': function (newval, oldval) {
+      window.location.reload()
+    }
   },
   data: () => ({
     avaLoading: false,
-    defaultAva: '',
     tableLoading: false,
     loading: false,
     activeContests: [],
@@ -183,20 +244,10 @@ export default {
     bio: '',
     uid: '',
     privilege: -1,
-    joinTime: '',
+    message: '',
+    showMsg: false,
+    msgType: '',
     editing: false,
-    editingInfo: {
-      nickname: '',
-      email: '',
-      bio: ''
-    },
-    rules: {
-    },
-    editingErr: {
-      nickname: '',
-      email: '',
-      bio: ''
-    },
     headers: [
       {
         text: '对局编号',
@@ -229,8 +280,13 @@ export default {
   }),
   methods: {
     getInfo () {
+      this.handle = this.$route.params.handle
+      if (this.handle === this.$store.state.handle) {
+        this.mode = 'self'
+      } else {
+        this.mode = 'else'
+      }
       this.loading = true
-      this.defaultAva = this.$axios.defaults.baseURL + '/user/' + this.handle + '/avatar'
       const params = {
         page: this.page - 1,
         count: this.count
@@ -284,6 +340,67 @@ export default {
         this.tableLoading = false
       }).catch(() => {
         this.tableLoading = false
+      })
+    },
+    startUserEdit () {
+      this.showMsg = false
+      this.editing = true
+    },
+    editSuccessful () {
+      this.message = '修改成功'
+      this.msgType = 'success'
+      this.showMsg = true
+      this.getInfo()
+    },
+    editFailed () {
+      this.message = '修改失败，请检查表单'
+      this.msgType = 'error'
+      this.showMsg = true
+    },
+    startPasswordEdit () {
+      this.showMsg = false
+      this.password = true
+    },
+    startAvatarUpload () {
+      this.$refs['avatar-input'].click()
+    },
+    avatarUpload () {
+      const files = this.$refs['avatar-input'].files
+      if (!files || files.length !== 1) {
+        this.message = '上传数量错误'
+        this.msgType = 'error'
+        this.showMsg = true
+        return
+      }
+      if (files[0].size >= 512 * 1024) {
+        this.message = '上传文件过大'
+        this.msgType = 'error'
+        this.showMsg = true
+        return
+      }
+      const namelist = files[0].name.split('.')
+      const filetype = namelist[namelist.length - 1]
+
+      if (['jpg', 'jpeg', 'gif', 'png'].indexOf(filetype) === -1) {
+        this.message = '上传格式错误'
+        this.msgType = 'error'
+        this.showMsg = true
+        return
+      }
+      this.avaLoading = true
+      const avapckt = new FormData()
+      avapckt.append('file', files[0])
+      this.$axios.post(
+        '/user/' + this.handle + '/avatar/upload',
+        avapckt
+      ).then(res => {
+        this.avaLoading = false
+        window.location.reload()
+      }).catch(() => {
+        this.avaLoading = false
+        this.message = '上传失败'
+        this.msgType = 'error'
+        this.showMsg = true
       })
     }
   }

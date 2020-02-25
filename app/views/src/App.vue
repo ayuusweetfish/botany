@@ -3,7 +3,7 @@
     <v-app-bar
       app
       color="white"
-      dark
+      style="z-index: 100"
     >
       <v-img
         alt="BotAny"
@@ -27,9 +27,12 @@
         @click="$router.push('/')"
       />
 
+      <v-scroll-x-transition>
+        <top-bar v-if="$route.meta.type==='contest'"></top-bar>
+      </v-scroll-x-transition>
       <v-spacer></v-spacer>
 
-      <div class="d-flex hidden-sm-and-down">
+      <div class="d-flex" v-if="$vuetify.breakpoint.mdAndUp">
         <div v-if="$store.state.id===-1">
           <v-btn text color="primary"
             :to="{path: '/register/login', query: { redirect: $route.path !== '/error' }}"
@@ -50,9 +53,9 @@
             <router-link text
               class="d-flex align-center"
               style="text-decoration: none"
-              :to="{path: '/profile', query: {handle: $store.state.handle}}">
+              :to="`/profile/${$store.state.handle}`">
               <v-avatar tile size="48">
-                <img
+                <v-img
                   :src="$axios.defaults.baseURL + '/user/' + $store.state.handle + '/avatar'"
                   style="border-radius: 4px"
                 />
@@ -70,12 +73,12 @@
                 <div class="subtitle-2 grey--text">@{{$store.state.handle}}</div>
               </span>
             </router-link>
-            <v-btn @click="quiting=true" :loading="quitLoading" :disabled="quitLoading">退出</v-btn>
+            <v-btn @click="quiting=true" :loading="quitLoading" :disabled="quitLoading" dark>退出</v-btn>
           </div>
           <div v-else class="d-flex align-center" >
             <div class="secondary--text mr-2">确定退出登录？</div>
-            <v-btn @click="logout">是</v-btn>
-            <v-btn text color="secondary" @click="quiting=false" class="mr-2">否</v-btn>
+            <v-btn @click="logout" dark>是</v-btn>
+            <v-btn text color="secondary" @click="quiting=false" class="mr-2" dark>否</v-btn>
           </div>
         </div>
       </div>
@@ -95,8 +98,12 @@
 </template>
 
 <script>
+import TopBar from './components/Topbar.vue'
 export default {
   name: 'App',
+  components: {
+    'top-bar': TopBar
+  },
   created () {
     this.$axios.get('/whoami').then(res => {
       this.$store.commit('login', res.data)

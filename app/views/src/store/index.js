@@ -13,9 +13,8 @@ export default new Vuex.Store({
     nickname: '',
     routeList: [],
     // contest
-    cid: '',
     cname: '',
-    // state
+    myrole: -1,
     redirect: {
       path: '/'
     },
@@ -35,8 +34,12 @@ export default new Vuex.Store({
       state.nickname = ''
     },
     setContest: (state, contest) => {
-      state.cid = contest.id
       state.cname = contest.title
+      state.myrole = contest.my_role
+    },
+    resetContest: (state) => {
+      state.cname = ''
+      state.myrole = -1
     },
     setStall: (state, stall) => {
       state.stall = stall

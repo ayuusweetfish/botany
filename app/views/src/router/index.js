@@ -1,11 +1,18 @@
 import Vue from 'vue'
 import VueRouter from 'vue-router'
+const Contest = () => import('../views/Contest.vue')
 const ContestList = () => import('../views/ContestList.vue')
 const ContestMain = () => import('../views/ContestMain.vue')
 const Register = () => import('../views/Register.vue')
 const Login = () => import('../views/Login.vue')
 const Signup = () => import('../views/Signup.vue')
 const Profile = () => import('../views/Profile.vue')
+const SubmissionList = () => import('../views/SubmissionList.vue')
+const SubmissionDetail = () => import('../views/SubmissionDetail.vue')
+const ContestEdit = () => import('../views/ContestEdit.vue')
+const MatchList = () => import('../views/MatchList.vue')
+const MatchDetail = () => import('../views/MatchDetail.vue')
+const RankList = () => import('../views/RankList.vue')
 
 Vue.use(VueRouter)
 
@@ -21,7 +28,7 @@ const routes = [
       stalling: false
     }
   }, {
-    path: '/contest',
+    path: '/contest/:cid/main',
     name: 'Contest',
     component: ContestMain,
     meta: {
@@ -30,6 +37,68 @@ const routes = [
       prePage: [],
       stalling: false
     }
+  }, {
+    path: '/contest/:cid',
+    name: 'ContestInfo',
+    component: Contest,
+    children: [
+      {
+        path: 'submission/:sid',
+        name: 'SubmissionDetail',
+        component: SubmissionDetail,
+        meta: {
+          title: '提交详情',
+          type: 'contest',
+          stalling: false
+        }
+      }, {
+        path: 'submission',
+        name: 'SubmissionList',
+        component: SubmissionList,
+        meta: {
+          title: '提交列表',
+          type: 'contest',
+          prePage: [{ path: '/contest/main', query: ['cid'] }],
+          stalling: false
+        }
+      }, {
+        path: 'edit',
+        name: 'ContestEdit',
+        component: ContestEdit,
+        meta: {
+          title: '编辑比赛',
+          type: 'contest',
+          stalling: true
+        }
+      }, {
+        path: 'match/:mid',
+        name: 'MatchDetail',
+        component: MatchDetail,
+        meta: {
+          title: '对局详情',
+          type: 'contest',
+          stalling: false
+        }
+      }, {
+        path: 'match',
+        name: 'MatchList',
+        component: MatchList,
+        meta: {
+          title: '对局列表',
+          type: 'contest',
+          stalling: false
+        }
+      }, {
+        path: 'ranklist',
+        name: 'RankList',
+        component: RankList,
+        meta: {
+          title: '选手排行',
+          type: 'contest',
+          stalling: false
+        }
+      }
+    ]
   }, {
     path: '/register',
     name: 'Register',
@@ -56,7 +125,7 @@ const routes = [
       }
     ]
   }, {
-    path: '/profile',
+    path: '/profile/:handle',
     name: 'Profile',
     component: Profile,
     meta: {

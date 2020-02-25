@@ -6,7 +6,7 @@
       :width="$vuetify.breakpoint.mdAndUp? '80%' : '100%'"
       style="border: none"
     >
-      <v-snackbar v-model="showErr" color="error" :timeout="3000">
+      <v-snackbar top style="margin-top: 60px"  v-model="showErr" color="error" :timeout="3000">
       {{errMessage}}
     </v-snackbar>
       <v-card-title><div class="headline pl-6 pr-6 pb-4 pt-4">登录BotAny</div></v-card-title>

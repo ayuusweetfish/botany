@@ -18,10 +18,22 @@ Vue.component('v-loading-overlay', LoadingOverlay)
 
 router.beforeEach((to, from, next) => {
   if (to.query.redirect === true && from.meta.type !== 'login') {
-    store.commit('setRedirect', { path: from.path, query: from.query })
+    store.commit('setRedirect', from.path)
+  }
+  if (from.meta.stalling && store.state.stall) {
+    const check = window.confirm('表单尚未提交，确定离开?')
+    if (!check) {
+      return next(false)
+    }
   }
   next()
 })
+
+window.onbeforeunload = function () {
+  if (router.currentRoute.meta.stalling && store.state.stall) {
+    return ''
+  }
+}
 
 new Vue({
   router,
