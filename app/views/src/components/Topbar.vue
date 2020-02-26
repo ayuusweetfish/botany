@@ -10,6 +10,7 @@
       >{{$store.state.cname}}</v-chip>
     </div>
     <v-tabs v-model="tab" height="64" grow>
+      <v-tab :to="`/contest/${$route.params.cid}/participant#submit`">我的提交</v-tab>
       <v-tab :to="`/contest/${$route.params.cid}/ranklist`">选手排行</v-tab>
       <v-tab :to="`/contest/${$route.params.cid}/match`">对局列表</v-tab>
       <v-tab :to="`/contest/${$route.params.cid}/submission`">提交列表</v-tab>

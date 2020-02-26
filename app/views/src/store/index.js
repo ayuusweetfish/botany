@@ -18,6 +18,8 @@ export default new Vuex.Store({
     redirect: {
       path: '/'
     },
+    cstart: new Date(),
+    cend: new Date(),
     stall: false
   },
   mutations: {
@@ -36,10 +38,14 @@ export default new Vuex.Store({
     setContest: (state, contest) => {
       state.cname = contest.title
       state.myrole = contest.my_role
+      state.cstart = new Date(contest.start_time * 1000)
+      state.cend = new Date(contest.end_time * 1000)
     },
     resetContest: (state) => {
       state.cname = ''
       state.myrole = -1
+      state.cstart = new Date()
+      state.cend = state.cstart
     },
     setStall: (state, stall) => {
       state.stall = stall

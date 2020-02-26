@@ -9,7 +9,15 @@
       :timeout="selectMsgType==='success'? 0 : 3000"
     >
       {{selectMsg}}
-      <v-btn outlined v-if="selectMsgType==='success'" @click="selectMsgShow=false">确定</v-btn>
+      <div class="d-flex justify-end">
+        <v-btn outlined v-if="selectMsgType==='success'"
+          :to="`/contest/${$route.params.cid}/match/${newMid}`"
+        >转到记录</v-btn>
+        <v-btn text v-if="selectMsgType==='success'"
+          @click="selectMsgShow=false"
+          class="ml-2"
+        >取消</v-btn>
+      </div>
     </v-snackbar>
     <v-row justify="center">
       <v-col :cols="12" :md="10" :lg="8">
@@ -275,7 +283,7 @@ export default {
           this.newMid = res.data.id
           this.submiting = false
           this.selectMsgType = 'success'
-          this.selectMsg = `生成成功，对局编号${this.newMid}`
+          this.selectMsg = `生成成功，对局编号${this.newMid}，是否转到详情页面？`
           this.selectMsgShow = true
         })
         .catch(() => {

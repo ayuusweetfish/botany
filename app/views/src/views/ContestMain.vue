@@ -56,6 +56,8 @@ export default {
     desc: '',
     myRole: -1,
     owner: '',
+    start: new Date(),
+    end: new Date(),
     time: '',
     bannerLoading: false,
     loading: false,
@@ -75,6 +77,8 @@ export default {
       ).then(res => {
         const start = this.$functions.dateTimeString(res.data.end_time)
         const end = this.$functions.dateTimeString(res.data.start_time)
+        this.start = new Date(start)
+        this.end = new Date(end)
         this.time = start + ' TO ' + end
         this.desc = res.data.desc
         this.isRegOpen = res.data.is_reg_open

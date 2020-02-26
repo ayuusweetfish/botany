@@ -13,6 +13,7 @@ const ContestEdit = () => import('../views/ContestEdit.vue')
 const MatchList = () => import('../views/MatchList.vue')
 const MatchDetail = () => import('../views/MatchDetail.vue')
 const RankList = () => import('../views/RankList.vue')
+const CreateSubmission = () => import('../views/CreateSubmission.vue')
 
 Vue.use(VueRouter)
 
@@ -96,6 +97,15 @@ const routes = [
           title: '选手排行',
           type: 'contest',
           stalling: false
+        }
+      }, {
+        path: 'participant',
+        name: 'Participant',
+        component: CreateSubmission,
+        meta: {
+          title: '我的提交',
+          type: 'contest',
+          stalling: true
         }
       }
     ]

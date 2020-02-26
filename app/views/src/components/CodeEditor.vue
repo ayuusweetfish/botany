@@ -49,6 +49,10 @@ export default {
         lineNumbers: true,
         line: true
       })
+    },
+    tile: {
+      type: Boolean,
+      default: false
     }
   },
   data: () => ({
@@ -79,8 +83,12 @@ export default {
         alias: 'Markdown',
         script: CmMd
       }, {
-        value: 'x-objectivec',
+        value: 'x-csrc',
         alias: 'C',
+        script: CmCl
+      }, {
+        value: 'x-c++src',
+        alias: 'Cpp',
         script: CmCl
       }, {
         value: 'x-sh',
@@ -144,13 +152,22 @@ export default {
       if (oldval !== newval) {
         this.loadOptions()
       }
+    },
+    tile: function (newval, oldval) {
+      if (!newval) {
+        this.cminstance.getWrapperElement().style.borderRadius = '5px'
+      } else {
+        this.cminstance.getWrapperElement().style.borderRadius = '0px'
+      }
     }
   },
   methods: {
     initialize () {
       this.cminstance = CodeMirror.fromTextArea(this.$refs['cm-area'])
       this.cminstance.getWrapperElement().style.fontFamily = 'SFMono-Regular, Consolas, Liberation Mono, Menlo, monospace'
-      this.cminstance.getWrapperElement().style.borderRadius = '5px'
+      if (!this.tile) {
+        this.cminstance.getWrapperElement().style.borderRadius = '5px'
+      }
       this.cminstance.refresh()
       this.cminstance.setValue(this.value)
       this.cminstance.setSize(null, this.height)

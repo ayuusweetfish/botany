@@ -20,7 +20,7 @@ router.beforeEach((to, from, next) => {
   if (to.query.redirect === true && from.meta.type !== 'login') {
     store.commit('setRedirect', from.path)
   }
-  if (from.meta.stalling && store.state.stall) {
+  if (from.meta.stalling && store.state.stall && to.path !== from.path) {
     const check = window.confirm('表单尚未提交，确定离开?')
     if (!check) {
       return next(false)

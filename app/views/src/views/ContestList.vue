@@ -18,6 +18,7 @@
             <v-card-title>
               <div class="d-inline">{{item.title}}</div>
               <div class="d-inline primary--text ml-2" v-if="item.my_role===$consts.role.moderator">我管理的比赛</div>
+              <div class="d-inline primary--text ml-2" v-else-if="item.my_role===$consts.role.imIn">我参加的比赛</div>
             </v-card-title>
             <v-card-subtitle>{{item.time}}</v-card-subtitle>
             <v-card-text>
@@ -51,7 +52,7 @@ export default {
           const start = this.$functions.dateTimeString(item.start_time)
           const end = this.$functions.dateTimeString(item.end_time)
           item.time = start + ' TO ' + end
-          console.log(item)
+          // console.log(item)
         })
       }).catch(err => {
         if (err.response.state >= 400) {
