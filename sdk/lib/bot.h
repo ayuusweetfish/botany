@@ -14,40 +14,24 @@ extern "C" {
 #define BOT_ERR_CLOSED  4   /* Pipe closed, usually caused by program exiting */
 #define BOT_ERR_TIMEOUT 5   /* Time out */
 
-/* General interfaces; usually not needed */
-
-int bot_send_blob(int pipe, size_t len, const char *payload);
-
-/*
-  Receives data from a file descriptor with a given timeout.
-  Returns a pointer to the data and stores the length in *o_len.
-  In case of errors, returns NULL, stores the error code (see above) in *o_len,
-  and prints related messages to stderr.
- */
-char *bot_recv_blob(int pipe, size_t *o_len, int timeout);
-
-const char *bot_strerr(int code);
+const char *bot_strerr(size_t code);
 
 /* Judge side interfaces */
 
-typedef struct _childproc {
+typedef struct _bot_player {
     pid_t pid;
     /* fd_send is the child's stdin, fd_recv is stdout
        Parent writes to fd_send and reads from fd_recv */
     int fd_send, fd_recv;
     int fd_log;
-} childproc;
+} bot_player;
 
-/*
-  Creates the child.
-  Child processes are normally paused, but during `child_recv()`
-  the process is resumed, and paused again after its response arrives.
- */
-childproc child_create(const char *cmd, const char *log);
+/* Creates all children from command line arguments */
+bot_player *bot_player_all(int argc, char *const argv[], int *num);
 /* Terminates the child and flushes all output */
-void child_finish(childproc proc);
+void bot_player_finish(bot_player *procs, int num);
 /* Sends to and receives from a child */
-void child_send(childproc proc, const char *str);
+void bot_player_send(bot_player proc, const char *str);
 /*
   Returns a string on success, and NULL on failure.
   The returned string, if non-null, should be free()'d.
@@ -55,7 +39,7 @@ void child_send(childproc proc, const char *str);
   See constant definitions at top of the file, or use `bot_strerr()`
   to get the error description.
  */
-char *child_recv(childproc proc, size_t *o_len, int timeout);
+char *bot_player_recv(bot_player proc, size_t *o_len, int timeout);
 
 /* Player side interfaces */
 

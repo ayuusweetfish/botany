@@ -9,7 +9,7 @@ run-lua: judge
 
 run-py: CMD = "PYTHONPATH=lib python player.py"
 run-py: judge
-	./judge $(CMD) $(CMD) $(LOGS)
+	@./judge $(CMD) $(CMD) $(LOGS)
 
 ifneq (, $(wildcard judge.c))
 judge: lib/bot.h lib/bot.c judge.c

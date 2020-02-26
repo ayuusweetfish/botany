@@ -5,22 +5,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-/* Modifies contents in `s` */
-static inline char *str_head(char *s, size_t n)
-{
-    size_t m = strlen(s);
-    if (m > n) {
-        if (n >= 3) s[n - 3] = '.';
-        if (n >= 2) s[n - 2] = '.';
-        if (n >= 1) s[n - 1] = '.';
-        s[n] = '\0';
-    }
-    return s;
-}
-
 /*
     Usage:
-    - ./run <prog-1> <prog-2> [<log-1> [<log-2>]]
+    - ./judge <prog-1> <prog-2> <log-1> <log-2>
 
     Player protocol:
     - Startup: input "<side>"
@@ -33,42 +20,49 @@ static inline char *str_head(char *s, size_t n)
             row, col - 0..2
 */
 
+static inline char *str_head(char *s, size_t n);
+
 int main(int argc, char *argv[])
 {
-    if (argc < 3) {
-        printf("usage: %s <prog-1> <prog-2> [<log-1> [<log-2>]]\n", argv[0]);
-        return 1;
+    /* Initialize players and make sure there are exactly 2 of them */
+    int n;
+    bot_player *pl = bot_player_all(argc, argv, &n);
+    if (n != 2) {
+        fprintf(stderr, "Expected 2 players, got %d\n", n);
+        exit(1);
     }
 
-    childproc par[2];
-    par[0] = child_create(argv[1], argc < 4 ? "/dev/null" : argv[3]);
-    par[1] = child_create(argv[2], argc < 5 ? "/dev/null" : argv[4]);
+    /* Inform each player which side it is on */
+    bot_player_send(pl[0], "0");
+    bot_player_send(pl[1], "1");
 
-    child_send(par[0], "0");
-    child_send(par[1], "1");
-
-    char buf[8];
-    char *resp;
-    size_t err;
-
+    /* Set up board state */
     int move = 0;
     int win = -1, count = 0;
     int row = -1, col = -1;
     int board[3][3];
     memset(board, -1, sizeof board);
 
-    for (; win == -1 && count < 9; free(resp), move ^= 1) {
-        snprintf(buf, sizeof buf, "%d %d", row, col);
-        child_send(par[move], buf);
-        resp = child_recv(par[move], &err, 1000);
+    /* Temporary variables and buffers */
+    char buf[8];
+    char *resp;
+    size_t err;
 
+    for (; win == -1 && count < 9; free(resp), move ^= 1) {
+        /* Inform the current player of the last move */
+        snprintf(buf, sizeof buf, "%d %d", row, col);
+        bot_player_send(pl[move], buf);
+        resp = bot_player_recv(pl[move], &err, 1000);
+
+        /* An invalid response causes immediate defeat; the same below */
         if (resp == NULL) {
             fprintf(stderr, "Side #%d errors with %d (%s), considered resignation\n",
-                move, (int)err, bot_strerr((int)err));
+                move, (int)err, bot_strerr(err));
             win = move ^ 1;
             continue;
         }
 
+        /* Parse the player's response */
         if (sscanf(resp, "%d%d", &row, &col) != 2 ||
             (row < 0 || row >= 3) ||
             (col < 0 || col >= 3))
@@ -89,7 +83,7 @@ int main(int argc, char *argv[])
         fprintf(stderr, "Side #%d moves at (%d, %d)\n", move, row, col);
         board[row][col] = move;
 
-        // Check winning condition
+        /* Check winning condition */
         for (int i = 0; i < 3; i++)
             if ((board[i][0] == move && board[i][1] == move && board[i][2] == move) ||
                 (board[0][i] == move && board[1][i] == move && board[2][i] == move))
@@ -107,6 +101,7 @@ int main(int argc, char *argv[])
         }
     }
 
+    /* Write the report to stdout */
     printf("{\n  \"winner\": %d,\n  \"board\": \"", win);
     for (int i = 0; i < 3; i++) {
         for (int j = 0; j < 3; j++)
@@ -115,8 +110,20 @@ int main(int argc, char *argv[])
     }
     printf("\"\n}\n");
 
-    child_finish(par[0]);
-    child_finish(par[1]);
+    /* Stop all players to ensure their logs are written */
+    bot_player_finish(pl, 2);
 
     return 0;
+}
+
+static inline char *str_head(char *s, size_t n)
+{
+    size_t m = strlen(s);
+    if (m > n) {
+        if (n >= 3) s[n - 3] = '.';
+        if (n >= 2) s[n - 2] = '.';
+        if (n >= 1) s[n - 1] = '.';
+        s[n] = '\0';
+    }
+    return s;
 }
