@@ -169,6 +169,14 @@ const char *bot_strerr(size_t code)
     }
 }
 
+typedef struct _bot_player {
+    pid_t pid;
+    /* fd_send is the child's stdin, fd_recv is stdout
+       Parent writes to fd_send and reads from fd_recv */
+    int fd_send, fd_recv;
+    int fd_log;
+} bot_player;
+
 #define bot_player_pause(__cp)   kill(-(__cp).pid, SIGUSR1)
 #define bot_player_resume(__cp)  kill(-(__cp).pid, SIGUSR2)
 
@@ -177,7 +185,7 @@ const char *bot_strerr(size_t code)
   Child processes are normally paused, but during `bot_player_recv()`
   the process is resumed, and paused again after its response arrives.
  */
-bot_player bot_player_create(const char *cmd, const char *log)
+static bot_player bot_player_create(const char *cmd, const char *log)
 {
     bot_player ret;
     ret.pid = -1;
@@ -227,39 +235,42 @@ bot_player bot_player_create(const char *cmd, const char *log)
     return ret;
 }
 
-bot_player *bot_player_all(int argc, char *const argv[], int *num)
+int num_players;
+static bot_player *players;
+
+int bot_player_init(int argc, char *const argv[])
 {
     int n = (argc - 1) / 2;
-    bot_player *players = (bot_player *)malloc(sizeof(bot_player) * n);
+    num_players = n;
+    players = (bot_player *)malloc(sizeof(bot_player) * n);
 
     int i;
     for (i = 0; i < n; i++)
         players[i] = bot_player_create(argv[1 + i], argv[1 + i + n]);
 
-    if (num != NULL) *num = n;
-    return players;
+    return n;
 }
 
-void bot_player_finish(bot_player *procs, int num)
+void bot_player_finish()
 {
     int i;
-    for (i = 0; i < num; i++) {
-        fsync(procs[i].fd_log);
-        kill(procs[i].pid, SIGTERM);
-        while (waitpid(procs[i].pid, 0, 0) > 0) { }
+    for (i = 0; i < num_players; i++) {
+        fsync(players[i].fd_log);
+        kill(players[i].pid, SIGTERM);
+        while (waitpid(players[i].pid, 0, 0) > 0) { }
     }
 }
 
-void bot_player_send(bot_player proc, const char *str)
+void bot_player_send(int id, const char *str)
 {
-    bot_send_blob(proc.fd_send, 0, str);
+    bot_send_blob(players[id].fd_send, 0, str);
 }
 
-char *bot_player_recv(bot_player proc, size_t *o_len, int timeout)
+char *bot_player_recv(int id, size_t *o_len, int timeout)
 {
-    bot_player_resume(proc);
-    char *resp = bot_recv_blob(proc.fd_recv, o_len, timeout);
-    bot_player_pause(proc);
+    bot_player_resume(players[id]);
+    char *resp = bot_recv_blob(players[id].fd_recv, o_len, timeout);
+    bot_player_pause(players[id]);
     return resp;
 }
 
