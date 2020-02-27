@@ -9,6 +9,7 @@
 #include <string.h>
 #include <sys/wait.h>
 #include <time.h>
+#include <unistd.h>
 
 #define quq(__syscall, ...) _quq(#__syscall, __syscall(__VA_ARGS__))
 
@@ -156,7 +157,7 @@ static char *bot_recv_blob(int pipe, size_t *o_len, int timeout)
     return ret;
 }
 
-const char *bot_strerr(size_t code)
+const char *bot_strerr(int code)
 {
     switch (code) {
         case BOT_ERR_NONE:    return "ok";
@@ -266,11 +267,13 @@ void bot_player_send(int id, const char *str)
     bot_send_blob(players[id].fd_send, 0, str);
 }
 
-char *bot_player_recv(int id, size_t *o_len, int timeout)
+char *bot_player_recv(int id, int *o_len, int timeout)
 {
+    size_t len;
     bot_player_resume(players[id]);
-    char *resp = bot_recv_blob(players[id].fd_recv, o_len, timeout);
+    char *resp = bot_recv_blob(players[id].fd_recv, &len, timeout);
     bot_player_pause(players[id]);
+    if (o_len != NULL) *o_len = len;
     return resp;
 }
 

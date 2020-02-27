@@ -45,7 +45,7 @@ int main(int argc, char *argv[])
     /* Temporary variables and buffers */
     char buf[8];
     char *resp;
-    size_t err;
+    int err;
 
     for (; win == -1 && count < 9; free(resp), move ^= 1) {
         /* Inform the current player of the last move */
@@ -56,7 +56,7 @@ int main(int argc, char *argv[])
         /* An invalid response causes immediate defeat; the same below */
         if (resp == NULL) {
             fprintf(stderr, "Side #%d errors with %d (%s), considered resignation\n",
-                move, (int)err, bot_strerr(err));
+                move, err, bot_strerr(err));
             win = move ^ 1;
             continue;
         }

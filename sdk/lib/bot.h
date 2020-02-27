@@ -5,8 +5,6 @@
 extern "C" {
 #endif
 
-#include <unistd.h>
-
 #define BOT_ERR_NONE    0   /* No error */
 #define BOT_ERR_FMT     1   /* Incorrect message format, does not happen if player uses this library */
 #define BOT_ERR_SYSCALL 2   /* Failure during system calls */
@@ -14,7 +12,7 @@ extern "C" {
 #define BOT_ERR_CLOSED  4   /* Pipe closed, usually caused by program exiting */
 #define BOT_ERR_TIMEOUT 5   /* Time out */
 
-const char *bot_strerr(size_t code);
+const char *bot_strerr(int code);
 
 /* Judge side interfaces */
 
@@ -34,7 +32,7 @@ void bot_player_send(int id, const char *str);
   See constant definitions at top of the file, or use `bot_strerr()`
   to get the error description.
  */
-char *bot_player_recv(int id, size_t *o_len, int timeout);
+char *bot_player_recv(int id, int *o_len, int timeout);
 
 /* Player side interfaces */
 
