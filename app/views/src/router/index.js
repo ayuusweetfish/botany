@@ -14,6 +14,8 @@ const MatchList = () => import('../views/MatchList.vue')
 const MatchDetail = () => import('../views/MatchDetail.vue')
 const RankList = () => import('../views/RankList.vue')
 const CreateSubmission = () => import('../views/CreateSubmission.vue')
+const Judge = () => import('../views/Judge.vue')
+const Script = () => import('../views/HandleScript.vue')
 
 Vue.use(VueRouter)
 
@@ -106,6 +108,24 @@ const routes = [
           title: '我的提交',
           type: 'contest',
           stalling: true
+        }
+      }, {
+        path: 'judge',
+        name: 'Judge',
+        component: Judge,
+        meta: {
+          title: '设置裁判',
+          type: 'contest',
+          stalling: true
+        }
+      }, {
+        path: 'script',
+        name: 'Script',
+        component: Script,
+        meta: {
+          title: '脚本操作',
+          type: 'contest',
+          stalling: false
         }
       }
     ]

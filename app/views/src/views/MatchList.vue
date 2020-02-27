@@ -22,7 +22,7 @@
           <template v-slot:item.parties="{ item }">
             <div class="d-flex no-wrap align-center">
               <v-menu
-                transition="scroll-y-transistion"
+                transition="slide-y-transistion"
                 v-for="(party, index) in item.parties.slice(0, 5)" :key="index"
                 offset-y
                 open-on-hover

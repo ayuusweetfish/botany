@@ -19,7 +19,9 @@
     <v-row justify="center">
       <v-col :cols="12" :md="10" :lg="8">
         <v-card outlined style="border: none">
-          <v-card-title class="title">提交代码</v-card-title>
+          <v-card-title class="title" v-if="mode==='participant'">提交代码</v-card-title>
+          <v-card-title class="title" v-else>设置裁判</v-card-title>
+          <v-card-subtitle class="subtitle-1">当前比赛ID：{{$route.params.cid}}，名称：{{$store.state.cname}}</v-card-subtitle>
         </v-card>
           <v-tabs :value="getTab()" @change="changeTab">
             <v-tab>代码编辑</v-tab>
@@ -87,6 +89,9 @@
                       <div>
                         当前主战提交
                         <v-btn text small class="ml-1 mb-1" color="primary"
+                          @click="loadContent({sid: delegate.sid})"
+                        ><v-icon>mdi-open-in-new</v-icon>导出</v-btn>
+                        <v-btn text small class="ml-1 mb-1" color="primary"
                           @click="setDelegate({sid: -1})"
                         ><v-icon>mdi-star-off</v-icon>撤下</v-btn>
                       </div>
@@ -100,6 +105,9 @@
                     <div v-else>
                       <div>
                         当前裁判代码：
+                        <v-btn text small class="ml-1 mb-1" color="primary"
+                          @click="loadContent({sid: delegate.sid})"
+                        ><v-icon>mdi-open-in-new</v-icon>导出</v-btn>
                         <v-btn text small class="ml-1 mb-1" color="primary"
                           @click="setDelegate({sid: -1})"
                         ><v-icon>mdi-star-off</v-icon>撤下</v-btn>
@@ -253,8 +261,9 @@ export default {
       this.$axios.get(
         '/contest/' + this.$route.params.cid + '/my'
       ).then(res => {
+        const tail = this.mode === 'participant' ? '/my_delegate' : '/judge_id'
         this.$axios.get(
-          '/contest/' + this.$route.params.cid + '/my_delegate'
+          '/contest/' + this.$route.params.cid + tail
         ).then(result => {
           this.history = Array.from(res.data, item => {
             const newItem = {
@@ -270,11 +279,20 @@ export default {
           })
           this.page = 1
           this.tableLoading = false
+        }).catch(err => {
+          this.tableLoading = false
+          if (err.response.status === 403 || err.response.status === 401) {
+            this.error.msg = '未参加本赛事或未登录！'
+            this.error.show = true
+          } else {
+            this.error.msg = '查询失败'
+            this.error.show = true
+          }
         })
       }).catch(err => {
         this.tableLoading = false
         if (err.response.status === 403 || err.response.status === 401) {
-          this.error.msg = '未参本赛事或未登录！'
+          this.error.msg = '未参加本赛事或未登录！'
           this.error.show = true
         } else {
           this.error.msg = '查询失败'
