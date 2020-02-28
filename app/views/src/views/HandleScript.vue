@@ -125,24 +125,6 @@ export default {
         this.error.msg = '查询日志失败'
         this.error.show = true
       })
-    },
-    downloadLog () {
-      this.loading = true
-      this.$axios.get(
-        '/contest/' + this.$route.params.cid + '/script_log',
-        { params: { full: 1 } }
-      ).then(res => {
-        this.loading = false
-        const blob = new Blob([res.data], { type: 'text/txt,charset=UTF-8' })
-        const a = document.createElement('a')
-        a.href = URL.createObjectURL(blob)
-        a.download = 'log.txt'
-        a.click()
-      }).catch(() => {
-        this.loading = false
-        this.error.msg = '下载失败'
-        this.error.show = true
-      })
     }
   }
 }
