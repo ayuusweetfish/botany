@@ -6,6 +6,13 @@
     <v-container fluid>
       <h1>欢迎来到BotAny</h1>
       <div>当前共有{{total}}场赛事</div>
+      <div>
+        <v-btn
+          text color="primary" class="pa-0"
+          v-if="$store.state.privilege === $consts.privilege.organizer"
+          :to="`/create`"
+        ><v-icon>mdi-plus-box-outline</v-icon>添加一场赛事</v-btn>
+      </div>
       <v-row>
         <v-col
           :cols="12" :md="6"
@@ -14,7 +21,7 @@
           <v-card
             :to="`/contest/${item.id}/main`"
           >
-            <v-img :src="$axios.defaults.baseURL + '/contest/' + item.id + '/banner'" :height="180" contain></v-img>
+            <v-img :src="$axios.defaults.baseURL + '/contest/' + item.id + '/banner'" :height="180"></v-img>
             <v-card-title>
               <div class="d-inline">{{item.title}}</div>
               <div class="d-inline primary--text ml-2" v-if="item.my_role===$consts.role.moderator">我管理的比赛</div>

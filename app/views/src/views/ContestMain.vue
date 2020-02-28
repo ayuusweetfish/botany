@@ -4,18 +4,83 @@
     <v-snackbar top style="margin-top: 60px"  v-model="showErr" color="error" :timeout="3000">
       {{errMessage}}
     </v-snackbar>
-    <v-img :src="bannerUrl" max-height="300" contain transition="fade-transition"></v-img>
+    <v-snackbar top style="margin-top: 60px"  v-model="showSuccess" color="success" :timeout="3000">
+      {{successMsg}}
+    </v-snackbar>
+    <v-img :src="bannerUrl" max-height="300" transition="fade-transition"></v-img>
+    <input
+      ref="banner-upload"
+      type="file"
+      style="display: none"
+      accept="image/gif, image/jpeg, image/png"
+      min="1"
+      max="1"
+      @change="uploadBanner"/>
     <div class="display-2 mb-2 d-flex justify-center">{{title}}</div>
     <v-container fluid>
       <v-row justify="center">
-        <v-btn color="primary" class="ml-1 mr-1">报名参加</v-btn>
-        <v-btn color="primary" class="ml-1 mr-1">公开赛事</v-btn>
-        <v-btn color="primary" class="ml-1 mr-1">隐藏赛事</v-btn>
-        <v-btn text color="primary" class="ml-1 mr-1" :to="`/contest/${$route.params.cid}/ranklist`">玩家排行</v-btn>
-        <v-btn text color="primary" class="ml-1 mr-1" :to="`/contest/${$route.params.cid}/match`">对局列表</v-btn>
-        <v-btn text color="primary" class="ml-1 mr-1" :to="`/contest/${$route.params.cid}/submission`">提交列表</v-btn>
-        <v-btn text color="primary" class="ml-1 mr-1">我的代码</v-btn>
-        <v-btn text color="primary" class="ml-1 mr-1" :to="`/contest/${$route.params.cid}/edit`">赛事设置</v-btn>
+        <v-btn color="primary"
+          class="ml-1 mr-1"
+          v-if="checkAuth('notIn')"
+          :loading="joining"
+          :disabled="joining"
+          @click="join"
+        >报名参加</v-btn>
+        <v-btn color="primary"
+          class="ml-1 mr-1"
+          v-if="checkAuth('moderator')"
+          :loading="bannerLoading"
+          :disabled="bannerLoading"
+          @click="changeBanner"
+        >更改Banner</v-btn>
+        <div v-if="$store.state.privilege === $consts.privilege.superuser">
+          <v-btn
+            color="primary" class="ml-1 mr-1"
+            v-if="!isVisible"
+            @click="setContest(true)"
+            :loading="setting"
+            :disabled="setting"
+          >公开赛事</v-btn>
+          <v-btn
+            color="primary" class="ml-1 mr-1"
+            v-else
+            @click="setContest(false)"
+            :loading="setting"
+            :disabled="setting"
+          >隐藏赛事</v-btn>
+        </div>
+        <v-btn
+          text color="primary" class="ml-1 mr-1"
+          :to="`/contest/${$route.params.cid}/script`"
+          v-if="checkAuth('moderator')"
+        >脚本操作</v-btn>
+        <v-btn
+          text color="primary" class="ml-1 mr-1"
+          :to="`/contest/${$route.params.cid}/judge#submit`"
+          v-if="checkAuth('moderator')"
+        >设置裁判</v-btn>
+        <v-btn
+          text color="primary" class="ml-1 mr-1"
+          :to="`/contest/${$route.params.cid}/edit`"
+          v-if="checkAuth('moderator')"
+        >赛事编辑</v-btn>
+        <v-btn
+          text color="primary" class="ml-1 mr-1"
+          :to="`/contest/${$route.params.cid}/submit#edit`"
+          v-if="checkAuth('imIn')"
+        >我的代码</v-btn>
+        <v-btn
+          text color="primary" class="ml-1 mr-1"
+          :to="`/contest/${$route.params.cid}/ranklist`"
+        >玩家排行</v-btn>
+        <v-btn
+          text color="primary" class="ml-1 mr-1"
+          :to="`/contest/${$route.params.cid}/match`"
+        >对局列表</v-btn>
+        <v-btn
+          text color="primary" class="ml-1 mr-1"
+          :to="`/contest/${$route.params.cid}/submission`"
+        >提交列表</v-btn>
       </v-row>
     </v-container>
     <v-container fluid>
@@ -62,7 +127,11 @@ export default {
     bannerLoading: false,
     loading: false,
     showErr: false,
-    errMessage: '查询失败'
+    errMessage: '查询失败',
+    showSuccess: false,
+    successMsg: '',
+    joining: false,
+    setting: false
   }),
   methods: {
     reload () {
@@ -96,6 +165,79 @@ export default {
           this.errMessage = '赛事信息查询失败 (404 Not Found)'
         }
         this.loading = false
+        this.showErr = true
+      })
+    },
+    checkAuth (type) {
+      return this.$store.state.myrole === this.$consts.role[type]
+    },
+    join () {
+      if (this.$store.state.handle === '') {
+        this.$router.push({ path: '/register/login', query: { redirect: true } })
+      }
+      this.joining = true
+      this.$axios.post(
+        '/contest/' + this.cid + '/join'
+      ).then(res => {
+        this.successMsg = '成功加入赛事'
+        this.showSuccess = true
+        this.reload()
+      }).catch(() => {
+        this.errMessage = '加入赛事失败'
+        this.showErr = true
+      })
+    },
+    setContest (visible) {
+      this.setting = true
+      const param = this.$qs.stringify({ set: visible })
+      this.$axios.post(
+        '/contest/' + this.cid + '/publish',
+        param
+      ).then(res => {
+        this.setting = false
+        this.successMsg = '设置成功'
+        this.showSuccess = true
+        this.reload()
+      }).catch(() => {
+        this.setting = false
+        this.errMessage = '设置失败'
+        this.showErr = true
+      })
+    },
+    changeBanner () {
+      this.$refs['banner-upload'].click()
+    },
+    uploadBanner () {
+      const files = this.$refs['banner-upload'].files
+      if (!files || files.length !== 1) {
+        this.errMessage = '上传文件过多'
+        this.showErr = true
+        return
+      }
+      if (files[0].size >= 1024 * 1024) {
+        this.errMessage = '上传文件过大'
+        this.showErr = true
+        return
+      }
+      const namelist = files[0].name.split('.')
+      const filetype = namelist[namelist.length - 1]
+      if (['jpg', 'jpeg', 'gif', 'png'].indexOf(filetype) === -1) {
+        this.errMessage = '上传文件格式错误'
+        this.showErr = true
+        return
+      }
+      this.bannerLoading = true
+      const bannerpckt = new FormData()
+      bannerpckt.append('file', files[0])
+      this.$axios.post(
+        '/contest/' + this.cid + '/banner/upload',
+        bannerpckt
+      ).then(res => {
+        this.bannerLoading = false
+        window.location.reload()
+      }).catch(() => {
+        this.bannerLoading = false
+        this.errMessage = '上传失败'
         this.showErr = true
       })
     }

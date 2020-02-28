@@ -25,7 +25,18 @@
             </div>
           </template>
           <template v-slot:item.delegate="{ item }">
-            <div>{{item.delegate}}</div>
+            <div v-if="$store.state.myrole===$consts.role.moderator">
+              <router-link
+                v-if="item.delegate!==-1"
+                :to="`/contest/${$route.params.cid}/submission/${item.delegate}`"
+                style="text-decoration: none"
+              >{{item.delegate}}</router-link>
+              <div v-else>无</div>
+            </div>
+            <div v-else>
+              <div v-if="item.delegate!==-1">{{item.delegate}}</div>
+              <div v-else>无</div>
+            </div>
           </template>
           <template slot="footer">
             <table-pagination
@@ -69,7 +80,7 @@ export default {
         align: 'center',
         value: 'participant'
       }, {
-        text: '提交编号',
+        text: '主战提交',
         align: 'center',
         value: 'delegate'
       }, {

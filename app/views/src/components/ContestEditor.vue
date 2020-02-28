@@ -231,8 +231,9 @@ export default {
       ).then(res => {
         this.$store.commit('setContest', res.data)
         if (res.data.my_role !== this.$consts.role.moderator) {
-          this.$message.error('没有权限进行这项操作')
-          this.$router.push(`/contest/${this.$route.params.cid}/main`)
+          this.message = '没有权限进行这个操作'
+          this.messageType = 'error'
+          this.showMessage = true
           return
         }
         this.script = res.data.script
@@ -312,8 +313,9 @@ export default {
           params.moderators = idList.join(',')
         }
         params = this.$qs.stringify(params)
+        const tail = this.mode === 'edit' ? `${this.$route.params.cid}/edit` : '/create'
         this.$axios.post(
-          '/contest/' + this.$route.params.cid + '/edit',
+          '/contest/' + tail,
           params
         ).then(res => {
           this.$store.commit('setStall', false)
@@ -334,10 +336,12 @@ export default {
       }
     },
     goNext () {
-      this.$router.push(`/contest/${this.$route.params.cid}/main`)
+      const url = this.mode === 'edit' ? `/contest/${this.$route.params.cid}/main` : '/'
+      this.$router.push(url)
     },
     cancel () {
-      this.$router.push(`/contest/${this.$route.params.cid}/main`)
+      const url = this.mode === 'edit' ? `/contest/${this.$route.params.cid}/main` : '/'
+      this.$router.push(url)
     }
   }
 }

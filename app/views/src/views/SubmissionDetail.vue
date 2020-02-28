@@ -38,10 +38,12 @@
         <v-card>
           <v-card-title class="title">
             <v-btn
-              icon
+              text
               exact
+              color="primary"
+              class="title pa-0"
               :to="`/contest/${$route.params.cid}/submission`"
-            ><v-icon>mdi-arrow-collapse-left</v-icon></v-btn>
+            >提交列表<v-icon>mdi-chevron-right</v-icon></v-btn>
             提交详情
           </v-card-title>
           <v-card-subtitle class="subtitle-1">第{{$route.params.sid}}号提交@{{$store.state.cname}}</v-card-subtitle>

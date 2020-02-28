@@ -16,6 +16,7 @@ const RankList = () => import('../views/RankList.vue')
 const CreateSubmission = () => import('../views/CreateSubmission.vue')
 const Judge = () => import('../views/Judge.vue')
 const Script = () => import('../views/HandleScript.vue')
+const CreateContest = () => import('../views/CreateContest.vue')
 
 Vue.use(VueRouter)
 
@@ -27,7 +28,6 @@ const routes = [
     meta: {
       title: '主页',
       type: 'main',
-      prePage: [],
       stalling: false
     }
   }, {
@@ -37,8 +37,16 @@ const routes = [
     meta: {
       title: '赛事',
       type: 'main',
-      prePage: [],
       stalling: false
+    }
+  }, {
+    path: '/create',
+    name: 'Create',
+    component: CreateContest,
+    meta: {
+      title: '新建赛事',
+      type: 'main',
+      stalling: true
     }
   }, {
     path: '/contest/:cid',
@@ -140,7 +148,6 @@ const routes = [
         meta: {
           title: '登录',
           type: 'login',
-          prePage: [],
           stalling: false
         }
       }, {
@@ -149,7 +156,6 @@ const routes = [
         meta: {
           title: '注册',
           type: 'login',
-          prePage: [],
           stalling: true
         }
       }
@@ -161,7 +167,6 @@ const routes = [
     meta: {
       title: '选手信息',
       type: 'main',
-      prePage: [{ path: '/', query: [] }],
       stalling: false
     }
   }

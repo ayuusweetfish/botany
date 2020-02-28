@@ -12,10 +12,12 @@
         <v-card>
           <v-card-title class="title">
             <v-btn
-              icon
+              text
               exact
-              :to="`/contest/${$route.params.cid}/submission`"
-            ><v-icon>mdi-arrow-collapse-left</v-icon></v-btn>
+              color="primary"
+              class="title pa-0"
+              :to="`/contest/${$route.params.cid}/match`"
+            >对局列表<v-icon>mdi-chevron-right</v-icon></v-btn>
             对局详情
           </v-card-title>
           <v-card-subtitle class="subtitle-1">对局编号：{{$route.params.mid}}</v-card-subtitle>
@@ -29,7 +31,13 @@
                 v-for="(item, index) in parties"
                 :key="index"
               >
-                <div class="title mr-2">{{item.id}}</div>
+                <router-link
+                  v-if="$store.state.myrole===$consts.role.moderator"
+                  :to="`/contest/${$route.params.cid}/submission/${item.id}`"
+                  class="title mr-2"
+                  style="text-decoration: none"
+                >{{item.id}}</router-link>
+                <div v-else class="title mr-2">{{item.id}}</div>
                 <div class="mr-1">by</div>
                 <user-tag :user="item.participant" size="small"></user-tag>
               </span>
