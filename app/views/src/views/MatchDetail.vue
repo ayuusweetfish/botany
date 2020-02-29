@@ -42,7 +42,22 @@
                 <user-tag :user="item.participant" size="small"></user-tag>
               </span>
             </div>
-          </v-card-text>
+            <div class="mt-5">
+              <v-btn text icon class="mr-2">
+                <v-icon @click="zoomIn" large>mdi-magnify-plus-outline</v-icon>
+              </v-btn>
+              <v-btn text icon>
+                <v-icon @click="zoomOut" large>mdi-magnify-minus-outline</v-icon>
+              </v-btn>
+            </div>
+            <iframe
+              class="embed mt-5"
+              :src="$axios.defaults.baseURL + '/contest/' + $route.params.cid + '/match/' + $route.params.cid + '/playback'"
+              :style="{ transform: `scale(${transform})` }"
+              frameborder="0"
+              >
+              </iframe>
+            </v-card-text>
         </v-card>
       </v-col>
     </v-row>
@@ -66,9 +81,17 @@ export default {
     scroll: 0,
     loading: false,
     parties: [],
-    status: -1
+    status: -1,
+    transform: 1
   }),
   methods: {
+    zoomIn () {
+      this.transform += 0.05
+    },
+    zoomOut () {
+      const r = this.transform - 0.05
+      r > 0 && (this.transform = r)
+    },
     getDetail () {
       this.loading = true
       this.$axios.get(
@@ -87,5 +110,10 @@ export default {
 </script>
 
 <style>
+.embed {
+  width: 100vw;
+  height: 100vh;
+  transform-origin: 0 0;
+}
 
 </style>
