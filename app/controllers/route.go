@@ -11,13 +11,19 @@ import (
 var router *mux.Router
 var apiRouter *mux.Router
 
+func handlerServeHomePage(w http.ResponseWriter, r *http.Request) {
+	http.ServeFile(w, r, "./views/dist/index.html")
+}
+
 func registerRouterFunc(path string, fn func(http.ResponseWriter, *http.Request), methods ...string) {
 	if router == nil {
 		// Initialize API endpoint
 		router = mux.NewRouter()
 		apiRouter = router.PathPrefix(globals.Config().ApiPrefix).Subrouter()
 		// Initialize static file server
-		router.PathPrefix("/").Handler(http.FileServer(http.Dir("./views/dist/")))
+		router.PathPrefix("/static").Handler(http.FileServer(http.Dir("./views/dist/")))
+		// Set custom "not found" handler
+		router.NotFoundHandler = http.HandlerFunc(handlerServeHomePage)
 	}
 	if len(methods) == 0 {
 		methods = []string{"GET"}
