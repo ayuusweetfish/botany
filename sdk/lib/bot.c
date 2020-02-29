@@ -9,6 +9,12 @@
   Deprecated POSIX names:
     write, open
  */
+#undef STDIN_FILENO
+#undef STDOUT_FILENO
+#undef STDERR_FILENO
+#define STDIN_FILENO  _fileno(stdin)
+#define STDOUT_FILENO _fileno(stdout)
+#define STDERR_FILENO _fileno(stderr)
 #else
 #include <poll.h>
 #include <sys/wait.h>
@@ -259,17 +265,13 @@ static bot_player bot_player_create(const char *cmd, const char *log)
 #ifdef _WIN32
     /* Back up stdin/stdout/stderr, since following _dup2() calls
        overwrite these */
-    int stdin_fileno = _fileno(stdin);
-    int stdout_fileno = _fileno(stdout);
-    int stderr_fileno = _fileno(stderr);
+    int fd_stdin = _dup(STDIN_FILENO);
+    int fd_stdout = _dup(STDOUT_FILENO);
+    int fd_stderr = _dup(STDERR_FILENO);
 
-    int fd_stdin = _dup(stdin_fileno);
-    int fd_stdout = _dup(stdout_fileno);
-    int fd_stderr = _dup(stderr_fileno);
-
-    _dup2(fd_send[0], stdin_fileno);
-    _dup2(fd_recv[1], stdout_fileno);
-    _dup2(fd_log, stderr_fileno);
+    _dup2(fd_send[0], STDIN_FILENO);
+    _dup2(fd_recv[1], STDOUT_FILENO);
+    _dup2(fd_log, STDERR_FILENO);
 
     /* Spawn the child process */
     intptr_t handle = _spawnl(_P_NOWAIT, cmd, cmd, NULL);
@@ -278,9 +280,9 @@ static bot_player bot_player_create(const char *cmd, const char *log)
     ret.fd_log = fd_log;
 
     /* Restore original stdin/stdout/stderr */
-    _dup2(fd_stdin, stdin_fileno);
-    _dup2(fd_stdout, stdout_fileno);
-    _dup2(fd_stderr, stderr_fileno);
+    _dup2(fd_stdin, STDIN_FILENO);
+    _dup2(fd_stdout, STDOUT_FILENO);
+    _dup2(fd_stderr, STDERR_FILENO);
     _close(fd_stdin);
     _close(fd_stdout);
 
