@@ -46,6 +46,15 @@ char *bot_recv();
 
 接收到的消息字符串需要通过 __free()__ 释放。
 
+任意时刻都可以自行向标准错误 stderr 输出日志信息，这些内容可以在对局记录页面下载查看。推荐每次输出内容之后调用 __fflush()__，以避免在程序被裁判停止时丢失部分日志。
+
+```
+fprintf(stderr, "Hello world!\n");
+fflush(stderr);
+```
+
+祝大家玩得开心！
+
 ## 裁判
 
 裁判用 C/C++ 编写，保存为文件 judge.c/cpp，Make 将自动检测并使用对应的编译器。
@@ -83,7 +92,7 @@ bot_player_send(0, "0");
 bot_player_send(1, "1");
 ```
 
-需要发送动态生成的消息，可以利用 __sprintf__ 或 __snprintf__：
+若要发送动态生成的消息，可以利用 __sprintf__ 或 __snprintf__：
 
 ```c
 snprintf(buf, sizeof buf, "%d %d", row, col);
