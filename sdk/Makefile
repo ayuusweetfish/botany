@@ -7,7 +7,7 @@ run-lua: CMD = "LUA_PATH=lib/?.lua lua player.lua"
 run-lua: judge
 	@./judge $(CMD) $(CMD) $(LOGS)
 
-run-py: CMD = "PYTHONPATH=lib python player.py"
+run-py: CMD = "PYTHONPATH=lib python3 player.py"
 run-py: judge
 	@./judge $(CMD) $(CMD) $(LOGS)
 

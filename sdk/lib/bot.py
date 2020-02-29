@@ -15,9 +15,9 @@ class Bot:
 
     @staticmethod
     def recv():
-        s = sys.stdin.read(3)
-        l = ord(s[0]) + (ord(s[1]) << 8) + (ord(s[2]) << 16)
-        return sys.stdin.read(l)
+        s = sys.stdin.buffer.read(3)
+        l = s[0] + (s[1] << 8) + (s[2] << 16)
+        return sys.stdin.buffer.read(l).decode()
 
     @staticmethod
     def log(s):
