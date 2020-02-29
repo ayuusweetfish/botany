@@ -12,6 +12,7 @@ int main()
     sscanf(s, "%d", &side);
     free(s);
     fprintf(stderr, "Hello from side #%d\n", side);
+    fflush(stderr);
 
     srand(((unsigned)time(NULL) << 1) | side);
     bool board[3][3] = {{ false }};
@@ -32,6 +33,7 @@ int main()
         } while (board[u][v]);
         board[u][v] = true;
         fprintf(stderr, "Moving at (%d, %d)\n", u, v);
+        fflush(stderr);
 
         // Send
         char t[8];

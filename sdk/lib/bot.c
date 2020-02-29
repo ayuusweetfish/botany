@@ -1,13 +1,24 @@
 #include "bot.h"
 
+#ifdef _WIN32
+#include <io.h>
+#include <windows.h>
+#pragma warning(disable : 4996)
+/*
+  Deprecated POSIX names:
+    write, open
+ */
+#else
+#include <poll.h>
+#include <sys/wait.h>
+#endif
+
 #include <errno.h>
 #include <fcntl.h>
-#include <poll.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/wait.h>
 #include <time.h>
 #include <unistd.h>
 
@@ -67,6 +78,29 @@ static int bot_send_blob(int pipe, size_t len, const char *payload)
  */
 static char *bot_recv_blob(int pipe, size_t *o_len, int timeout)
 {
+#ifdef _WIN32
+    /* Under windows, a simple implementation without timeout is employed */
+    char buf[4];
+    if (_read(pipe, buf, 3) < 3) {
+        *o_len = BOT_ERR_FMT;
+        return NULL;
+    }
+    int len = ((int)buf[2] << 16) | ((int)buf[1] << 8) | (int)buf[0];
+
+    char *ret = (char *)malloc(len + 1);
+    int ptr = 0;
+
+    while (ptr < len) {
+        int read_len = _read(pipe, ret + ptr, len - ptr);
+        if (read_len == -1) {
+            free(ret);
+            *o_len = BOT_ERR_SYSCALL;
+            return NULL;
+        }
+        ptr += read_len;
+    }
+
+#else
     struct pollfd pfd = (struct pollfd){pipe, POLLIN, 0};
     char *ret = NULL;
     size_t len = 0, ptr = 0;
@@ -151,6 +185,7 @@ static char *bot_recv_blob(int pipe, size_t *o_len, int timeout)
             return NULL;
         }
     }
+#endif
 
     *o_len = len;
     ret[len] = '\0';
@@ -171,15 +206,25 @@ const char *bot_strerr(int code)
 }
 
 typedef struct _bot_player {
+#ifdef _WIN32
+    intptr_t pid;
+#else
     pid_t pid;
+#endif
+
     /* fd_send is the child's stdin, fd_recv is stdout
        Parent writes to fd_send and reads from fd_recv */
     int fd_send, fd_recv;
     int fd_log;
 } bot_player;
 
+#ifdef _WIN32
+#define bot_player_pause(__cp)
+#define bot_player_resume(__cp)
+#else
 #define bot_player_pause(__cp)   kill(-(__cp).pid, SIGUSR1)
 #define bot_player_resume(__cp)  kill(-(__cp).pid, SIGUSR2)
+#endif
 
 /*
   Creates the child.
@@ -192,7 +237,13 @@ static bot_player bot_player_create(const char *cmd, const char *log)
     ret.pid = -1;
 
     int fd_send[2], fd_recv[2];
-    if (pipe(fd_send) != 0 || pipe(fd_recv) != 0) {
+#ifdef _WIN32
+    if (_pipe(fd_send, 1024, _O_BINARY) != 0 ||
+        _pipe(fd_recv, 1024, _O_BINARY) != 0)
+#else
+    if (pipe(fd_send) != 0 || pipe(fd_recv) != 0)
+#endif
+    {
         fprintf(stderr, "pipe() failed with errno %d\n", errno);
         exit(1);    /* Non-zero exit status by the judge will be
                        reported as "System Error" */
@@ -204,6 +255,31 @@ static bot_player bot_player_create(const char *cmd, const char *log)
         exit(1);
     }
 
+#ifdef _WIN32
+    /* Back up stdin/stdout/stderr, since following _dup2() calls
+       overwrite these */
+    int fd_stdin = _dup(STDIN_FILENO);
+    int fd_stdout = _dup(STDOUT_FILENO);
+    int fd_stderr = _dup(STDERR_FILENO);
+
+    _dup2(fd_send[0], STDIN_FILENO);
+    _dup2(fd_recv[1], STDOUT_FILENO);
+    _dup2(fd_log, STDERR_FILENO);
+
+    /* Spawn the child process */
+    intptr_t handle = _spawnl(_P_NOWAIT, cmd, cmd, NULL);
+
+    ret.pid = handle;
+    ret.fd_log = fd_log;
+
+    /* Restore original stdin/stdout/stderr */
+    _dup2(fd_stdin, STDIN_FILENO);
+    _dup2(fd_stdout, STDOUT_FILENO);
+    _dup2(fd_stderr, STDERR_FILENO);
+    _close(fd_stdin);
+    _close(fd_stdout);
+
+#else
     pid_t pid = fork();
     if (pid == -1) {
         fprintf(stderr, "fork() failed with errno %d\n", errno);
@@ -223,15 +299,17 @@ static bot_player bot_player_create(const char *cmd, const char *log)
                 exit(1);
             }
         }
-    } else {
-        /* Parent process */
-        close(fd_send[0]);
-        close(fd_recv[1]);
-        ret.pid = pid;
-        ret.fd_send = fd_send[1];
-        ret.fd_recv = fd_recv[0];
-        bot_player_pause(ret);
     }
+
+    ret.pid = pid;
+#endif
+
+    /* Parent process */
+    close(fd_send[0]);
+    close(fd_recv[1]);
+    ret.fd_send = fd_send[1];
+    ret.fd_recv = fd_recv[0];
+    bot_player_pause(ret);
 
     return ret;
 }
@@ -256,9 +334,14 @@ void bot_player_finish()
 {
     int i;
     for (i = 0; i < num_players; i++) {
+#ifdef _WIN32
+        _close(players[i].fd_log);
+        TerminateProcess((HANDLE)players[i].pid, 0);
+#else
         fsync(players[i].fd_log);
         kill(players[i].pid, SIGTERM);
         while (waitpid(players[i].pid, 0, 0) > 0) { }
+#endif
     }
 }
 
