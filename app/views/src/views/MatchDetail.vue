@@ -51,6 +51,7 @@
               </v-btn>
             </div>
             <iframe
+              v-if="status == $consts.codeStat.accepted"
               class="embed mt-5"
               :src="$axios.defaults.baseURL + '/contest/' + $route.params.cid + '/match/' + $route.params.cid + '/playback'"
               :style="{ transform: `scale(${transform})` }"
