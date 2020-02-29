@@ -47,7 +47,7 @@ int main(int argc, char *argv[])
     char *resp;
     int err;
 
-    for (; win == -1 && count < 9; free(resp), move ^= 1) {
+    for (; win == -1 && count < 9; free(resp), move ^= 1, count++) {
         /* Inform the current player of the last move */
         snprintf(buf, sizeof buf, "%d %d", row, col);
         bot_player_send(move, buf);
