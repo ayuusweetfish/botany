@@ -1,51 +1,62 @@
 import Vue from 'vue'
 import Vuex from 'vuex'
-import createPersistedState from 'vuex-persistedstate'
+import Persistance from 'vuex-persistedstate'
 
 Vue.use(Vuex)
 
 export default new Vuex.Store({
   state: {
-    id: '',
+    // user
+    id: -1,
     handle: '',
     privilege: -1,
     nickname: '',
     routeList: [],
-    contestInfo: {},
-    afterLogin: null,
-    stallFlag: false
+    // contest
+    cname: '',
+    myrole: -1,
+    redirect: {
+      path: '/'
+    },
+    cstart: new Date(),
+    cend: new Date(),
+    stall: false
   },
   mutations: {
-    setRouteList (state, val) {
-      state.routeList = val
-      console.log(val)
+    login: (state, user) => {
+      state.id = user.id
+      state.handle = user.handle
+      state.privilege = user.privilege
+      state.nickname = user.nickname
     },
-    login (state, val) {
-      state.id = val.id
-      state.handle = val.handle
-      state.privilege = val.privilege
-      state.nickname = val.nickname
-    },
-    logout (state) {
-      state.id = ''
+    logout: (state) => {
+      state.id = -1
       state.handle = ''
-      state.nickname = ''
       state.privilege = -1
-      state.contestInfo = {}
-      state.afterLogin = null
+      state.nickname = ''
     },
-    enterSubSite (state, val) {
-      state.contestInfo = val
+    setContest: (state, contest) => {
+      state.cname = contest.title
+      state.myrole = contest.my_role
+      state.cstart = new Date(contest.start_time * 1000)
+      state.cend = new Date(contest.end_time * 1000)
     },
-    clearSubSite (state) {
-      state.contestInfo = {}
+    resetContest: (state) => {
+      state.cname = ''
+      state.myrole = -1
+      state.cstart = new Date()
+      state.cend = state.cstart
     },
-    setAfterLogin (state, val) {
-      state.afterLogin = val
+    setStall: (state, stall) => {
+      state.stall = stall
     },
-    setStallFlag (state, val) {
-      state.stallFlag = val
+    setRedirect: (state, redirect) => {
+      state.redirect = redirect
     }
   },
-  plugins: [createPersistedState()]
+  actions: {
+  },
+  modules: {
+  },
+  plugins: [Persistance()]
 })

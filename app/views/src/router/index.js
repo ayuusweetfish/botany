@@ -1,234 +1,179 @@
 import Vue from 'vue'
-import Router from 'vue-router'
-const login = () => import('@/components/login')
-const signup = () => import('@/components/signup')
-const contestlist = () => import('@/components/contestlist')
-const contestmain = () => import('@/components/contestmain')
-const submission = () => import('@/components/submission')
-const ranklist = () => import('@/components/ranklist')
-const matchlist = () => import('@/components/matchlist')
-const match = () => import('@/components/match')
-const profile = () => import('@/components/profile')
-const contestcreate = () => import('@/components/contestcreate')
-const contestedit = () => import('@/components/contestedit')
-const notfound = () => import('@/components/404')
-const submissionlist = () => import('@/components/submissionlist')
-const submissioninfo = () => import('@/components/submissioninfo')
-const contestscript = () => import('@/components/scriptview')
-const contestops = () => import('@/components/contestops')
-const judge = () => import('@/components/judge')
+import VueRouter from 'vue-router'
+const Contest = () => import('../views/Contest.vue')
+const ContestList = () => import('../views/ContestList.vue')
+const ContestMain = () => import('../views/ContestMain.vue')
+const Register = () => import('../views/Register.vue')
+const Login = () => import('../views/Login.vue')
+const Signup = () => import('../views/Signup.vue')
+const Profile = () => import('../views/Profile.vue')
+const SubmissionList = () => import('../views/SubmissionList.vue')
+const SubmissionDetail = () => import('../views/SubmissionDetail.vue')
+const ContestEdit = () => import('../views/ContestEdit.vue')
+const MatchList = () => import('../views/MatchList.vue')
+const MatchDetail = () => import('../views/MatchDetail.vue')
+const RankList = () => import('../views/RankList.vue')
+const CreateSubmission = () => import('../views/CreateSubmission.vue')
+const Judge = () => import('../views/Judge.vue')
+const Script = () => import('../views/HandleScript.vue')
+const CreateContest = () => import('../views/CreateContest.vue')
 
-Vue.use(Router)
+Vue.use(VueRouter)
 
-const originalPush = Router.prototype.push
-Router.prototype.push = function push (location, onResolve, onReject) {
-  if (onResolve || onReject) return originalPush.call(this, location, onResolve, onReject)
-  return originalPush.call(this, location).catch(err => err)
-}
-
-export default new Router({
-  routes: [
-    {
-      path: '/login',
-      name: 'login',
-      component: login,
-      meta: {
-        title: '登录',
-        navbarType: 'none',
-        prePage: [],
-        stalling: false
-      }
-    },
-    {
-      path: '/signup',
-      name: 'signup',
-      component: signup,
-      meta: {
-        title: '注册',
-        navbarType: 'none',
-        prePage: [],
-        stalling: false
-      }
-    },
-    {
-      path: '/',
-      name: 'contest_list',
-      component: contestlist,
-      meta: {
-        title: '主页',
-        navbarType: 'main',
-        prePage: [],
-        stalling: false
-      }
-    },
-    {
-      path: '/contest_main',
-      name: 'contest_main',
-      component: contestmain,
-      meta: {
-        title: '比赛主页',
-        navbarType: 'contest',
-        prePage: [],
-        stalling: false
-      }
-    },
-    {
-      path: '/submission',
-      name: 'submission',
-      component: submission,
-      meta: {
-        title: '提交代码',
-        navbarType: 'contest',
-        prePage: [{ path: '/contest_main', query: ['cid'] }],
-        stalling: false
-      }
-    },
-    {
-      path: '/ranklist',
-      name: 'ranklist',
-      component: ranklist,
-      meta: {
-        title: '选手排行',
-        navbarType: 'contest',
-        prePage: [{ path: '/contest_main', query: ['cid'] }],
-        stalling: false
-      }
-    },
-    {
-      path: '/match_list',
-      name: 'match_list',
-      component: matchlist,
-      meta: {
-        title: '对局列表',
-        navbarType: 'contest',
-        prePage: [{ path: '/contest_main', query: ['cid'] }],
-        stalling: false
-      }
-    },
-    {
-      path: '/match',
-      name: 'match',
-      component: match,
-      meta: {
-        title: '对局信息',
-        navbarType: 'contest',
-        prePage: [
-          { path: '/contest_main', query: ['cid'] },
-          { path: '/match_list', query: ['cid'] }
-        ],
-        stalling: false
-      }
-    },
-    {
-      path: '/profile',
-      name: 'profile',
-      component: profile,
-      meta: {
-        title: '选手信息',
-        navbarType: 'main',
-        prePage: [{ path: '/', query: [] }],
-        stalling: false
-      }
-    },
-    {
-      path: '/contest_create',
-      name: 'contest_create',
-      component: contestcreate,
-      meta: {
-        title: '创建比赛',
-        navbarType: 'main',
-        prePage: [{ path: '/', query: [] }],
-        stalling: true
-      }
-    },
-    {
-      path: '/contest_edit',
-      name: 'contest_edit',
-      component: contestedit,
-      meta: {
-        title: '修改比赛',
-        navbarType: 'contest',
-        prePage: [
-          { path: '/contest_main', query: ['cid'] },
-          { path: '/contest_ops', query: ['cid'] }
-        ],
-        stalling: true
-      }
-    },
-    {
-      path: '/notfound',
-      name: 'notfound',
-      component: notfound,
-      meta: {
-        title: '出错了',
-        navbarType: 'main',
-        prePage: [],
-        stalling: false
-      }
-    },
-    {
-      path: '/submission_list',
-      name: 'submission_list',
-      component: submissionlist,
-      meta: {
-        title: '提交列表',
-        navbarType: 'contest',
-        prePage: [{ path: '/contest_main', query: ['cid'] }],
-        stalling: false
-      }
-    },
-    {
-      path: '/submission_info',
-      name: 'submission_info',
-      component: submissioninfo,
-      meta: {
-        title: '提交详情',
-        navbarType: 'contest',
-        prePage: [
-          { path: '/contest_main', query: ['cid'] },
-          { path: '/submission_list', query: ['cid'] }
-        ],
-        stalling: false
-      }
-    },
-    {
-      path: '/contest_script',
-      name: 'contest_script',
-      component: contestscript,
-      meta: {
-        title: '赛制脚本',
-        navbarType: 'contest',
-        prePage: [
-          { path: '/contest_main', query: ['cid'] },
-          { path: '/contest_ops', query: ['cid'] }
-        ],
-        stalling: false
-      }
-    },
-    {
-      path: '/contest_ops',
-      name: 'contestops',
-      component: contestops,
-      meta: {
-        title: '比赛操作',
-        navbarType: 'contest',
-        prePage: [{ path: '/contest_main', query: ['cid'] }],
-        stalling: false
-      }
-    },
-    {
-      path: '/judge',
-      name: 'judge',
-      component: judge,
-      meta: {
-        title: '裁判程序',
-        navbarType: 'contest',
-        prePage: [
-          { path: '/contest_main', query: ['cid'] },
-          { path: '/contest_ops', query: ['cid'] }
-        ],
-        stalling: false
-      }
+const routes = [
+  {
+    path: '/',
+    name: 'ContestList',
+    component: ContestList,
+    meta: {
+      title: '主页',
+      type: 'main',
+      stalling: false
     }
-  ]
+  }, {
+    path: '/contest/:cid/main',
+    name: 'Contest',
+    component: ContestMain,
+    meta: {
+      title: '赛事',
+      type: 'main',
+      stalling: false
+    }
+  }, {
+    path: '/create',
+    name: 'Create',
+    component: CreateContest,
+    meta: {
+      title: '新建赛事',
+      type: 'main',
+      stalling: true
+    }
+  }, {
+    path: '/contest/:cid',
+    name: 'ContestInfo',
+    component: Contest,
+    children: [
+      {
+        path: 'submission/:sid',
+        name: 'SubmissionDetail',
+        component: SubmissionDetail,
+        meta: {
+          title: '提交详情',
+          type: 'contest',
+          stalling: false
+        }
+      }, {
+        path: 'submission',
+        name: 'SubmissionList',
+        component: SubmissionList,
+        meta: {
+          title: '提交列表',
+          type: 'contest',
+          prePage: [{ path: '/contest/main', query: ['cid'] }],
+          stalling: false
+        }
+      }, {
+        path: 'edit',
+        name: 'ContestEdit',
+        component: ContestEdit,
+        meta: {
+          title: '编辑比赛',
+          type: 'contest',
+          stalling: true
+        }
+      }, {
+        path: 'match/:mid',
+        name: 'MatchDetail',
+        component: MatchDetail,
+        meta: {
+          title: '对局详情',
+          type: 'contest',
+          stalling: false
+        }
+      }, {
+        path: 'match',
+        name: 'MatchList',
+        component: MatchList,
+        meta: {
+          title: '对局列表',
+          type: 'contest',
+          stalling: false
+        }
+      }, {
+        path: 'ranklist',
+        name: 'RankList',
+        component: RankList,
+        meta: {
+          title: '选手排行',
+          type: 'contest',
+          stalling: false
+        }
+      }, {
+        path: 'participant',
+        name: 'Participant',
+        component: CreateSubmission,
+        meta: {
+          title: '我的提交',
+          type: 'contest',
+          stalling: true
+        }
+      }, {
+        path: 'judge',
+        name: 'Judge',
+        component: Judge,
+        meta: {
+          title: '设置裁判',
+          type: 'contest',
+          stalling: true
+        }
+      }, {
+        path: 'script',
+        name: 'Script',
+        component: Script,
+        meta: {
+          title: '脚本操作',
+          type: 'contest',
+          stalling: false
+        }
+      }
+    ]
+  }, {
+    path: '/register',
+    name: 'Register',
+    component: Register,
+    children: [
+      {
+        path: 'login',
+        component: Login,
+        meta: {
+          title: '登录',
+          type: 'login',
+          stalling: false
+        }
+      }, {
+        path: 'signup',
+        component: Signup,
+        meta: {
+          title: '注册',
+          type: 'login',
+          stalling: true
+        }
+      }
+    ]
+  }, {
+    path: '/profile/:handle',
+    name: 'Profile',
+    component: Profile,
+    meta: {
+      title: '选手信息',
+      type: 'main',
+      stalling: false
+    }
+  }
+]
+
+const router = new VueRouter({
+  routes
 })
+
+export default router

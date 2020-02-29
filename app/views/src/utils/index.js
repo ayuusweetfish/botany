@@ -35,13 +35,6 @@ export default {
         const D = date.getDate() < 10 ? '0' + date.getDate() : date.getDate()
         return Y + '-' + M + '-' + D
       },
-      globalValidator (rule, value, callback) {
-        if (value.match(new RegExp('[#^$%&!?%*]'))) {
-          callback(new Error('输入了非法字符'))
-        } else {
-          callback()
-        }
-      },
       checkTime (timeStart, timeEnd) {
         const now = new Date().getTime() / 1000
         if (timeStart >= now) {
@@ -66,7 +59,6 @@ export default {
       codeStat: {
         pending: 0,
         compiling: 1,
-        running: 2,
         accepted: 9,
         complErr: -1,
         systmErr: -9
