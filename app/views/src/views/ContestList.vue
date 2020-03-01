@@ -3,8 +3,8 @@
     <v-snackbar top style="margin-top: 60px"  v-model="showErr" color="error" :timeout="3000">
       {{errMessage}}
     </v-snackbar>
-    <v-container fluid>
-      <h1>欢迎来到BotAny</h1>
+    <v-container>
+      <h1 class="mb-4">欢迎来到BotAny</h1>
       <div>当前共有{{total}}场赛事</div>
       <div>
         <v-btn
