@@ -16,7 +16,7 @@
       min="1"
       max="1"
       @change="uploadBanner"/>
-    <div class="display-2 mb-2 d-flex justify-center">{{title}}</div>
+    <div class="display-2 mt-6 mb-2 d-flex justify-center">{{title}}</div>
     <v-container fluid>
       <v-row justify="center">
         <v-btn color="primary"
