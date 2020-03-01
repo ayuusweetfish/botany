@@ -87,12 +87,14 @@ static char *bot_recv_blob(int pipe, size_t *o_len, int timeout)
 {
 #ifdef _WIN32
     /* Under windows, a simple implementation without timeout is employed */
-    char buf[4];
+    unsigned char buf[4];
     if (_read(pipe, buf, 3) < 3) {
         *o_len = BOT_ERR_FMT;
         return NULL;
     }
-    int len = ((int)buf[2] << 16) | ((int)buf[1] << 8) | (int)buf[0];
+    int len = ((unsigned int)buf[2] << 16) |
+        ((unsigned int)buf[1] << 8) |
+        (unsigned int)buf[0];
 
     char *ret = (char *)malloc(len + 1);
     int ptr = 0;
@@ -111,7 +113,7 @@ static char *bot_recv_blob(int pipe, size_t *o_len, int timeout)
     struct pollfd pfd = (struct pollfd){pipe, POLLIN, 0};
     char *ret = NULL;
     size_t len = 0, ptr = 0;
-    char buf[4];
+    unsigned char buf[4];
     struct timespec t1, t2;
     int loops = 0;
 
@@ -172,9 +174,9 @@ static char *bot_recv_blob(int pipe, size_t *o_len, int timeout)
                     return NULL;
                 }
                 /* Parse the length */
-                len = ((unsigned char)buf[2] << 16) |
-                    ((unsigned char)buf[1] << 8) |
-                    (unsigned char)buf[0];
+                len = ((unsigned int)buf[2] << 16) |
+                    ((unsigned int)buf[1] << 8) |
+                    (unsigned int)buf[0];
                 ret = (char *)malloc(len + 1);
                 if (len == 0) break;    /* Nothing to read */
             } else {
