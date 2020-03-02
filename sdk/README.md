@@ -82,7 +82,7 @@ int main(int argc, char *argv[])
 
 ```c
 void bot_player_send(int id, const char *str);
-char *bot_player_recv(int id, size_t *o_len, int timeout);
+char *bot_player_recv(int id, int *o_len, int timeout);
 ```
 
 通过 __bot_player_send()__ 向玩家发送消息。需要指定一个玩家编号与一个字符串，字符串可以包含除了 NUL 字符 __\\0__ 以外的任意字符。
