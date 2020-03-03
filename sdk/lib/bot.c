@@ -228,19 +228,19 @@ typedef struct _bot_player {
 } bot_player;
 
 #ifdef _WIN32
-#define bot_player_pause(__cp)
-#define bot_player_resume(__cp)
+#define bot_judge_pause(__cp)
+#define bot_judge_resume(__cp)
 #else
-#define bot_player_pause(__cp)   kill(-(__cp).pid, SIGUSR1)
-#define bot_player_resume(__cp)  kill(-(__cp).pid, SIGUSR2)
+#define bot_judge_pause(__cp)   kill(-(__cp).pid, SIGUSR1)
+#define bot_judge_resume(__cp)  kill(-(__cp).pid, SIGUSR2)
 #endif
 
 /*
   Creates the child.
-  Child processes are normally paused, but during `bot_player_recv()`
+  Child processes are normally paused, but during `bot_judge_recv()`
   the process is resumed, and paused again after its response arrives.
  */
-static bot_player bot_player_create(const char *cmd, const char *log)
+static bot_player bot_judge_create(const char *cmd, const char *log)
 {
     bot_player ret;
     ret.pid = -1;
@@ -318,7 +318,7 @@ static bot_player bot_player_create(const char *cmd, const char *log)
     close(fd_recv[1]);
     ret.fd_send = fd_send[1];
     ret.fd_recv = fd_recv[0];
-    bot_player_pause(ret);
+    bot_judge_pause(ret);
 
     return ret;
 }
@@ -326,7 +326,7 @@ static bot_player bot_player_create(const char *cmd, const char *log)
 int num_players;
 static bot_player *players;
 
-int bot_player_init(int argc, char *const argv[])
+int bot_judge_init(int argc, char *const argv[])
 {
     int n = (argc - 1) / 2;
     num_players = n;
@@ -334,12 +334,12 @@ int bot_player_init(int argc, char *const argv[])
 
     int i;
     for (i = 0; i < n; i++)
-        players[i] = bot_player_create(argv[1 + i], argv[1 + i + n]);
+        players[i] = bot_judge_create(argv[1 + i], argv[1 + i + n]);
 
     return n;
 }
 
-void bot_player_finish()
+void bot_judge_finish()
 {
     int i;
     for (i = 0; i < num_players; i++) {
@@ -354,17 +354,17 @@ void bot_player_finish()
     }
 }
 
-void bot_player_send(int id, const char *str)
+void bot_judge_send(int id, const char *str)
 {
     bot_send_blob(players[id].fd_send, 0, str);
 }
 
-char *bot_player_recv(int id, int *o_len, int timeout)
+char *bot_judge_recv(int id, int *o_len, int timeout)
 {
     size_t len;
-    bot_player_resume(players[id]);
+    bot_judge_resume(players[id]);
     char *resp = bot_recv_blob(players[id].fd_recv, &len, timeout);
-    bot_player_pause(players[id]);
+    bot_judge_pause(players[id]);
     if (o_len != NULL) *o_len = len;
     return resp;
 }

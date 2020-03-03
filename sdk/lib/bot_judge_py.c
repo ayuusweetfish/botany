@@ -30,7 +30,7 @@ static PyObject *init(PyObject *self, PyObject *args)
         Py_DECREF(tmp);
     }
 
-    int n = bot_player_init(len, argv);
+    int n = bot_judge_init(len, argv);
 
     for (i = 0; i < len; i++) free(argv[i]);
     free(argv);
@@ -44,7 +44,7 @@ static PyObject *send(PyObject *self, PyObject *args)
     const char *str;
     if (!PyArg_ParseTuple(args, "is", &id, &str)) return NULL;
 
-    bot_player_send(id, str);
+    bot_judge_send(id, str);
 
     return Py_None;
 }
@@ -56,7 +56,7 @@ static PyObject *recv(PyObject *self, PyObject *args)
     if (!PyArg_ParseTuple(args, "ii", &id, &timeout)) return NULL;
 
     int len;
-    char *resp = bot_player_recv(id, &len, timeout);
+    char *resp = bot_judge_recv(id, &len, timeout);
 
     PyObject *ret = Py_BuildValue("si", resp, (int)len);
     return ret;
@@ -64,7 +64,7 @@ static PyObject *recv(PyObject *self, PyObject *args)
 
 static PyObject *finish(PyObject *self, PyObject *args)
 {
-    bot_player_finish();
+    bot_judge_finish();
     return Py_None;
 }
 
@@ -78,13 +78,13 @@ static PyMethodDef methods[] = {
 
 static struct PyModuleDef module = {
     PyModuleDef_HEAD_INIT,
-    "bot_jury_py",
-    "Botany jury module (Python binding)",
+    "bot_judge_py",
+    "Botany judge module (Python binding)",
     -1,
     methods
 };
 
-PyMODINIT_FUNC PyInit_bot_jury_py()
+PyMODINIT_FUNC PyInit_bot_judge_py()
 {
     return PyModule_Create(&module);
 }

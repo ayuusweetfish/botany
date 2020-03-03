@@ -25,15 +25,15 @@ static inline char *str_head(char *s, size_t n);
 int main(int argc, char *argv[])
 {
     /* Initialize players and make sure there are exactly 2 of them */
-    int n = bot_player_init(argc, argv);
+    int n = bot_judge_init(argc, argv);
     if (n != 2) {
         fprintf(stderr, "Expected 2 players, got %d\n", n);
         exit(1);
     }
 
     /* Inform each player which side it is on */
-    bot_player_send(0, "0");
-    bot_player_send(1, "1");
+    bot_judge_send(0, "0");
+    bot_judge_send(1, "1");
 
     /* Set up board state */
     int move = 0;
@@ -50,8 +50,8 @@ int main(int argc, char *argv[])
     for (; win == -1 && count < 9; free(resp), move ^= 1, count++) {
         /* Inform the current player of the last move */
         snprintf(buf, sizeof buf, "%d %d", row, col);
-        bot_player_send(move, buf);
-        resp = bot_player_recv(move, &err, 1000);
+        bot_judge_send(move, buf);
+        resp = bot_judge_recv(move, &err, 1000);
 
         /* An invalid response causes immediate defeat; the same below */
         if (resp == NULL) {
@@ -110,7 +110,7 @@ int main(int argc, char *argv[])
     printf("\"\n}\n");
 
     /* Stop all players to ensure their logs are written */
-    bot_player_finish();
+    bot_judge_finish();
 
     return 0;
 }

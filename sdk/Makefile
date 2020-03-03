@@ -13,7 +13,7 @@ judge-c: judge
 	$(eval JUDGE_ARGS := )
 	@:
 
-judge-py: lib/bot_jury_py.so
+judge-py: lib/bot_judge_py.so
 	$(eval JUDGE_EXEC := python3)
 	$(eval JUDGE_ARGS := judge.py)
 	@:
@@ -50,10 +50,10 @@ judge: lib/bot.h lib/bot.c judge.cpp
 endif
 endif
 
-lib/bot_jury_py.so: lib/bot.h lib/bot.c lib/bot_jury_py.c
+lib/bot_judge_py.so: lib/bot.h lib/bot.c lib/bot_judge_py.c
 	$(CC) lib/bot.c -o lib/bot.o -c -fPIC
-	$(CC) lib/bot_jury_py.c -o lib/bot_jury_py.o -c -fPIC `python3-config --cflags`
-	$(CC) lib/bot.o lib/bot_jury_py.o -shared -o lib/bot_jury_py.so `python3-config --ldflags`
+	$(CC) lib/bot_judge_py.c -o lib/bot_judge_py.o -c -fPIC `python3-config --cflags`
+	$(CC) lib/bot.o lib/bot_judge_py.o -shared -o lib/bot_judge_py.so `python3-config --ldflags`
 
 ifneq (, $(wildcard player.c))
 player: lib/bot.h lib/bot.c player.c
@@ -66,6 +66,6 @@ endif
 endif
 
 clean:
-	$(RM) judge player p1.log p2.log lib/bot.o lib/bot_jury_py.o lib/bot_jury_py.so
+	$(RM) judge player p1.log p2.log lib/bot.o lib/bot_judge_py.o lib/bot_judge_py.so
 
 .PHONY: clean

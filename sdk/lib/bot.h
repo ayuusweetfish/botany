@@ -17,13 +17,13 @@ const char *bot_strerr(int code);
 /* Judge side interfaces */
 
 /* Initializes players from command line arguments */
-int bot_player_init(int argc, char *const argv[]);
+int bot_judge_init(int argc, char *const argv[]);
 
 /* Terminates the player and flushes all output */
-void bot_player_finish();
+void bot_judge_finish();
 
 /* Sends to and receives from a player */
-void bot_player_send(int id, const char *str);
+void bot_judge_send(int id, const char *str);
 
 /*
   Returns a string on success, and NULL on failure.
@@ -32,7 +32,7 @@ void bot_player_send(int id, const char *str);
   See constant definitions at top of the file, or use `bot_strerr()`
   to get the error description.
  */
-char *bot_player_recv(int id, int *o_len, int timeout);
+char *bot_judge_recv(int id, int *o_len, int timeout);
 
 /* Player side interfaces */
 
