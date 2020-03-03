@@ -7,19 +7,11 @@
 ```sh
 # 运行裁判，裁判将运行两个同样的选手程序
 make
-make run
 
-# 运行 Lua 语言选手程序
-make run-lua
-
-# 运行 Python 语言选手程序
-make run-py
-
-# 只编译裁判
-make judge
-
-# 只编译选手
-make player
+# 选择不同语言的裁判和选手程序
+# make judge-<c|py> player-<c|lua|py> run
+make judge-c player-py run
+make judge-py player-lua run
 
 # 移除生成的文件
 make clean
@@ -129,3 +121,39 @@ void bot_judge_finish();
 ```
 
 在裁判程序结束前调用 __bot_judge_finish()__，以结束选手程序并将它们的日志写入文件。
+
+## 其他语言
+
+### Python 裁判
+
+方便起见，引入包时可使用别名：
+
+```py
+import bot_judge_py as bot
+```
+
+初始化：
+
+```py
+import sys
+bot.init(sys.argv)  # 返回玩家数目
+```
+
+发送和接收：
+
+```py
+# 传入玩家编号和字符串
+bot.send(0, '0')
+
+# 传入玩家编号和等待时间
+# 返回两个值：
+#   成功时第一个为字符串，第二个为长度；
+#   失败时第一个为 None，第二个为错误代码
+s, err = bot.recv(0, 1000)
+```
+
+结束：
+
+```py
+bot.finish()
+```
