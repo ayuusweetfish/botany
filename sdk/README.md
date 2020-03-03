@@ -64,15 +64,15 @@ fflush(stderr);
 函数签名：
 
 ```c
-int bot_player_init(int argc, char *const argv[]);
+int bot_judge_init(int argc, char *const argv[]);
 ```
 
-一般只需将命令行参数 __argc__ 和 __argv__ 传入 __bot_player_all()__，它会返回一个整数 __n__，表示玩家的数量，玩家编号为 __0, 1, …, n-1__。
+一般只需将命令行参数 __argc__ 和 __argv__ 传入 __bot_judge_all()__，它会返回一个整数 __n__，表示玩家的数量，玩家编号为 __0, 1, …, n-1__。
 
 ```c
 int main(int argc, char *argv[])
 {
-    int n = bot_player_init(argc, argv);
+    int n = bot_judge_init(argc, argv);
     // ...
 ```
 
@@ -81,29 +81,29 @@ int main(int argc, char *argv[])
 函数签名：
 
 ```c
-void bot_player_send(int id, const char *str);
-char *bot_player_recv(int id, size_t *o_len, int timeout);
+void bot_judge_send(int id, const char *str);
+char *bot_judge_recv(int id, int *o_len, int timeout);
 ```
 
-通过 __bot_player_send()__ 向玩家发送消息。需要指定一个玩家编号与一个字符串，字符串可以包含除了 NUL 字符 __\\0__ 以外的任意字符。
+通过 __bot_judge_send()__ 向玩家发送消息。需要指定一个玩家编号与一个字符串，字符串可以包含除了 NUL 字符 __\\0__ 以外的任意字符。
 
 ```c
-bot_player_send(0, "0");
-bot_player_send(1, "1");
+bot_judge_send(0, "0");
+bot_judge_send(1, "1");
 ```
 
 若要发送动态生成的消息，可以利用 __sprintf__ 或 __snprintf__：
 
 ```c
 snprintf(buf, sizeof buf, "%d %d", row, col);
-bot_player_send(0, buf);
+bot_judge_send(0, buf);
 ```
 
-各条消息不会自动拼接，且能以队列形式暂存。例如连续两次调用 __bot_player_send()__ 之后，玩家两次调用 __bot_recv()__ 会分别收到两次发送的消息。
+各条消息不会自动拼接，且能以队列形式暂存。例如连续两次调用 __bot_judge_send()__ 之后，玩家两次调用 __bot_recv()__ 会分别收到两次发送的消息。
 
-通过 __bot_player_recv()__ 从玩家接收信息。需要指定一个玩家编号与一个等待时间，等待时间的单位为毫秒。玩家程序会开始运行，直到它发出一条消息后被暂停；如果队列中已经有消息，则玩家程序立刻被暂停。
+通过 __bot_judge_recv()__ 从玩家接收信息。需要指定一个玩家编号与一个等待时间，等待时间的单位为毫秒。玩家程序会开始运行，直到它发出一条消息后被暂停；如果队列中已经有消息，则玩家程序立刻被暂停。
 
-玩家正常发出消息时，__bot_player_recv()__ 返回一个字符串，并在参数 __o_len__ 所指向的位置存放字符串的长度；否则它返回空，并在 __o_len__ 所指向的位置存放一个错误代码。错误代码含义如下：
+玩家正常发出消息时，__bot_judge_recv()__ 返回一个字符串，并在参数 __o_len__ 所指向的位置存放字符串的长度；否则它返回空，并在 __o_len__ 所指向的位置存放一个错误代码。错误代码含义如下：
 
 - __BOT_ERR_CLOSED__ (4): 选手程序自行退出或崩溃；
 - __BOT_ERR_TIMEOUT__ (5): 选手程序在等待时间内未发送消息；
@@ -125,7 +125,7 @@ bot_player_send(0, buf);
 函数签名：
 
 ```c
-void bot_player_finish();
+void bot_judge_finish();
 ```
 
-在裁判程序结束前调用 __bot_player_finish()__，以结束选手程序并将它们的日志写入文件。
+在裁判程序结束前调用 __bot_judge_finish()__，以结束选手程序并将它们的日志写入文件。

@@ -1,15 +1,44 @@
 LOGS = p1.log p2.log
 
-run: judge player
-	@./judge ./player ./player $(LOGS)
+# Language selection
 
-run-lua: CMD = "LUA_PATH=lib/?.lua lua player.lua"
-run-lua: judge
-	@./judge $(CMD) $(CMD) $(LOGS)
+JUDGE_EXEC := ./judge
+JUDGE_ARGS :=
+PLAYER_CMD := ./player
 
-run-py: CMD = "PYTHONPATH=lib python3 player.py"
-run-py: judge
-	@./judge $(CMD) $(CMD) $(LOGS)
+run-default: judge-c player-c run
+
+judge-c: judge
+	$(eval JUDGE_EXEC := ./judge)
+	$(eval JUDGE_ARGS := )
+	@:
+
+judge-py: lib/bot_judge_py.so
+	$(eval JUDGE_EXEC := python3)
+	$(eval JUDGE_ARGS := judge.py)
+	@:
+
+player-c: player
+	$(eval PLAYER_EXEC := ./player)
+	$(eval PLAYER_ARGS := )
+	@:
+
+player-lua: player.lua
+	$(eval PLAYER_CMD := LUA_PATH=lib/?.lua lua player.lua)
+	@:
+
+player-py: player.py
+	$(eval PLAYER_CMD := PYTHONPATH=lib python3 player.py)
+	@:
+
+run: export PYTHONPATH = lib
+run: export LUA_PATH = lib/?.lua
+run:
+	@$(JUDGE_EXEC) $(JUDGE_ARGS) "$(PLAYER_CMD)" "$(PLAYER_CMD)" $(LOGS)
+
+.PHONY: judge-py player-lua player-py run-default run
+
+# Building
 
 ifneq (, $(wildcard judge.c))
 judge: lib/bot.h lib/bot.c judge.c
@@ -20,6 +49,11 @@ judge: lib/bot.h lib/bot.c judge.cpp
 	$(CXX) judge.cpp -x c lib/bot.c -Ilib -O2 -o judge
 endif
 endif
+
+lib/bot_judge_py.so: lib/bot.h lib/bot.c lib/bot_judge_py.c
+	$(CC) lib/bot.c -o lib/bot.o -c -fPIC
+	$(CC) lib/bot_judge_py.c -o lib/bot_judge_py.o -c -fPIC `python3-config --cflags`
+	$(CC) lib/bot.o lib/bot_judge_py.o -shared -o lib/bot_judge_py.so `python3-config --ldflags`
 
 ifneq (, $(wildcard player.c))
 player: lib/bot.h lib/bot.c player.c
@@ -32,6 +66,6 @@ endif
 endif
 
 clean:
-	$(RM) judge player p1.log p2.log
+	$(RM) judge player p1.log p2.log lib/bot.o lib/bot_judge_py.o lib/bot_judge_py.so
 
-.PHONY: run run-lua run-py
+.PHONY: clean
