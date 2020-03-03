@@ -1,13 +1,13 @@
-import bot_judge_py as bot_judge
+import bot_judge_py as bot
 import sys
 
-if bot_judge.init(sys.argv) != 2:
+if bot.init(sys.argv) != 2:
     print('Incorrect number of players!')
     sys.exit()
 
 # Inform each player of their side
-bot_judge.send(0, '0')
-bot_judge.send(1, '1')
+bot.send(0, '0')
+bot.send(1, '1')
 
 board = [[-1] * 3 for _ in range(3)]
 win = -1
@@ -15,8 +15,8 @@ row, col = -1, -1   # Last move
 
 for count in range(9):
     move = count % 2    # Current player
-    bot_judge.send(move, '%d %d' % (row, col))
-    resp, err = bot_judge.recv(move, 1000)
+    bot.send(move, '%d %d' % (row, col))
+    resp, err = bot.recv(move, 1000)
 
     if resp == None:
         sys.stderr.write(
@@ -71,4 +71,4 @@ sys.stderr.write(
 )
 sys.stderr.write('"\n}\n')
 
-bot_judge.finish()
+bot.finish()
