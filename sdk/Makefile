@@ -1,18 +1,44 @@
 LOGS = p1.log p2.log
 
-run: judge player
-	@./judge ./player ./player $(LOGS)
+# Language selection
 
-run-lua: CMD = "LUA_PATH=lib/?.lua lua player.lua"
-run-lua: judge
-	@./judge $(CMD) $(CMD) $(LOGS)
+JUDGE_EXEC := ./judge
+JUDGE_ARGS :=
+PLAYER_CMD := ./player
 
-run-py: CMD = "PYTHONPATH=lib python3 player.py"
-run-py: judge
-	@./judge $(CMD) $(CMD) $(LOGS)
+run-default: judge-c player-c run
 
-run-pyjudge: lib/bot_jury_py.so player
-	@PYTHONPATH=lib python3 judge.py ./player ./player $(LOGS)
+judge-c: judge
+	$(eval JUDGE_EXEC := ./judge)
+	$(eval JUDGE_ARGS := )
+	@:
+
+judge-py: lib/bot_jury_py.so
+	$(eval JUDGE_EXEC := python3)
+	$(eval JUDGE_ARGS := judge.py)
+	@:
+
+player-c: player
+	$(eval PLAYER_EXEC := ./player)
+	$(eval PLAYER_ARGS := )
+	@:
+
+player-lua: player.lua
+	$(eval PLAYER_CMD := LUA_PATH=lib/?.lua lua player.lua)
+	@:
+
+player-py: player.py
+	$(eval PLAYER_CMD := PYTHONPATH=lib python3 player.py)
+	@:
+
+run: export PYTHONPATH = lib
+run: export LUA_PATH = lib/?.lua
+run:
+	@$(JUDGE_EXEC) $(JUDGE_ARGS) "$(PLAYER_CMD)" "$(PLAYER_CMD)" $(LOGS)
+
+.PHONY: judge-py player-lua player-py run-default run
+
+# Building
 
 ifneq (, $(wildcard judge.c))
 judge: lib/bot.h lib/bot.c judge.c
@@ -42,4 +68,4 @@ endif
 clean:
 	$(RM) judge player p1.log p2.log lib/bot.o lib/bot_jury_py.o lib/bot_jury_py.so
 
-.PHONY: run run-lua run-py
+.PHONY: clean
