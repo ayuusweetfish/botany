@@ -313,7 +313,7 @@ export default {
           params.moderators = idList.join(',')
         }
         params = this.$qs.stringify(params)
-        const tail = this.mode === 'edit' ? `${this.$route.params.cid}/edit` : '/create'
+        const tail = this.mode === 'edit' ? `${this.$route.params.cid}/edit` : 'create'
         this.$axios.post(
           '/contest/' + tail,
           params
