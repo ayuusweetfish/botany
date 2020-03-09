@@ -203,6 +203,9 @@ export default {
     langs: [
       'C', 'Cpp', 'Lua', 'Python', 'Python3'
     ],
+    formatLangs: [
+      'gcc.c', 'gcc.cpp', 'lua', 'py', 'py3'
+    ],
     langMenu: false,
     content: '',
     basedOn: -1,
@@ -370,7 +373,7 @@ export default {
       this.submiting = true
       const params = this.$qs.stringify({
         code: this.content,
-        lang: this.langs[this.langIdx]
+        lang: this.formatLangs[this.langIdx]
       })
       this.$axios.post(
         '/contest/' + this.$route.params.cid + '/submit',
