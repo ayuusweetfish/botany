@@ -366,7 +366,7 @@ export default {
     submit () {
       this.submiting = true
       const params = this.$qs.stringify({
-        code: this.code,
+        code: this.content,
         lang: this.langs[this.langIdx]
       })
       this.$axios.post(
