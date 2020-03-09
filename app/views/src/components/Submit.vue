@@ -201,7 +201,7 @@ export default {
     tab: 0,
     langIdx: 0,
     langs: [
-      'C', 'Lua', 'Python', 'Cpp'
+      'C', 'Cpp', 'Lua', 'Python', 'Python3'
     ],
     langMenu: false,
     content: '',
@@ -316,13 +316,15 @@ export default {
     },
     getLang (lang) {
       if (lang.endsWith('cpp')) {
-        return 3
+        return 1
       } else if (lang.endsWith('c')) {
         return 0
       } else if (lang.endsWith('lua')) {
-        return 1
-      } else if (lang.endsWith('py')) {
         return 2
+      } else if (lang.endsWith('py')) {
+        return 3
+      } else if (lang.endsWith('py3')) {
+        return 4
       }
     },
     loadContent (item) {
@@ -349,8 +351,9 @@ export default {
       const params = this.$qs.stringify({
         submission: item.sid
       })
+      const tail = this.mode === 'participant' ? '/delegate' : '/judge'
       this.$axios.post(
-        '/contest/' + this.$route.params.cid + '/delegate',
+        '/contest/' + this.$route.params.cid + tail,
         params
       ).then(res => {
         this.tableLoading = false
