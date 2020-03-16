@@ -144,8 +144,8 @@ export default {
       this.$axios.get(
         '/contest/' + this.cid + '/info'
       ).then(res => {
-        const start = this.$functions.dateTimeString(res.data.end_time)
-        const end = this.$functions.dateTimeString(res.data.start_time)
+        const end = this.$functions.dateTimeString(res.data.end_time)
+        const start = this.$functions.dateTimeString(res.data.start_time)
         this.start = new Date(start)
         this.end = new Date(end)
         this.time = start + ' TO ' + end
