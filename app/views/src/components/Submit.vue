@@ -50,7 +50,7 @@
                       </span>
                     </template>
                     <v-list>
-                      <v-list-item-group v-model="langIdx">
+                      <v-list-item-group mandatory v-model="langIdx">
                         <v-list-item v-for="(item, index) in langs" :key="index">
                           <v-list-item-title>{{item}}</v-list-item-title>
                         </v-list-item>
