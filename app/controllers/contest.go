@@ -395,7 +395,8 @@ func contestSubmissionHistoryHandlerCommon(w http.ResponseWriter, r *http.Reques
 		w.WriteHeader(404)
 		return
 	}
-	if !c.HasStarted() {
+	participation := c.ParticipationOf(u)
+	if !c.HasStarted() && participation != models.ParticipationTypeModerator {
 		w.WriteHeader(403)
 		fmt.Fprintf(w, "[]")
 		return
@@ -418,7 +419,6 @@ func contestSubmissionHistoryHandlerCommon(w http.ResponseWriter, r *http.Reques
 			"submissions": ss,
 		})
 	} else if subType == 1 {
-		participation := c.ParticipationOf(u)
 		ss := []map[string]interface{}{}
 		if participation == -1 {
 			// Querying own submission history, but did not participate

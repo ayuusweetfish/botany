@@ -21,9 +21,11 @@ func registerRouterFunc(path string, fn func(http.ResponseWriter, *http.Request)
 		router = mux.NewRouter()
 		apiRouter = router.PathPrefix(globals.Config().ApiPrefix).Subrouter()
 		// Initialize static file server
-		router.PathPrefix("/static").Handler(http.FileServer(http.Dir("./views/dist/")))
+		// TODO: Uncomment after frontend has been updated
+		//router.PathPrefix("/static").Handler(http.FileServer(http.Dir("./views/dist/")))
+		router.PathPrefix("/").Handler(http.FileServer(http.Dir("./views/dist/")))
 		// Set custom "not found" handler
-		router.NotFoundHandler = http.HandlerFunc(handlerServeHomePage)
+		//router.NotFoundHandler = http.HandlerFunc(handlerServeHomePage)
 	}
 	if len(methods) == 0 {
 		methods = []string{"GET"}
