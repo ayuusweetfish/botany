@@ -330,6 +330,7 @@ func (m *Match) ExecuteStatsUpdateScript() error {
 	t := &lua.LTable{}
 	for _, p := range ps {
 		t2 := &lua.LTable{}
+		t2.RawSetString("id", lua.LNumber(p.User))
 		t2.RawSetString("rating", lua.LNumber(p.Rating))
 		t2.RawSetString("performance", lua.LString(p.Performance))
 		t.Append(t2)

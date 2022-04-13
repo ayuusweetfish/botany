@@ -10,7 +10,7 @@ See [README in sdk/ directory](sdk/README.md).
 
 ## Running the server
 
-Tested Go version: 1.13.1, 1.13.7
+Tested Go version: 1.18
 
 Clone repository into `$GOPATH/src/github.com/kawa-yoiko/botany`, or create a symlink, whichever works.
 
@@ -43,7 +43,7 @@ Install Node.js first.
 ```sh
 cd app/views
 npm install
-npm run dev
+npm run serve
 ```
 
 ## Running the judge

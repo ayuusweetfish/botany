@@ -61,6 +61,7 @@ test_update_stats = function (report, par_ids)
     for i, id in ipairs(par_ids) do
         orig_par[i] = stats[id]
         par[i] = {
+            id = id,
             rating = stats[id].rating,
             performance = stats[id].performance
         }

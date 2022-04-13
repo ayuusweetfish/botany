@@ -27,4 +27,8 @@ Test the script with [the contest script tool](../tools/script_test).
 
 ## 在一场对局结束后结算 rating 和 performance
 
-接收裁判程序产生的 report (string) 以及一个数组，包含若干由 rating (number) 和 performance (string) 组成的选手信息，直接修改之即可，不必返回。由于传入的是引用，调用者 Golang 可以获取结果。
+- 函数 `update_stats()` 接收裁判程序产生的 **report** (string) 以及数组 **par** (table)，表示选手信息，每个元素包含以下字段
+	- **id** (number)
+	- **rating** (number)
+	- **performance** (string)
+- 直接修改 **rating** 与 **performance** 即可。修改 **id** 无效。
